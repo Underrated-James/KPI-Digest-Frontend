@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Users | KPI Digest",
+  description: "Manage your users in KPI Digest",
+};
+
 export default function Page() {
   return (
     <div>
