@@ -1,226 +1,236 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
 import {
-  LogOut,
-  Folder,
   Users,
-  Ticket,
-  Layers,
+  Briefcase,
+  CheckSquare,
+  Users2,
+  Settings,
+  LogOut,
+  CalendarDays,
   PanelLeft,
+  type LucideIcon,
 } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
   useSidebar,
-} from "@/components/base/ui/sidebar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-  TooltipProvider,
-} from "@/components/base/ui/tooltip";
+} from "@/components/ui/sidebar";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 
-const navItems = [
-  { name: "Projects", href: "/projects", icon: Folder },
-  { name: "Sprints", href: "/sprints", icon: Layers },
-  { name: "Teams", href: "/teams", icon: Users },
-  { name: "Tickets", href: "/tickets", icon: Ticket },
-  { name: "Users", href: "/users", icon: Users },
+type NavItem = {
+  title: string;
+  href: string;
+  icon: LucideIcon;
+};
+
+const navItems: NavItem[] = [
+  {
+    title: "Projects",
+    href: "/projects",
+    icon: Briefcase,
+  },
+  {
+    title: "Users",
+    href: "/users",
+    icon: Users,
+  },
+  {
+    title: "Teams",
+    href: "/teams",
+    icon: Users2,
+  },
+  {
+    title: "Sprints",
+    href: "/sprints",
+    icon: CalendarDays,
+  },
+  {
+    title: "Tickets",
+    href: "/tickets",
+    icon: CheckSquare,
+  },
 ];
+
+function SidebarBrandToggle() {
+  const { state, toggleSidebar } = useSidebar();
+  const isCollapsed = state === "collapsed";
+
+  return (
+    <button
+      type="button"
+      onClick={toggleSidebar}
+      aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+      className={cn(
+        "group/brand relative flex items-center rounded-xl border border-zinc-800/80 bg-zinc-900/80 text-white transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-600",
+        isCollapsed
+          ? "size-10 justify-center overflow-hidden shadow-[0_12px_30px_-22px_rgba(255,255,255,0.75)] hover:-translate-y-0.5 hover:border-zinc-700 hover:bg-zinc-900 hover:shadow-[0_18px_35px_-22px_rgba(255,255,255,0.9)]"
+          : "h-10 w-full justify-between px-3 hover:border-zinc-700 hover:bg-zinc-900/95"
+      )}
+    >
+      {isCollapsed ? (
+        <div className="relative flex size-6 shrink-0 items-center justify-center">
+          <span className="absolute inset-0 flex items-center justify-center transition-all duration-300 group-hover/brand:scale-75 group-hover/brand:-translate-x-1 group-hover/brand:opacity-0">
+            <Image
+              src="/logo/Agile Logo.png"
+              alt="Agile Digest Logo"
+              width={18}
+              height={18}
+              className="object-contain"
+              priority
+            />
+          </span>
+          <PanelLeft className="absolute size-4 translate-x-1 opacity-0 text-zinc-100 transition-all duration-300 group-hover/brand:translate-x-0 group-hover/brand:opacity-100" />
+        </div>
+      ) : (
+        <>
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="relative flex size-6 shrink-0 items-center justify-center">
+              <Image
+                src="/logo/Agile Logo.png"
+                alt="Agile Digest Logo"
+                width={18}
+                height={18}
+                className="object-contain"
+                priority
+              />
+            </div>
+
+            <span className="truncate text-xl font-bold tracking-tight text-white font-nevera">
+              Agile Digest
+            </span>
+          </div>
+
+          <PanelLeft className="size-4 shrink-0 text-zinc-400 transition-all duration-300 group-hover/brand:-translate-x-0.5 group-hover/brand:text-zinc-100" />
+        </>
+      )}
+    </button>
+  );
+}
+
+function SidebarNavButton({
+  item,
+  pathname,
+  onNavigate,
+}: {
+  item: NavItem;
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+  return (
+    <SidebarMenuItem key={item.title}>
+      <SidebarMenuButton
+        asChild
+        isActive={isActive}
+        tooltip={item.title}
+        className={cn(
+          "text-zinc-400 transition-all duration-200 hover:bg-zinc-800 hover:text-white",
+          "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:hover:bg-transparent",
+          isActive &&
+            "bg-zinc-800 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)] group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none"
+        )}
+      >
+        <Link href={item.href} onClick={onNavigate}>
+          <span
+            className={cn(
+              "flex size-7 shrink-0 items-center justify-center rounded-lg text-current transition-all duration-200",
+              "group-data-[collapsible=icon]:shadow-[inset_0_0_0_1px_rgba(255,255,255,0)]",
+              "group-data-[collapsible=icon]:group-hover/menu-button:scale-105",
+              "group-data-[collapsible=icon]:group-hover/menu-button:text-white",
+              "group-data-[collapsible=icon]:group-hover/menu-button:shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_10px_24px_-18px_rgba(255,255,255,0.95)]",
+              isActive &&
+                "text-white group-data-[collapsible=icon]:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_10px_24px_-18px_rgba(255,255,255,0.95)]"
+            )}
+          >
+            <item.icon className="size-4" />
+          </span>
+          <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
+
+function SidebarActionButton({
+  title,
+  icon: Icon,
+}: {
+  title: string;
+  icon: LucideIcon;
+}) {
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        tooltip={title}
+        className="text-zinc-400 transition-all duration-200 hover:bg-zinc-800 hover:text-white group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:hover:bg-transparent"
+      >
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200 group-data-[collapsible=icon]:group-hover/menu-button:scale-105 group-data-[collapsible=icon]:group-hover/menu-button:text-white group-data-[collapsible=icon]:group-hover/menu-button:shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_10px_24px_-18px_rgba(255,255,255,0.95)]">
+          <Icon className="size-4" />
+        </span>
+        <span className="group-data-[collapsible=icon]:hidden">{title}</span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { state, isMobile, setOpenMobile, toggleSidebar } = useSidebar();
-  const isCollapsed = state === "collapsed";
-  const [isHoveringHeader, setIsHoveringHeader] = useState(false);
+  const { isMobile, setOpen, setOpenMobile } = useSidebar();
+
+  const handleNavItemClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+      return;
+    }
+
+    if (window.innerWidth < 1024) {
+      setOpen(false);
+    }
+  };
 
   return (
-    <Sidebar collapsible="icon" className="bg-zinc-950 border-r border-zinc-800">
-      {/* HEADER */}
-      <SidebarHeader 
-        className="p-4 h-16 flex items-center justify-center transition-all duration-300"
-        onMouseEnter={() => setIsHoveringHeader(true)}
-        onMouseLeave={() => setIsHoveringHeader(false)}
-      >
-        <div className="flex items-center gap-3 w-full">
-          {isCollapsed && !isMobile ? (
-            <TooltipProvider>
-              <Tooltip delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={toggleSidebar}
-                    className="flex h-12 w-12 items-center justify-center rounded-lg hover:bg-zinc-800 transition-all duration-300 group/trigger"
-                  >
-                    <div className="relative h-8 w-8">
-                      <div className={`absolute inset-0 transition-all duration-500 ease-in-out ${
-                        isHoveringHeader ? "opacity-0 scale-50 rotate-90" : "opacity-100 scale-100 rotate-0"
-                      }`}>
-                        <Image
-                          src="/logo/Agile Logo.png"
-                          alt="Agile Logo"
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
-                      <PanelLeft 
-                        className={`absolute inset-0 text-sky-400 transition-all duration-500 ease-in-out ${
-                          isHoveringHeader ? "opacity-100 scale-100 rotate-0" : "opacity-0 scale-50 -rotate-90"
-                        }`} 
-                      />
-                    </div>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="bg-zinc-800 text-white border-zinc-700">
-                  Open sidebar
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            <div className="flex items-center justify-between w-full px-2 group/header">
-               <div className="flex items-center gap-3">
-                 <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md">
-                   <Image
-                     src="/logo/Agile Logo.png"
-                     alt="Agile Digest Logo"
-                     fill
-                     className="object-contain"
-                     priority
-                   />
-                 </div>
-                <span className="text-xl font-bold tracking-tight text-white font-nevera whitespace-nowrap overflow-hidden transition-all duration-300">
-                  Agile Digest
-                </span>
-              </div>
-              {!isMobile && (
-                <TooltipProvider>
-                  <Tooltip delayDuration={0}>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={toggleSidebar}
-                        className="opacity-0 group-hover/header:opacity-100 p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-all duration-300"
-                      >
-                        <PanelLeft className="h-5 w-5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="bg-zinc-800 text-white border-zinc-700">
-                      Close sidebar
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
-          )}
-        </div>
+    <Sidebar collapsible="icon" className="border-r border-zinc-800 bg-zinc-950">
+      <SidebarHeader className="h-16 border-b border-zinc-800 px-4 group-data-[collapsible=icon]:px-1">
+        <SidebarBrandToggle />
       </SidebarHeader>
 
-      {/* CONTENT */}
-      <SidebarContent>
+      <SidebarContent className="py-2">
         <SidebarGroup>
+          <SidebarGroupLabel className="text-zinc-500">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
-            <TooltipProvider>
-              <SidebarMenu>
-                {navItems.map((item) => {
-                  const isActive = pathname.startsWith(item.href);
-                  const Icon = item.icon;
-
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      {isCollapsed && !isMobile ? (
-                        <Tooltip delayDuration={0}>
-                          <TooltipTrigger asChild>
-                            <SidebarMenuButton
-                              asChild
-                              isActive={isActive}
-                              className="group outline-none focus-visible:ring-0 focus:ring-0"
-                            >
-                              <Link
-                                href={item.href}
-                                className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all"
-                              >
-                                <Icon
-                                  size={18}
-                                  className={`${
-                                    isActive
-                                      ? "text-sky-400"
-                                      : "text-zinc-400 group-hover:text-white"
-                                  } shrink-0`}
-                                />
-                              </Link>
-                            </SidebarMenuButton>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="bg-zinc-800 text-white border-zinc-700">
-                            {item.name}
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          className="group outline-none focus-visible:ring-0 focus:ring-0"
-                        >
-                          <Link
-                            href={item.href}
-                            onClick={() => {
-                              if (isMobile) {
-                                setOpenMobile(false);
-                              }
-                            }}
-                            className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all"
-                          >
-                            <Icon
-                              size={18}
-                              className={`${
-                                isActive
-                                  ? "text-sky-400"
-                                  : "text-zinc-400 group-hover:text-white"
-                              } shrink-0`}
-                            />
-                            <span
-                              className={`${
-                                isActive
-                                  ? "text-sky-400 font-medium"
-                                  : "text-zinc-400 group-hover:text-white"
-                              } truncate`}
-                            >
-                              {item.name}
-                            </span>
-                          </Link>
-                        </SidebarMenuButton>
-                      )}
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </TooltipProvider>
+            <SidebarMenu className="gap-2">
+              {navItems.map((item) => (
+                <SidebarNavButton
+                  key={item.title}
+                  item={item}
+                  pathname={pathname}
+                  onNavigate={handleNavItemClick}
+                />
+              ))}
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      {/* FOOTER */}
-      <SidebarFooter className="p-4 border-t border-zinc-800">
-        <button 
-          className="flex items-center gap-3 w-full text-sm text-zinc-400 hover:text-red-400 transition outline-none"
-          onClick={() => {
-            if (isMobile) {
-              setOpenMobile(false);
-            }
-          }}
-        >
-          <LogOut size={16} className="shrink-0" />
-          {(!isCollapsed || isMobile) && <span>Logout</span>}
-        </button>
+      <SidebarFooter className="border-t border-zinc-800 p-4 group-data-[collapsible=icon]:px-1">
+        <SidebarMenu className="gap-1.5">
+          <SidebarActionButton title="Settings" icon={Settings} />
+          <SidebarActionButton title="Log out" icon={LogOut} />
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );

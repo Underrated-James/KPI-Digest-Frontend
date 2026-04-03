@@ -1,21 +1,11 @@
-import type { Metadata } from "next";
+import { Metadata } from "next";
+import { UserPage } from "@/features/users";
 
 export const metadata: Metadata = {
   title: "Users | KPI Digest",
-  description: "Manage your users in KPI Digest",
+  description: "Manage your team and users.",
 };
 
-export default function Page() {
-  return (
-    <div>
-      <h1>Users</h1>
-
-      <h1>User List</h1>
-      <ul>
-        <li>User 1</li>
-        <li>User 2</li>
-        <li>User 3</li>
-      </ul>
-    </div>
-  );
+export default function Users() {
+  return <UserPage />;
 }
