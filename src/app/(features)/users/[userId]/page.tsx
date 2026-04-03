@@ -1,20 +1,25 @@
-import { notFound } from "next/navigation";
+import { Metadata } from "next";
 
-export default async function Page({
-    params,
-}: {
-    params: Promise<{ userId: string }>;
-}) {
-    const { userId } = (await params);
+type Props = {
+    params: { userId: string };
+}
 
-    // Example logic to trigger notFound()
-    // if (userId === '404') {
-    //   notFound();
-    // }
+export const generateMetadata = async ({
+  params,
+}: Props): Promise<Metadata> => {
+  const id = (await params).userId;
 
+  return { 
+    title: `User Detail ${id}`,
+  }
+}
+
+export default async function userDetails({ params }: Props) {
+  const userid =  (await params).userId;
   return (
     <div>
-      <h1>User Detail {userId}</h1>
+      <h1>User Detail {userid}</h1>
     </div>
   );
 }
+ 

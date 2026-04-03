@@ -1,0 +1,111 @@
+"use client";
+
+import { Skeleton } from "@/components/ui/skeleton";
+
+function SkeletonRow() {
+  return (
+    <tr className="border-b border-zinc-800">
+      <td className="w-12 p-4">
+        <Skeleton className="h-4 w-4 rounded-sm bg-zinc-800" />
+      </td>
+      <td className="p-4">
+        <Skeleton className="h-4 w-28 bg-zinc-800 sm:w-36" />
+      </td>
+      <td className="hidden p-4 sm:table-cell">
+        <Skeleton className="h-4 w-40 bg-zinc-800 sm:w-52" />
+      </td>
+      <td className="hidden p-4 md:table-cell">
+        <Skeleton className="h-4 w-16 bg-zinc-800" />
+      </td>
+      <td className="p-4">
+        <Skeleton className="h-6 w-20 rounded-full bg-zinc-800" />
+      </td>
+      <td className="p-4">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-5 w-5 rounded bg-zinc-800" />
+          <Skeleton className="h-5 w-5 rounded bg-zinc-800" />
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+interface UsersTableSkeletonProps {
+  rows?: number;
+}
+
+export function UsersTableSkeleton({
+  rows = 8,
+}: UsersTableSkeletonProps) {
+  return (
+    <div
+      aria-busy="true"
+      aria-label="Loading users"
+      className="space-y-6"
+    >
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 sm:p-5">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="grid gap-4 md:grid-cols-[minmax(0,1.6fr)_minmax(220px,0.8fr)] xl:flex-1">
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-24 bg-zinc-800" />
+              <Skeleton className="h-11 w-full rounded-lg bg-zinc-800" />
+            </div>
+
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-24 bg-zinc-800" />
+              <Skeleton className="h-11 w-full rounded-lg bg-zinc-800" />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap xl:self-end">
+            <Skeleton className="h-11 w-full rounded-lg bg-zinc-800 sm:w-[140px]" />
+            <Skeleton className="h-11 w-full rounded-lg bg-zinc-800 sm:w-[180px]" />
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-2xl border border-zinc-800 bg-zinc-950">
+        <table className="w-full min-w-[600px]">
+          <thead>
+            <tr className="border-b border-zinc-800">
+              <th className="w-12 p-4">
+                <Skeleton className="h-4 w-4 rounded-sm bg-zinc-800" />
+              </th>
+              <th className="p-4 text-left">
+                <Skeleton className="h-4 w-12 bg-zinc-800" />
+              </th>
+              <th className="hidden p-4 text-left sm:table-cell">
+                <Skeleton className="h-4 w-12 bg-zinc-800" />
+              </th>
+              <th className="hidden p-4 text-left md:table-cell">
+                <Skeleton className="h-4 w-10 bg-zinc-800" />
+              </th>
+              <th className="p-4 text-left">
+                <Skeleton className="h-4 w-14 bg-zinc-800" />
+              </th>
+              <th className="p-4 text-left">
+                <Skeleton className="h-4 w-16 bg-zinc-800" />
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {Array.from({ length: rows }).map((_, index) => (
+              <SkeletonRow key={index} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Skeleton className="h-4 w-24 bg-zinc-800" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 w-20 rounded-md bg-zinc-800" />
+          <Skeleton className="h-9 w-9 rounded-md bg-zinc-800" />
+          <Skeleton className="h-9 w-9 rounded-md bg-zinc-800" />
+          <Skeleton className="h-9 w-16 rounded-md bg-zinc-800" />
+        </div>
+      </div>
+    </div>
+  );
+}
