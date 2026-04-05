@@ -50,8 +50,8 @@ export function useUserPage() {
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
-
   const normalizedSearchTerm = deferredSearchTerm.trim().toLowerCase();
+
   const filteredUsers =
     normalizedSearchTerm.length === 0
       ? data?.users ?? []
