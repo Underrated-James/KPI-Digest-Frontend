@@ -64,8 +64,8 @@ export function UsersTableSkeleton({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-zinc-800 bg-zinc-950">
-        <table className="w-full min-w-[600px]">
+      <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
+        <table className="w-full md:min-w-[600px]">
           <thead>
             <tr className="border-b border-zinc-800">
               <th className="w-12 p-4">

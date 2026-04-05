@@ -1,8 +1,8 @@
-export default async function Page({
+export const generateMetadata = async ({
     params,
 }: {
     params: Promise<{ userId: string }>;
-}) {
+}) => {
     const { userId } = (await params);
   return (
     <div>

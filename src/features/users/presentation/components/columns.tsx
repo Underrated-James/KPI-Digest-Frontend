@@ -1,30 +1,45 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { User } from "../../domain/types/user-types";
+import { ChevronDown, Pencil, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { User } from "../../domain/types/user-types";
 
 interface ColumnsProps {
   onEdit: (user: User) => void;
   onDelete: (id: string) => void;
 }
 
-export const getColumns = ({ onEdit, onDelete }: ColumnsProps): ColumnDef<User>[] => [
+export const getColumns = ({
+  onEdit,
+  onDelete,
+}: ColumnsProps): ColumnDef<User>[] => [
   {
     accessorKey: "name",
     header: "Name",
+    meta: {
+      mobileLabel: "Name",
+      mobileVisible: true,
+    },
     cell: ({ row }) => (
-      <div className="flex items-center gap-2 whitespace-normal break-words">
-        <span className="font-medium">{row.original.name}</span>
+      <div className="flex min-w-0 items-center">
+        <div className="min-w-0 flex-1">
+          <span className="block truncate font-medium text-zinc-100">
+            {row.original.name}
+          </span>
+        </div>
       </div>
     ),
   },
   {
     accessorKey: "email",
     header: "Email",
+    meta: {
+      mobileLabel: "Email",
+    },
     cell: ({ row }) => (
-      <span className="whitespace-normal break-all text-zinc-200">
+      <span className="whitespace-normal break-all text-zinc-200 md:break-words">
         {row.original.email}
       </span>
     ),
@@ -32,59 +47,129 @@ export const getColumns = ({ onEdit, onDelete }: ColumnsProps): ColumnDef<User>[
   {
     accessorKey: "role",
     header: "Role",
-    cell: ({ row }) => (
-      <span className="capitalize">{row.original.role}</span>
-    ),
+    meta: {
+      mobileLabel: "Role",
+    },
+    cell: ({ row }) => <span className="capitalize">{row.original.role}</span>,
   },
   {
     accessorKey: "status",
     header: "Status",
+    meta: {
+      mobileLabel: "Status",
+      mobileVisible: true,
+    },
     cell: ({ row }) => {
       const isActive = row.original.status;
 
       return (
-        <span
-          className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${
-            isActive
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-              : "border-red-500/30 bg-red-500/10 text-red-300"
-          }`}
-        >
+        <>
           <span
-            className={`h-2.5 w-2.5 rounded-full ${
-              isActive ? "bg-emerald-400" : "bg-red-400"
+            className={`hidden md:inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${
+              isActive
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                : "border-red-500/30 bg-red-500/10 text-red-300"
             }`}
-            aria-hidden="true"
-          />
-          {isActive ? "Active" : "Inactive"}
-        </span>
+          >
+            <span
+              className={`h-2.5 w-2.5 rounded-full ${
+                isActive ? "bg-emerald-400" : "bg-red-400"
+              }`}
+              aria-hidden="true"
+            />
+            {isActive ? "Active" : "Inactive"}
+          </span>
+
+          <div className="flex items-center justify-end gap-2 text-sm md:hidden">
+            {row.getCanExpand() ? (
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 text-zinc-500 transition-transform duration-200",
+                    row.getIsExpanded() && "rotate-180 text-zinc-100"
+                  )}
+                  aria-hidden="true"
+                />
+              </span>
+            ) : null}
+
+            <span
+              className={cn(
+                "inline-flex min-w-[84px] items-center gap-2 whitespace-nowrap text-left font-medium",
+                isActive ? "text-emerald-300" : "text-red-300"
+              )}
+            >
+              <span
+                className={cn(
+                  "h-2.5 w-2.5 rounded-full",
+                  isActive ? "bg-emerald-400" : "bg-red-400"
+                )}
+                aria-hidden="true"
+              />
+              {isActive ? "Active" : "Inactive"}
+            </span>
+          </div>
+        </>
       );
     },
   },
-  
   {
     id: "actions",
     header: "Actions",
+    meta: {
+      mobileLabel: "Actions",
+      mobileSection: "actions",
+    },
     cell: ({ row }) => {
       const user = row.original;
 
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col items-stretch gap-2 md:flex-row md:flex-wrap md:items-center">
           <Button
             variant="ghost"
             size="icon"
-            className="shrink-0"
-            onClick={() => onEdit(user)}
+            className="hidden shrink-0 md:inline-flex"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit(user);
+            }}
           >
             <Pencil className="h-4 w-4" />
           </Button>
           <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-center md:hidden"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit(user);
+            }}
+          >
+            <Pencil className="h-4 w-4" />
+            Edit
+          </Button>
+          <Button
             variant="ghost"
             size="icon"
-            className="shrink-0 text-destructive hover:text-destructive"
-            onClick={() => onDelete(user.id)}
+            className="hidden shrink-0 text-destructive hover:text-destructive md:inline-flex"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete(user.id);
+            }}
           >
             <Trash className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="w-full justify-center md:hidden"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete(user.id);
+            }}
+          >
+            <Trash className="h-4 w-4" />
+            Delete
           </Button>
         </div>
       );

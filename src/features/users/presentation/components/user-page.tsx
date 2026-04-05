@@ -87,6 +87,7 @@ export function UserPage() {
               <UserTable
                 data={filteredUsers}
                 total={totalUsers}
+                isMobile={isMobile}
                 onEdit={handleEditClick}
                 onDelete={handleDeleteById}
                 selectedUserIds={selectedUserIds}
