@@ -21,6 +21,7 @@ export default function FeaturesLayout({ children }: { children: React.ReactNode
                     width={18}
                     height={18}
                     className="object-contain"
+                    style={{ width: "auto", height: "auto" }}
                     priority
                   />
                 </div>
