@@ -89,6 +89,7 @@ function SidebarBrandToggle() {
               width={18}
               height={18}
               className="object-contain"
+              style={{ width: "auto", height: "auto" }}
               priority
             />
           </span>
@@ -104,6 +105,7 @@ function SidebarBrandToggle() {
                 width={18}
                 height={18}
                 className="object-contain"
+                style={{ width: "auto", height: "auto" }}
                 priority
               />
             </div>

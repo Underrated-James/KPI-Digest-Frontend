@@ -1,0 +1,588 @@
+# Frontend Architecture Analysis — KPI Digest
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | **Next.js 16** (App Router) |
+| Language | **TypeScript** |
+| Styling | **Tailwind CSS v4** + shadcn/ui (Radix) |
+| Server State | **TanStack React Query v5** |
+| Client State | **Redux Toolkit** (UI-only state) |
+| Forms | **React Hook Form** + **Zod** validation |
+| HTTP Client | **Axios** (with interceptors) |
+| Animations | **Framer Motion** |
+| Icons | **Lucide React** |
+
+---
+
+## Directory Structure
+
+```
+src/
+├── app/                          # Next.js App Router (routes + layouts)
+│   ├── layout.tsx                # Root layout (providers, fonts, metadata)
+│   ├── globals.css               # Global styles / Tailwind
+│   ├── not-found.tsx             # Global 404
+│   ├── (Auth)/                   # Route group – auth pages (no sidebar)
+│   │   ├── login/page.tsx
+│   │   ├── register/page.tsx
+│   │   └── forget-password/page.tsx
+│   └── (features)/              # Route group – main app (with sidebar)
+│       ├── layout.tsx            # Sidebar + mobile header shell
+│       ├── page.tsx              # Home / dashboard
+│       ├── users/
+│       │   ├── page.tsx          # → renders <UserPage />
+│       │   ├── loading.tsx       # Suspense loading boundary
+│       │   ├── not-found.tsx     # User-specific 404
+│       │   ├── error.tsx         # Error boundary (placeholder)
+│       │   ├── [userId]/         # Dynamic user detail route
+│       │   ├── create-user/      # Create user route
+│       │   └── _utils/           # Route-private utilities
+│       ├── projects/
+│       ├── sprints/
+│       ├── teams/
+│       └── tickets/
+│
+├── features/                     # Feature modules (Clean Architecture)
+│   └── users/
+│       ├── index.ts              # Public barrel export
+│       ├── domain/               # 🟢 Domain layer
+│       │   ├── types/            #    TypeScript interfaces & DTOs
+│       │   ├── entities/         #    Domain entity definition
+│       │   ├── schema/           #    Zod validation schemas
+│       │   └── repositories/     #    Repository interface (contract)
+│       ├── application/          # 🔵 Application layer
+│       │   └── use-cases/        #    Use case classes (one per action)
+│       ├── infrastructure/       # 🟠 Infrastructure layer
+│       │   ├── api/              #    Axios instance + raw API calls
+│       │   ├── impl/             #    Repository implementation
+│       │   └── user-service.ts   #    Service factory (DI wiring)
+│       └── presentation/         # 🟣 Presentation layer
+│           ├── components/       #    React UI components
+│           ├── hooks/            #    Custom hooks (data + UI logic)
+│           ├── queries/          #    React Query keys, cache, options
+│           └── store/            #    Redux slice (UI state only)
+│
+├── components/                   # Shared components
+│   ├── ui/                       # shadcn/ui primitives
+│   ├── app-sidebar.tsx           # App navigation sidebar
+│   └── GenericNotFound.tsx       # Reusable 404 component
+│
+├── hooks/                        # Shared hooks
+│   └── use-mobile.ts             # Mobile breakpoint detection
+│
+└── lib/                          # Shared utilities & providers
+    ├── api-error.ts              # ApiError class + normalizers
+    ├── react-query-provider.tsx  # QueryClient + global error toasts
+    ├── redux-provider.tsx        # Redux Provider wrapper
+    ├── redux-hooks.ts            # Typed useAppDispatch/useAppSelector
+    ├── store.ts                  # Redux store configuration
+    ├── toast-provider.tsx        # Stacked toast notification system
+    └── utils.ts                  # cn() utility (clsx + tailwind-merge)
+```
+
+---
+
+## Provider Hierarchy (Root Layout)
+
+```
+<html>
+  <body>
+    └── ReduxProvider            ← Redux store for UI state
+        └── ReactQueryProvider   ← TanStack Query for server state
+            └── TooltipProvider  ← Radix tooltip context
+                ├── {children}   ← Page content
+                └── ToastProvider← Stacked toast notifications (framer-motion)
+  </body>
+</html>
+```
+
+---
+
+## Clean Architecture Layers (per Feature)
+
+```mermaid
+graph TB
+    subgraph "🟣 Presentation"
+        A[Components] --> B[Custom Hooks]
+        B --> C[Redux Slice]
+        B --> D[React Query]
+    end
+
+    subgraph "🔵 Application"
+        E[Use Cases]
+    end
+
+    subgraph "🟠 Infrastructure"
+        F[Repository Impl] --> G[API Layer / Axios]
+        H[Service Factory]
+    end
+
+    subgraph "🟢 Domain"
+        I[Types / DTOs]
+        J[Repository Interface]
+        K[Zod Schemas]
+        L[Entities]
+    end
+
+    D --> H
+    H --> E
+    E --> J
+    F -.implements.-> J
+    H --> F
+    G --> M[Backend API]
+
+    style A fill:#7c3aed,color:#fff
+    style E fill:#3b82f6,color:#fff
+    style F fill:#f59e0b,color:#fff
+    style I fill:#22c55e,color:#fff
+```
+
+---
+
+## Main Data Flow — READ (Fetching Users)
+
+```
+              ┌─────────────────────────────────────────────────────────────────────┐
+              │                         USER NAVIGATES TO /users                     │
+              └───────────────────────────────┬─────────────────────────────────────┘
+                                              │
+                                              ▼
+                                    ┌─────────────────────┐
+                                    │   Next.js App Router │
+                                    │   (features)/users/  │
+                                    │     page.tsx         │
+                                    └──────────┬──────────┘
+                                               │ renders
+                                               ▼
+                                    ┌──────────────────────┐
+                                    │     <UserPage />      │
+                                    │ presentation/         │
+                                    │   components/         │
+                                    └──────────┬───────────┘
+                                               │ calls
+                                               ▼
+                                    ┌──────────────────────┐
+                                    │   useUserPage() Hook  │
+                                    │ (orchestrator hook -  │
+                                    │  combines all hooks)  │
+                                    └──────────┬───────────┘
+                                               │ calls
+                                    ┌──────────▼───────────┐
+                                    │    useUsers() Hook    │
+                                    │ (TanStack useQuery)   │
+                                    │ • queryKey: userKeys  │
+                                    │ • staleTime: 5 min    │
+                                    │ • select: transforms  │
+                                    │   PaginatedData →     │
+                                    │   UsersListData       │
+                                    └──────────┬───────────┘
+                                               │ queryFn
+                                               ▼
+                                    ┌──────────────────────┐
+                                    │    userService        │
+                                    │  .getUsers.execute()  │
+                                    │  (Use Case class)     │
+                                    └──────────┬───────────┘
+                                               │ delegates to
+                                               ▼
+                                    ┌──────────────────────┐
+                                    │ UserRepositoryImpl    │
+                                    │  .getUsers(params)    │
+                                    │ (implements interface)│
+                                    └──────────┬───────────┘
+                                               │ calls
+                                               ▼
+                                    ┌──────────────────────┐
+                                    │     userApi           │
+                                    │  .getUsers(params)    │
+                                    │ (Axios GET /api/users)│
+                                    └──────────┬───────────┘
+                                               │
+                                    ┌──────────▼───────────┐
+                                    │   Axios Instance      │
+                                    │ • baseURL: /api       │
+                                    │ • request interceptor │
+                                    │   (auth token)        │
+                                    │ • response interceptor│
+                                    │   (normalizeApiError) │
+                                    └──────────┬───────────┘
+                                               │
+                                    ┌──────────▼───────────┐
+                                    │  Next.js Rewrite      │
+                                    │  /api/:path* →        │
+                                    │  localhost:3001/:path* │
+                                    └──────────┬───────────┘
+                                               │
+                                               ▼
+                                    ┌──────────────────────┐
+                                    │   NestJS Backend      │
+                                    │   (localhost:3001)     │
+                                    └──────────┬───────────┘
+                                               │
+                                               ▼
+                                    ┌──────────────────────┐
+                                    │ BackendResponse<T>    │
+                                    │ { status, message,    │
+                                    │   data: PaginatedData │
+                                    │     <User> }          │
+                                    └──────────┬───────────┘
+                                               │
+                                    ┌──────────▼───────────┐
+                                    │  userApi unwraps      │
+                                    │  data.data            │
+                                    │ (strips envelope)     │
+                                    └──────────┬───────────┘
+                                               │
+                                    ┌──────────▼───────────┐
+                                    │  useQuery select()    │
+                                    │  Maps PaginatedData → │
+                                    │  UsersListData        │
+                                    │  (content → users)    │
+                                    └──────────┬───────────┘
+                                               │
+                                    ┌──────────▼───────────┐
+                                    │  React Query Cache    │
+                                    │  queryKey: ["users",  │
+                                    │   "list", {page,size}]│
+                                    └──────────┬───────────┘
+                                               │
+                                    ┌──────────▼───────────┐
+                                    │  useUserPage()        │
+                                    │  • client-side filter │
+                                    │    (search term)      │
+                                    │  • URL param sync     │
+                                    │    (page, size, role)  │
+                                    └──────────┬───────────┘
+                                               │
+                                    ┌──────────▼───────────┐
+                                    │ <UserTable /> renders  │
+                                    │ TanStack React Table   │
+                                    │ + <Pagination />       │
+                                    └──────────┬───────────┘
+                                               │
+                                               ▼
+              ┌─────────────────────────────────────────────────────────────────────┐
+              │                          UI RENDERS DATA                             │
+              └─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Main Data Flow — WRITE (Create User with Optimistic Updates)
+
+```
+              ┌─────────────────────────────────────────────────────────────────────┐
+              │                     USER CLICKS "Add User" BUTTON                    │
+              └───────────────────────────────┬─────────────────────────────────────┘
+                                              │
+                                              ▼
+                                    ┌─────────────────────┐
+                                    │  Redux Dispatch      │
+                                    │  openCreateUserForm()│
+                                    │  → isFormOpen: true   │
+                                    └──────────┬──────────┘
+                                               │
+                                    ┌──────────▼──────────┐
+                                    │  <UserForm />        │
+                                    │  React Hook Form     │
+                                    │  + Zod validation    │
+                                    └──────────┬──────────┘
+                                               │ user submits form
+                                               ▼
+                                    ┌─────────────────────┐
+                                    │  Zod Schema          │
+                                    │  Validates:          │
+                                    │  • name (min 1)      │
+                                    │  • email (valid)     │
+                                    │  • role (enum)       │
+                                    └──────────┬──────────┘
+                                               │ if valid
+                                               ▼
+                                    ┌─────────────────────┐
+                                    │ useUserPage()        │
+                                    │  handleCreate()      │
+                                    │  calls createUser    │
+                                    │  .mutate(userData)   │
+                                    └──────────┬──────────┘
+                                               │
+                                    ┌──────────▼──────────┐
+                                    │ useCreateUser() Hook │
+                                    │ TanStack useMutation │
+                                    └──────────┬──────────┘
+                                               │
+                              ┌────────────────┼────────────────┐
+                              │                │                │
+                              ▼                │                │
+                   ┌──────────────────┐        │                │
+                   │    onMutate()     │        │                │
+                   │ OPTIMISTIC UPDATE │        │                │
+                   │ 1. Check error   │        │                │
+                   │    cache (30s)   │        │                │
+                   │ 2. Cancel queries│        │                │
+                   │ 3. Snapshot lists│        │                │
+                   │ 4. Create temp   │        │                │
+                   │    user with     │        │                │
+                   │    temp-{uuid} id│        │                │
+                   │ 5. Prepend to    │        │                │
+                   │    first page    │        │                │
+                   └──────────────────┘        │                │
+                              │                │                │
+                              ▼                │                │
+                   ┌──────────────────┐        │                │
+                   │ UI UPDATES       │        │                │
+                   │ INSTANTLY        │        │                │
+                   │ (user sees new   │        │                │
+                   │  row in table)   │        │                │
+                   └──────────────────┘        │                │
+                                               │                │
+                                    ┌──────────▼──────────┐     │
+                                    │    mutationFn()      │     │
+                                    │ 1. Check error cache │     │
+                                    │ 2. userService       │     │
+                                    │    .createUser       │     │
+                                    │    .execute(data)    │     │
+                                    │ 3. Cache API errors  │     │
+                                    │    (400,409,422)     │     │
+                                    └──────────┬──────────┘     │
+                                               │                │
+                                    ┌──────────▼──────────┐     │
+                                    │  Use Case → Repo →   │     │
+                                    │  API → Axios →       │     │
+                                    │  POST /api/users     │     │
+                                    └──────────┬──────────┘     │
+                                               │                │
+                              ┌────────────────┼────────────────┘
+                              │                │
+                     (on error)         (on success)
+                              │                │
+                              ▼                ▼
+                   ┌──────────────────┐ ┌──────────────────┐
+                   │   onError()       │ │   onSuccess()     │
+                   │ Restore snapshots │ │ 1. Set detail     │
+                   │ (rollback)        │ │    cache          │
+                   │                   │ │ 2. Replace temp   │
+                   │                   │ │    user with real  │
+                   └──────────────────┘ │    server user     │
+                                        └──────────────────┘
+                                               │
+                                    ┌──────────▼──────────┐
+                                    │    onSettled()       │
+                                    │ Invalidate all list  │
+                                    │ queries (refetch     │
+                                    │ from server)         │
+                                    └──────────┬──────────┘
+                                               │
+                                    ┌──────────▼──────────┐
+                                    │ Toast Notification   │
+                                    │ "User created        │
+                                    │  successfully"       │
+                                    └──────────┬──────────┘
+                                               │
+                                    ┌──────────▼──────────┐
+                                    │  Redux Dispatch      │
+                                    │  closeUserForm()     │
+                                    └──────────┬──────────┘
+                                               │
+                                               ▼
+              ┌─────────────────────────────────────────────────────────────────────┐
+              │                       UI SHOWS UPDATED TABLE                         │
+              └─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## State Management Strategy
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                        STATE MANAGEMENT                               │
+├──────────────────────────┬───────────────────────────────────────────┤
+│                          │                                           │
+│   Redux Toolkit          │   TanStack React Query                    │
+│   (Client/UI State)      │   (Server/Async State)                    │
+│                          │                                           │
+│   • isFormOpen           │   • Users list data (paginated)           │
+│   • editingUser          │   • User detail data                      │
+│   • deleteTarget         │   • Loading / error states                │
+│   • selectedUserIds      │   • Cache management (stale/gc time)      │
+│   • modal visibility     │   • Optimistic updates                    │
+│                          │   • Background refetching                  │
+│                          │   • Query key factory                      │
+│                          │   • Retry logic (skip 404)                │
+│   Dispatched via:        │                                           │
+│   useAppDispatch()       │   Accessed via:                           │
+│                          │   useQuery / useMutation                   │
+│   Read via:              │                                           │
+│   useAppSelector()       │   Global error handling via                │
+│                          │   QueryCache + MutationCache               │
+│                          │   → toast.error()                          │
+└──────────────────────────┴───────────────────────────────────────────┘
+```
+
+---
+
+## Error Handling Flow
+
+```
+              ┌─────────────────────────────────────────────────────────────────────┐
+              │                         API ERROR OCCURS                             │
+              └───────────────────────────────┬─────────────────────────────────────┘
+                                              │
+                                              ▼
+                                    ┌─────────────────────┐
+                                    │ Axios Response       │
+                                    │ Interceptor          │
+                                    │ (error handler)      │
+                                    └──────────┬──────────┘
+                                               │
+                                    ┌──────────▼──────────┐
+                                    │ normalizeApiError()  │
+                                    │ • Extracts status    │
+                                    │ • Extracts message   │
+                                    │   (string or array)  │
+                                    │ • Strips MongoDB IDs │
+                                    │   from "not found"   │
+                                    │   messages           │
+                                    │ • Returns ApiError   │
+                                    └──────────┬──────────┘
+                                               │
+                              ┌────────────────┼────────────────┐
+                              │                                 │
+                       (Query error)                     (Mutation error)
+                              │                                 │
+                              ▼                                 ▼
+                   ┌──────────────────┐              ┌──────────────────┐
+                   │ QueryCache       │              │ MutationCache     │
+                   │ .onError()       │              │ .onError()        │
+                   │ • checks meta    │              │ • checks meta     │
+                   │   .showErrorToast│              │   .showErrorToast │
+                   └──────────┬───────┘              └──────────┬───────┘
+                              │                                 │
+                              └────────────────┬────────────────┘
+                                               │
+                                    ┌──────────▼──────────┐
+                                    │ toast.error()        │
+                                    │ → ToastProvider      │
+                                    │ (Stacked framer-     │
+                                    │  motion toasts)      │
+                                    └──────────┬──────────┘
+                                               │
+                                               ▼
+              ┌─────────────────────────────────────────────────────────────────────┐
+              │                     USER SEES ERROR NOTIFICATION                     │
+              └─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Query Key Factory Pattern
+
+```typescript
+userKeys = {
+  all:      ["users"]                           // invalidate everything
+  lists:    ["users", "list"]                   // all list queries
+  list:     ["users", "list", {page, size, role}] // specific filtered list
+  details:  ["users", "detail"]                 // all detail queries
+  detail:   ["users", "detail", userId]         // specific user detail
+}
+```
+
+This enables **granular cache invalidation**:
+- After **create**: invalidate `lists()` (refetch all list pages)
+- After **update**: invalidate `detail(id)` + `lists()`
+- After **delete**: invalidate `lists()` + remove `detail(id)`
+
+---
+
+## Routing Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        NEXT.JS APP ROUTER                            │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   RootLayout (layout.tsx)                                            │
+│   ├── Providers: Redux → ReactQuery → Tooltip → Toast                │
+│   │                                                                  │
+│   ├── (Auth)/ ─────────────── Route Group (NO sidebar)               │
+│   │   ├── login/page.tsx                                             │
+│   │   ├── register/page.tsx                                          │
+│   │   └── forget-password/page.tsx                                   │
+│   │                                                                  │
+│   └── (features)/ ─────────── Route Group (WITH sidebar)             │
+│       ├── layout.tsx ─── SidebarProvider + AppSidebar + Mobile hdr   │
+│       ├── page.tsx ───── Home / Dashboard                            │
+│       ├── users/                                                     │
+│       │   ├── page.tsx ──── <UserPage /> (main list view)            │
+│       │   ├── loading.tsx ─ Suspense fallback                        │
+│       │   ├── not-found.tsx─ User 404                                │
+│       │   ├── error.tsx ─── Error boundary (placeholder)             │
+│       │   ├── [userId]/ ─── Dynamic detail route                     │
+│       │   └── create-user/─ Create form route                        │
+│       ├── projects/                                                  │
+│       ├── sprints/                                                   │
+│       ├── teams/                                                     │
+│       └── tickets/                                                   │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Dependency Injection Wiring
+
+```
+user-service.ts (composition root)
+│
+├── Creates: new UserRepositoryImpl()
+│   └── Implements: UserRepository interface (domain)
+│   └── Delegates to: userApi (axios calls)
+│
+└── Wires use cases with repository:
+    ├── new GetUsersUseCase(repo)
+    ├── new GetUserByIdUseCase(repo)
+    ├── new CreateUserUseCase(repo)
+    ├── new UpdateUserUseCase(repo)
+    └── new DeleteUserUseCase(repo)
+
+Consumed by presentation hooks:
+    useUsers()       → userService.getUsers.execute(params)
+    useUser()        → userService.getUserById.execute(id)
+    useCreateUser()  → userService.createUser.execute(data)
+    useUpdateUser()  → userService.updateUser.execute(id, data)
+    useDeleteUser()  → userService.deleteUser.execute(id)
+```
+
+---
+
+## API Proxy Configuration
+
+```
+next.config.ts rewrites:
+    /api/:path*  →  http://localhost:3001/:path*
+
+Frontend call:  GET /api/users?page=1&size=10
+Proxied to:     GET http://localhost:3001/users?page=1&size=10
+
+Backend wraps response in: { status, message, data }
+Frontend userApi unwraps:   response.data.data
+```
+
+---
+
+## Key Architectural Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| **Feature-based folder structure** | Each feature encapsulates all 4 clean architecture layers, making features self-contained and independently maintainable |
+| **Repository pattern on frontend** | Abstracts HTTP layer from business logic; allows swapping API implementation (e.g., for tests) |
+| **Use Cases as classes** | Mirrors backend pattern; provides a clear, testable unit of business logic per operation |
+| **Redux for UI-only state** | Modals, forms, selections don't belong in server cache — Redux handles ephemeral UI state |
+| **React Query for server state** | Automatic caching, background refetching, optimistic updates, retry logic |
+| **Optimistic updates with snapshots** | Instant UI feedback; full rollback on error using snapshot/restore pattern |
+| **Error cache (create mutation)** | Prevents re-sending requests that already failed with 400/409/422 within a 30s window |
+| **Query key factory** | Structured, hierarchical keys enable precise cache invalidation |
+| **Barrel exports (index.ts)** | Clean public API per feature — consumers import from `@/features/users` instead of deep paths |
+| **Next.js rewrites as API proxy** | Avoids CORS issues in development; single origin for frontend + backend |
