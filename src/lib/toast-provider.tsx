@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -79,25 +79,39 @@ export function ToastProvider() {
   const { toasts, handlers } = useToaster();
   const { startPause, endPause } = handlers;
   const [isHovered, setIsHovered] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
 
   /* Track created-at timestamps so the progress bar starts correctly */
   const timestampsRef = useRef<Map<string, number>>(new Map());
 
   /* Only take non-dismissed toasts */
-  const activeToasts = toasts.filter((t) => t.visible || t.createdAt + 200 > Date.now());
+  const activeToasts = useMemo(
+    () => toasts.filter((t) => t.visible || t.createdAt + 200 > now),
+    [toasts, now],
+  );
 
-  /* Record timestamps */
-  for (const t of activeToasts) {
-    if (!timestampsRef.current.has(t.id)) {
-      timestampsRef.current.set(t.id, Date.now());
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setNow(Date.now());
+    }, 100);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    const timestamp = Date.now();
+
+    for (const t of activeToasts) {
+      if (!timestampsRef.current.has(t.id)) {
+        timestampsRef.current.set(t.id, timestamp);
+      }
     }
-  }
 
-  /* Cleanup old entries */
-  const activeIds = new Set(activeToasts.map((t) => t.id));
-  for (const id of timestampsRef.current.keys()) {
-    if (!activeIds.has(id)) timestampsRef.current.delete(id);
-  }
+    const activeIds = new Set(activeToasts.map((t) => t.id));
+    for (const id of timestampsRef.current.keys()) {
+      if (!activeIds.has(id)) timestampsRef.current.delete(id);
+    }
+  }, [activeToasts]);
 
   const visibleToasts = activeToasts.slice(-MAX_VISIBLE);
   const hiddenCount = Math.max(0, activeToasts.length - MAX_VISIBLE);

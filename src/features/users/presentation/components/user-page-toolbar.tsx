@@ -34,19 +34,19 @@ export function UserPageToolbar({
   onBulkDelete,
 }: UserPageToolbarProps) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 sm:p-5">
+    <div className="rounded-2xl border border-border bg-card/80 p-4 shadow-sm backdrop-blur sm:p-5">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="grid gap-4 md:grid-cols-[minmax(0,1.6fr)_minmax(220px,0.8fr)] xl:flex-1">
             <div className="space-y-3">
               <label
                 htmlFor="user-search"
-                className="mb-2 block text-sm font-medium text-zinc-200"
+                className="mb-2 block text-sm font-medium text-foreground"
               >
                 Search Users
               </label>
               <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="user-search"
                   value={searchTerm}
@@ -56,7 +56,7 @@ export function UserPageToolbar({
                       ? "Search users by name..."
                       : "Search by name, email or role..."
                   }
-                  className="h-11 border-zinc-800 bg-zinc-900 pl-9 text-zinc-100 placeholder:text-zinc-500"
+                  className="h-11 border-border bg-background pl-9 text-foreground placeholder:text-muted-foreground"
                 />
               </div>
             </div>
@@ -64,7 +64,7 @@ export function UserPageToolbar({
             <div className="space-y-3">
               <label
                 htmlFor="user-role-filter"
-                className="mb-2 block text-sm font-medium text-zinc-200"
+                className="mb-2 block text-sm font-medium text-foreground"
               >
                 Filter By Role
               </label>
@@ -75,7 +75,7 @@ export function UserPageToolbar({
                   onChange={(event) =>
                     onRoleChange(event.target.value as UserRole | "ALL")
                   }
-                  className="flex h-11 w-full appearance-none rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 pr-10 text-sm text-zinc-100 outline-none transition focus:ring-2 focus:ring-sky-500/50"
+                  className="flex h-11 w-full appearance-none rounded-lg border border-border bg-background px-3 py-2 pr-10 text-sm text-foreground outline-none transition focus:ring-2 focus:ring-ring/50"
                 >
                   {roleOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -83,7 +83,7 @@ export function UserPageToolbar({
                     </option>
                   ))}
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400">
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground">
                   <svg
                     className="h-4 w-4 fill-current"
                     xmlns="http://www.w3.org/2000/svg"
@@ -105,7 +105,7 @@ export function UserPageToolbar({
             </Button>
             <Button
               variant="outline"
-              className="h-11 w-full cursor-pointer border-destructive/20 text-destructive transition-all duration-200 hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50 md:w-auto md:min-w-[180px]"
+              className="h-11 w-full cursor-pointer border-destructive/20 text-destructive transition-all duration-200 hover:border-destructive hover:bg-destructive hover:text-white disabled:cursor-not-allowed disabled:opacity-50 md:w-auto md:min-w-[180px]"
               onClick={onBulkDelete}
               disabled={selectedUserCount === 0}
             >

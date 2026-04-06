@@ -1,13 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { type ColumnDef, type Row, type Table as TanStackTable } from "@tanstack/react-table";
+import {
+  type ColumnDef,
+  type Row,
+  type Table as TanStackTable,
+} from "@tanstack/react-table";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ExpandableDataTable } from "@/components/data-table/expandable-data-table";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationNext,
   PaginationPrevious,
@@ -36,13 +41,14 @@ export function UserTable({
   onSelectionChange,
   hidePagination = false,
 }: UserTableProps) {
+  const pageSizeOptions = [5, 10, 20, 50];
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
   const page = Number(searchParams.get("page")) || 1;
   const size = Number(searchParams.get("size")) || 10;
-  const totalPages = Math.ceil(total / size);
+  const totalPages = Math.max(1, Math.ceil(total / size));
 
   const columns = React.useMemo<ColumnDef<User>[]>(
     () => [
@@ -51,7 +57,7 @@ export function UserTable({
         header: ({ table }: { table: TanStackTable<User> }) => (
           <input
             type="checkbox"
-            className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 accent-sky-500"
+            className="h-4 w-4 rounded border-border bg-background accent-primary"
             checked={table.getIsAllPageRowsSelected()}
             onChange={(event) =>
               table.toggleAllPageRowsSelected(event.target.checked)
@@ -63,7 +69,7 @@ export function UserTable({
         cell: ({ row }: { row: Row<User> }) => (
           <input
             type="checkbox"
-            className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 accent-sky-500"
+            className="h-4 w-4 rounded border-border bg-background accent-primary"
             checked={row.getIsSelected()}
             onChange={(event) => row.toggleSelected(event.target.checked)}
             onClick={(event) => event.stopPropagation()}
@@ -78,7 +84,7 @@ export function UserTable({
       },
       ...getColumns({ onEdit, onDelete }),
     ],
-    [onDelete, onEdit]
+    [onDelete, onEdit],
   );
 
   const handlePageChange = (newPage: number) => {
@@ -86,6 +92,32 @@ export function UserTable({
     params.set("page", newPage.toString());
     router.push(`${pathname}?${params.toString()}`);
   };
+
+  const handlePageSizeChange = (newSize: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", "1");
+    params.set("size", newSize.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const pageStart = total === 0 ? 0 : (page - 1) * size + 1;
+  const pageEnd = total === 0 ? 0 : pageStart + data.length - 1;
+
+  const visiblePages = React.useMemo(() => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    if (page <= 3) {
+      return [1, 2, 3];
+    }
+
+    if (page >= totalPages - 2) {
+      return [totalPages - 2, totalPages - 1, totalPages];
+    }
+
+    return [page - 1, page, page + 1];
+  }, [page, totalPages]);
 
   return (
     <div className="w-full space-y-4">
@@ -100,11 +132,34 @@ export function UserTable({
         getExpandedRowLabel={(user) => user.name}
       />
 
-      {!hidePagination && totalPages > 1 && (
-        <div className="mt-6 flex w-full flex-col gap-3 pb-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="hidden text-sm text-zinc-500 sm:block">
-            Page {page} of {totalPages}
-          </p>
+      {!hidePagination && (
+        <div className="mt-6 flex w-full flex-col gap-3 pb-6 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+            <label htmlFor="user-page-size">Rows per page:</label>
+            <div className="relative">
+              <select
+                id="user-page-size"
+                value={size}
+                onChange={(event) =>
+                  handlePageSizeChange(Number(event.target.value))
+                }
+                className="h-8 appearance-none rounded-full border border-border bg-background px-3 pr-8 text-foreground outline-none transition focus:border-ring"
+              >
+                {pageSizeOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-muted-foreground">
+                ▾
+              </span>
+            </div>
+          </div>
+
+          <div className="text-muted-foreground">
+            {pageStart}-{pageEnd} of {total}
+          </div>
 
           <Pagination className="mx-0 w-full sm:w-auto">
             <PaginationContent className="flex-wrap justify-start gap-1 sm:justify-end">
@@ -118,32 +173,87 @@ export function UserTable({
                   className={
                     page === 1
                       ? "pointer-events-none opacity-50"
-                      : "cursor-pointer hover:bg-zinc-900"
+                      : "cursor-pointer border-border bg-background text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground"
                   }
                 />
               </PaginationItem>
 
-              {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-                (currentPage) => (
-                  <PaginationItem key={currentPage}>
+              {visiblePages[0] > 1 ? (
+                <>
+                  <PaginationItem>
                     <Button
-                      variant={page === currentPage ? "outline" : "ghost"}
+                      variant={page === 1 ? "default" : "ghost"}
                       size="icon"
+                      aria-current={page === 1 ? "page" : undefined}
                       onClick={(event) => {
                         event.preventDefault();
-                        handlePageChange(currentPage);
+                        handlePageChange(1);
                       }}
                       className={`h-9 w-9 cursor-pointer ${
-                        page === currentPage
-                          ? "border-zinc-700 bg-zinc-900 text-zinc-100"
-                          : "text-zinc-400 hover:text-zinc-100"
+                        page === 1
+                          ? "border-primary bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground"
+                          : "text-foreground hover:bg-muted"
                       }`}
                     >
-                      {currentPage}
+                      1
                     </Button>
                   </PaginationItem>
-                )
-              )}
+                  {visiblePages[0] > 2 ? (
+                    <PaginationItem>
+                      <PaginationEllipsis className="text-muted-foreground" />
+                    </PaginationItem>
+                  ) : null}
+                </>
+              ) : null}
+
+              {visiblePages.map((currentPage) => (
+                <PaginationItem key={currentPage}>
+                  <Button
+                    variant={page === currentPage ? "default" : "ghost"}
+                    size="icon"
+                    aria-current={page === currentPage ? "page" : undefined}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      handlePageChange(currentPage);
+                    }}
+                    className={`h-9 w-9 cursor-pointer ${
+                      page === currentPage
+                        ? "border-primary bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground"
+                        : "text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {currentPage}
+                  </Button>
+                </PaginationItem>
+              ))}
+
+              {visiblePages.at(-1) && visiblePages.at(-1)! < totalPages ? (
+                <>
+                  {visiblePages.at(-1)! < totalPages - 1 ? (
+                    <PaginationItem>
+                      <PaginationEllipsis className="text-muted-foreground" />
+                    </PaginationItem>
+                  ) : null}
+                  <PaginationItem>
+                    <Button
+                      variant={page === totalPages ? "default" : "ghost"}
+                      size="icon"
+                      aria-current={page === totalPages ? "page" : undefined}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        handlePageChange(totalPages);
+                      }}
+                      className={`h-9 w-9 cursor-pointer ${
+                        page === totalPages
+                          ? "border-primary bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground"
+                          : "text-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {totalPages}
+                    </Button>
+                  </PaginationItem>
+                </>
+              ) : null}
 
               <PaginationItem>
                 <PaginationNext
@@ -155,7 +265,7 @@ export function UserTable({
                   className={
                     page === totalPages
                       ? "pointer-events-none opacity-50"
-                      : "cursor-pointer hover:bg-zinc-900"
+                      : "cursor-pointer border-border bg-background text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground"
                   }
                 />
               </PaginationItem>

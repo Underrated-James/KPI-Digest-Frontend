@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant default (&:is( *));
 
 @theme inline {
   --font-sans: var(--font-geist-sans);
@@ -49,9 +49,27 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
+/* Duration for smooth theme transitions */
+@layer utilities {
+  @keyframes theme-fade {
+    from {
+      opacity: 0.95;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/* Light theme (default) */
+:root,
+.light {
+  /* Smooth transitions for theme changes */
+  color-scheme: light;
+  
+  /* Background colors */
   --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --foreground: 240 10% 3.9%;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -82,9 +100,43 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Semantic theme tokens - Light Mode */
+  --bg-primary: oklch(1 0 0);
+  --bg-secondary: oklch(0.97 0 0);
+  --bg-tertiary: oklch(0.94 0 0);
+  --text-primary: oklch(0.145 0 0);
+  --text-secondary: oklch(0.556 0 0);
+  --text-tertiary: oklch(0.708 0 0);
+  --text-disabled: oklch(0.778 0 0);
+  --card-bg: oklch(1 0 0);
+  --card-hover-bg: oklch(0.97 0 0);
+  --input-bg: oklch(0.985 0 0);
+  --input-disabled-bg: oklch(0.94 0 0);
+  --border-primary: oklch(0.922 0 0);
+  --border-secondary: oklch(0.961 0 0);
+  --button-bg: oklch(0.205 0 0);
+  --button-text: oklch(0.985 0 0);
+  --button-hover-bg: oklch(0.269 0 0);
+  --button-disabled-bg: oklch(0.88 0 0);
+  --button-disabled-text: oklch(0.708 0 0);
+  --focus-ring: oklch(0.708 0 0);
+  --ring-opacity: 0.5;
+  --accent-primary: oklch(0.205 0 0);
+  --accent-secondary: oklch(0.97 0 0);
+  --sidebar-bg: oklch(0.985 0 0);
+  --sidebar-hover: oklch(0.94 0 0);
+  --sidebar-active: oklch(0.205 0 0);
+  --sidebar-active-text: oklch(0.985 0 0);
+
+  /* Transition duration for theme changes */
+  --theme-transition-duration: 200ms;
 }
 
+/* Dark theme */
 .dark {
+  color-scheme: dark;
+
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -116,6 +168,36 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Semantic theme tokens - Dark Mode */
+  --bg-primary: oklch(0.145 0 0);
+  --bg-secondary: oklch(0.205 0 0);
+  --bg-tertiary: oklch(0.269 0 0);
+  --text-primary: oklch(0.985 0 0);
+  --text-secondary: oklch(0.708 0 0);
+  --text-tertiary: oklch(0.556 0 0);
+  --text-disabled: oklch(0.439 0 0);
+  --card-bg: oklch(0.205 0 0);
+  --card-hover-bg: oklch(0.269 0 0);
+  --input-bg: oklch(0.185 0 0);
+  --input-disabled-bg: oklch(0.145 0 0);
+  --border-primary: oklch(0.371 0 0);
+  --border-secondary: oklch(0.269 0 0);
+  --button-bg: oklch(0.922 0 0);
+  --button-text: oklch(0.205 0 0);
+  --button-hover-bg: oklch(0.985 0 0);
+  --button-disabled-bg: oklch(0.269 0 0);
+  --button-disabled-text: oklch(0.556 0 0);
+  --focus-ring: oklch(0.708 0 0);
+  --ring-opacity: 0.4;
+  --accent-primary: oklch(0.922 0 0);
+  --accent-secondary: oklch(0.269 0 0);
+  --sidebar-bg: oklch(0.17 0 0);
+  --sidebar-hover: oklch(0.25 0 0);
+  --sidebar-active: oklch(0.922 0 0);
+  --sidebar-active-text: oklch(0.205 0 0);
+
+  --theme-transition-duration: 200ms;
 }
 
 @layer base {
@@ -123,11 +205,49 @@
     @apply border-border;
   }
 
+  html,
   body {
     @apply bg-background text-foreground;
   }
 
   html {
     @apply font-sans;
+  }
+
+  /* Enhanced button and interactive element transitions */
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    transition-property: background-color, border-color, color, outline-color;
+    transition-duration: var(--theme-transition-duration);
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Focus ring styling with theme support */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline-color: var(--focus-ring);
+    outline-width: 2px;
+    outline-style: solid;
+  }
+
+  /* Card and container transitions */
+  [class*="card"],
+  [class*="panel"],
+  [class*="modal"],
+  [role="dialog"] {
+    transition-property: background-color, border-color, color;
+    transition-duration: var(--theme-transition-duration);
+  }
+
+  /* Input and form styling */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--text-tertiary);
   }
 }

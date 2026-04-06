@@ -1,7 +1,26 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-export interface FieldProps extends React.HTMLAttributes<HTMLDivElement> {}
+type FieldProps = React.HTMLAttributes<HTMLDivElement>
+type FieldErrorValue =
+  | string
+  | number
+  | React.ReactNode
+  | { message?: React.ReactNode | string | number | null }
+
+function isFieldErrorMessageObject(
+  error: FieldErrorValue,
+): error is { message?: React.ReactNode | string | number | null } {
+  return typeof error === "object" && error !== null && "message" in error
+}
+
+function getFieldErrorMessage(error: FieldErrorValue): React.ReactNode {
+  if (isFieldErrorMessageObject(error)) {
+    return error.message ?? null
+  }
+
+  return error
+}
 
 export function Field({ className, ...props }: FieldProps) {
   return (
@@ -46,13 +65,19 @@ export function FieldDescription({ className, ...props }: React.HTMLAttributes<H
   )
 }
 
-export function FieldError({ errors, className, ...props }: { errors: any[] } & React.HTMLAttributes<HTMLParagraphElement>) {
+export function FieldError({
+  errors,
+  className,
+  ...props
+}: {
+  errors: FieldErrorValue[]
+} & React.HTMLAttributes<HTMLParagraphElement>) {
   if (!errors || errors.length === 0) return null
   return (
     <div className={cn("flex flex-col gap-1", className)} {...props}>
       {errors.map((error, index) => (
         <p key={index} className="text-[0.8rem] font-medium text-destructive">
-          {error?.message || error}
+          {getFieldErrorMessage(error)}
         </p>
       ))}
     </div>
