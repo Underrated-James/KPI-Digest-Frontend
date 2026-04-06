@@ -20,7 +20,7 @@ export function UserPageErrorState({
         <h2 className="text-xl font-semibold text-destructive">
           We couldn&apos;t load the users table
         </h2>
-        <p className="mt-3 text-sm text-zinc-300 sm:text-base">
+        <p className="mt-3 text-sm text-foreground sm:text-base">
           Search, filters, and actions are still available. Please check the
           connection and try again in a moment.
         </p>

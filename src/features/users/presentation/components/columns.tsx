@@ -25,7 +25,7 @@ export const getColumns = ({
     cell: ({ row }) => (
       <div className="flex min-w-0 items-center">
         <div className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-zinc-100">
+          <span className="block truncate font-medium text-foreground">
             {row.original.name}
           </span>
         </div>
@@ -39,7 +39,7 @@ export const getColumns = ({
       mobileLabel: "Email",
     },
     cell: ({ row }) => (
-      <span className="whitespace-normal break-all text-zinc-200 md:break-words">
+      <span className="whitespace-normal break-all text-foreground/85 md:break-words">
         {row.original.email}
       </span>
     ),
@@ -85,8 +85,8 @@ export const getColumns = ({
               <span className="flex h-4 w-4 shrink-0 items-center justify-center">
                 <ChevronDown
                   className={cn(
-                    "h-4 w-4 text-zinc-500 transition-transform duration-200",
-                    row.getIsExpanded() && "rotate-180 text-zinc-100"
+                    "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                    row.getIsExpanded() && "rotate-180 text-foreground"
                   )}
                   aria-hidden="true"
                 />
@@ -128,7 +128,7 @@ export const getColumns = ({
           <Button
             variant="ghost"
             size="icon"
-            className="hidden shrink-0 md:inline-flex"
+            className="hidden shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground md:inline-flex"
             onClick={(event) => {
               event.stopPropagation();
               onEdit(user);
@@ -139,7 +139,7 @@ export const getColumns = ({
           <Button
             variant="outline"
             size="sm"
-            className="w-full justify-center md:hidden"
+            className="w-full justify-center border-border bg-background hover:border-foreground hover:bg-foreground hover:text-background md:hidden"
             onClick={(event) => {
               event.stopPropagation();
               onEdit(user);
@@ -151,7 +151,7 @@ export const getColumns = ({
           <Button
             variant="ghost"
             size="icon"
-            className="hidden shrink-0 text-destructive hover:text-destructive md:inline-flex"
+            className="hidden shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive md:inline-flex"
             onClick={(event) => {
               event.stopPropagation();
               onDelete(user.id);

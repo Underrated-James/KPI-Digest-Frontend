@@ -36,7 +36,7 @@ interface ExpandableDataTableProps<TData> {
 
 function getColumnHeaderClass(columnId: string) {
   if (columnId === "select") {
-    return "w-12 pl-3 pr-2 md:w-auto md:px-2";
+    return "w-12 pl-6 pr-4 md:w-auto md:pl-3 md:pr-2";
   }
 
   if (columnId === "status") {
@@ -52,7 +52,7 @@ function getColumnHeaderClass(columnId: string) {
 
 function getColumnCellClass(columnId: string) {
   if (columnId === "select") {
-    return "w-12 align-middle pl-3 pr-2 md:w-auto md:px-2";
+    return "w-12 align-middle pl-4 pr-2 md:w-auto md:pl-3 md:pr-2";
   }
 
   if (columnId === "name") {
@@ -82,42 +82,51 @@ export function ExpandableDataTable<TData>({
 
   const rowSelection = React.useMemo(
     () =>
-      selectedRowIds.reduce((accumulator, id) => {
-        accumulator[id] = true;
-        return accumulator;
-      }, {} as Record<string, boolean>),
-    [selectedRowIds]
+      selectedRowIds.reduce(
+        (accumulator, id) => {
+          accumulator[id] = true;
+          return accumulator;
+        },
+        {} as Record<string, boolean>,
+      ),
+    [selectedRowIds],
   );
 
   const hasMobileHiddenColumns = React.useMemo(
     () =>
       columns.some(
         (column) =>
-          column.id !== "select" && column.meta?.mobileVisible !== true
+          column.id !== "select" && column.meta?.mobileVisible !== true,
       ),
-    [columns]
+    [columns],
   );
 
   const columnVisibility = React.useMemo(
     () =>
-      columns.reduce((visibility, column) => {
-        const columnId =
-          "id" in column && typeof column.id === "string"
-            ? column.id
-            : "accessorKey" in column && typeof column.accessorKey === "string"
-              ? column.accessorKey
-              : undefined;
+      columns.reduce(
+        (visibility, column) => {
+          const columnId =
+            "id" in column && typeof column.id === "string"
+              ? column.id
+              : "accessorKey" in column &&
+                  typeof column.accessorKey === "string"
+                ? column.accessorKey
+                : undefined;
 
-        if (!columnId) {
+          if (!columnId) {
+            return visibility;
+          }
+
+          visibility[columnId] =
+            !isMobile ||
+            column.meta?.mobileVisible === true ||
+            columnId === "select";
+
           return visibility;
-        }
-
-        visibility[columnId] =
-          !isMobile || column.meta?.mobileVisible === true || columnId === "select";
-
-        return visibility;
-      }, {} as Record<string, boolean>),
-    [columns, isMobile]
+        },
+        {} as Record<string, boolean>,
+      ),
+    [columns, isMobile],
   );
 
   // eslint-disable-next-line react-hooks/incompatible-library
@@ -135,7 +144,7 @@ export function ExpandableDataTable<TData>({
           const nextSelection =
             typeof updater === "function" ? updater(rowSelection) : updater;
           const nextSelectedIds = Object.keys(nextSelection).filter(
-            (key) => nextSelection[key]
+            (key) => nextSelection[key],
           );
 
           onSelectionChange(nextSelectedIds);
@@ -166,27 +175,27 @@ export function ExpandableDataTable<TData>({
   }
 
   return (
-    <div className="w-full overflow-hidden rounded-md border border-zinc-800 bg-zinc-950">
-      <Table className="relative w-full table-fixed md:min-w-[600px] md:table-auto">
-        <TableHeader className="sticky top-0 z-10 bg-zinc-950 shadow-[0_1px_0_0_rgba(39,39,42,1)]">
+    <div className="w-full overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm">
+      <Table className="relative w-full table-fixed md:min-w-150 md:table-auto">
+        <TableHeader className="sticky top-0 z-10 bg-card">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow
               key={headerGroup.id}
-              className="border-zinc-800 hover:bg-transparent"
+              className="border-border hover:bg-transparent"
             >
               {headerGroup.headers.map((header) => (
                 <TableHead
                   key={header.id}
                   className={cn(
-                    "text-zinc-400",
-                    getColumnHeaderClass(header.column.id)
+                    "text-muted-foreground",
+                    getColumnHeaderClass(header.column.id),
                   )}
                 >
                   {header.isPlaceholder
                     ? null
                     : flexRender(
                         header.column.columnDef.header,
-                        header.getContext()
+                        header.getContext(),
                       )}
                 </TableHead>
               ))}
@@ -222,26 +231,27 @@ export function ExpandableDataTable<TData>({
                       : undefined
                   }
                   className={cn(
-                    "border-zinc-800 transition-colors data-[state=selected]:bg-zinc-900/50 hover:bg-zinc-900/30",
+                    "border-border transition-colors data-[state=selected]:bg-muted/80 hover:bg-muted/60",
                     isExpandableRow &&
-                      "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60"
+                      "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
                   )}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className={cn(
-                        getColumnCellClass(cell.column.id)
-                      )}
+                      className={cn(getColumnCellClass(cell.column.id))}
                     >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
 
                 <AnimatePresence initial={false}>
                   {isExpandableRow && isExpandedRow ? (
-                    <TableRow className="border-zinc-800 bg-zinc-950 hover:bg-zinc-950 md:hidden">
+                    <TableRow className="border-border bg-card hover:bg-card md:hidden">
                       <TableCell
                         colSpan={table.getVisibleLeafColumns().length}
                         className="px-3 pb-3 pt-0"

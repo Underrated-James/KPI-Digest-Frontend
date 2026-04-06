@@ -68,8 +68,8 @@ export function UserForm({
   }
 
   return (
-    <Card className="w-full sm:max-w-md">
-      <CardHeader>
+    <Card className="w-full border border-border bg-card shadow-xl ring-1 ring-border/70 sm:max-w-md">
+      <CardHeader className="border-b border-border/80 pb-5">
         <CardTitle>{initialData ? "Edit User" : "Create User"}</CardTitle>
         <CardDescription>
           {initialData
@@ -77,7 +77,7 @@ export function UserForm({
             : "Fill in the details to add a new user."}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-5">
         <form id="user-form" onSubmit={form.handleSubmit(handleSubmit)}>
           <FieldGroup>
             <Controller
@@ -134,13 +134,13 @@ export function UserForm({
                       {...field}
                       id="user-role"
                       disabled={isLoading}
-                      className="flex h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none focus:ring-2 focus:ring-sky-500/50 appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex h-10 w-full appearance-none cursor-pointer rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <option value="DEVS" className="bg-zinc-900 text-zinc-100">Developer</option>
-                      <option value="QA" className="bg-zinc-900 text-zinc-100">QA Engineer</option>
-                      <option value="ADMIN" className="bg-zinc-900 text-zinc-100">Administrator</option>
+                      <option value="DEVS">Developer</option>
+                      <option value="QA">QA Engineer</option>
+                      <option value="ADMIN">Administrator</option>
                     </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400">
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground">
                       <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                         <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                       </svg>
@@ -170,16 +170,16 @@ export function UserForm({
                         onBlur={field.onBlur}
                         name={field.name}
                         disabled={isLoading}
-                        className="flex h-10 w-full appearance-none rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none focus:ring-2 focus:ring-sky-500/50 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-10 w-full appearance-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <option value="active" className="bg-zinc-900 text-zinc-100">
+                        <option value="active">
                           Active
                         </option>
-                        <option value="inactive" className="bg-zinc-900 text-zinc-100">
+                        <option value="inactive">
                           Inactive
                         </option>
                       </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400">
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground">
                         <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                           <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                         </svg>
@@ -195,7 +195,7 @@ export function UserForm({
           </FieldGroup>
         </form>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="border-t border-border/80 bg-muted/30">
         <div className="flex w-full items-center justify-end gap-3">
           <Button
             type="button"

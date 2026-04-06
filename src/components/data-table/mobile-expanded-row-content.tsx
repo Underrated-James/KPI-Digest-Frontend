@@ -34,7 +34,7 @@ export function MobileExpandedRowContent<TData>({
   return (
     <div
       className={cn(
-        "rounded-b-2xl border-t border-zinc-800 bg-zinc-950 px-4 pb-5 pt-4",
+        "rounded-b-2xl border-t border-border bg-muted/40 px-4 pb-5 pt-4",
         className
       )}
     >
@@ -45,12 +45,12 @@ export function MobileExpandedRowContent<TData>({
           return (
             <section key={cell.id} className="space-y-2">
               {meta?.mobileLabel ? (
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                   {meta.mobileLabel}
                 </p>
               ) : null}
 
-              <div className="min-w-0 text-sm text-zinc-100">
+              <div className="min-w-0 text-sm text-foreground">
                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
               </div>
             </section>
@@ -59,10 +59,10 @@ export function MobileExpandedRowContent<TData>({
 
         {actionCells.length > 0 ? (
           <section className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               Actions
             </p>
-            <div className="h-px w-full bg-zinc-800" />
+            <div className="h-px w-full bg-border" />
             <div className="grid grid-cols-2 gap-3">
               {actionCells.map((cell) => (
                 <div key={cell.id} className="min-w-0">
