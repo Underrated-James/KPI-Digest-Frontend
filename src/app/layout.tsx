@@ -47,6 +47,11 @@ export const metadata: Metadata = {
   },
   description:
     "KPI Digest is a tool to help you track and analyze your KPIs. | Agile Digest",
+  icons: {
+    icon: "/logo/Agile%20Logo.png",
+    shortcut: "/logo/Agile%20Logo.png",
+    apple: "/logo/Agile%20Logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -61,6 +66,16 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        <link rel="icon" type="image/png" href="/logo/Agile%20Logo.png" />
+        <link
+          rel="shortcut icon"
+          type="image/png"
+          href="/logo/Agile%20Logo.png"
+        />
+        <link
+          rel="apple-touch-icon"
+          href="/logo/Agile%20Logo.png"
+        />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-full flex flex-col">
