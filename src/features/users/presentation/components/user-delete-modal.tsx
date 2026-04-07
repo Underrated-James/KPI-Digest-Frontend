@@ -66,6 +66,7 @@ export function UserDeleteModal({
         <CardFooter className="flex justify-end gap-3 border-t border-destructive/15 bg-muted/25 pt-4">
           <Button
             variant="outline"
+            className="hover:border-foreground/35 hover:bg-foreground/10 hover:text-foreground dark:hover:border-foreground/35 dark:hover:bg-foreground/15 dark:hover:text-foreground"
             onClick={onClose}
             disabled={isLoading}
           >

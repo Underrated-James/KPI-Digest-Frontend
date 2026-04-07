@@ -53,8 +53,8 @@ export function UserPageToolbar({
                   onChange={(event) => onSearchTermChange(event.target.value)}
                   placeholder={
                     isMobile
-                      ? "Search users by name..."
-                      : "Search by name, email or role..."
+                      ? "Search users..."
+                      : "Search by keyword..."
                   }
                   className="h-11 border-border bg-background pl-9 text-foreground placeholder:text-muted-foreground"
                 />
@@ -109,7 +109,7 @@ export function UserPageToolbar({
               onClick={onBulkDelete}
               disabled={selectedUserCount === 0}
             >
-              <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+              <Trash2 className="mr-2 h-4 w-4 text-current" />
               Delete Selected ({selectedUserCount})
             </Button>
           </div>
