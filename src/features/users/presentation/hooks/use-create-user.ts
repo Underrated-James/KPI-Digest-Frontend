@@ -50,7 +50,10 @@ function getCachedCreateUserError(userData: CreateUserDTO) {
 }
 
 function cacheCreateUserError(userData: CreateUserDTO, error: ApiError) {
-  if (!error.status || !CACHEABLE_CREATE_USER_ERROR_STATUSES.has(error.status)) {
+  if (
+    !error.status ||
+    !CACHEABLE_CREATE_USER_ERROR_STATUSES.has(error.status)
+  ) {
     return;
   }
 
@@ -128,6 +131,7 @@ export function useCreateUser() {
       }
     },
     onSettled: async () => {
+      //refetch the list to trigger newly user
       await qc.invalidateQueries({ queryKey: userKeys.lists() });
     },
   });

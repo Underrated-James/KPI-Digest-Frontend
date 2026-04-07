@@ -1,8 +1,9 @@
 "use client";
 
-import { useDeferredValue, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useAppDispatch, useAppSelector } from "@/lib/redux-hooks";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CreateUserDTO, User, UserRole } from "../../domain/types/user-types";
@@ -30,8 +31,10 @@ export function useUserPage() {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const isMobile = useIsMobile();
-  const [searchTerm, setSearchTerm] = useState("");
-  const deferredSearchTerm = useDeferredValue(searchTerm);
+  const search = searchParams.get("search") ?? "";
+  const [searchTerm, setSearchTerm] = useState(search);
+  const debouncedSearchTerm = useDebouncedValue(searchTerm, 200);
+  const pendingSearchRef = useRef<string | null>(null);
 
   const page = Number(searchParams.get("page")) || 1;
   const size = Number(searchParams.get("size")) || 10;
@@ -42,26 +45,48 @@ export function useUserPage() {
   const deleteTarget = useAppSelector(selectDeleteTarget);
   const selectedUserIds = useAppSelector(selectSelectedUserIds);
 
+  useEffect(() => {
+    if (pendingSearchRef.current === search) {
+      pendingSearchRef.current = null;
+    }
+  }, [search]);
+
+  useEffect(() => {
+    const normalizedSearchTerm = debouncedSearchTerm.trim();
+
+    if (normalizedSearchTerm === search) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", "1");
+
+    if (normalizedSearchTerm.length === 0) {
+      params.delete("search");
+    } else {
+      params.set("search", normalizedSearchTerm);
+    }
+
+    pendingSearchRef.current = normalizedSearchTerm;
+    dispatch(clearSelectedUserIds());
+    startTransition(() => {
+      router.replace(
+        params.toString() ? `${pathname}?${params.toString()}` : pathname,
+        { scroll: false }
+      );
+    });
+  }, [debouncedSearchTerm, dispatch, pathname, router, search, searchParams]);
+
   const { data, isLoading, isError, error, refetch } = useUsers({
     page,
     size,
+    search: search || undefined,
     role: selectedRole ?? undefined,
   });
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
-  const normalizedSearchTerm = deferredSearchTerm.trim().toLowerCase();
-
-  const filteredUsers =
-    normalizedSearchTerm.length === 0
-      ? data?.users ?? []
-      : (data?.users ?? []).filter((user) => {
-          const searchableText = [user.name, user.email, user.role]
-            .join(" ")
-            .toLowerCase();
-
-          return searchableText.includes(normalizedSearchTerm);
-        });
+  const users = data?.users ?? [];
 
   const updateUserFilters = (nextRole: UserRole | "ALL") => {
     const params = new URLSearchParams(searchParams.toString());
@@ -149,7 +174,7 @@ export function useUserPage() {
   };
 
   const handleDeleteById = (id: string) => {
-    const user = filteredUsers.find((item) => item.id === id);
+    const user = users.find((item) => item.id === id);
 
     if (user) {
       handleDeleteClick(user);
@@ -191,12 +216,9 @@ export function useUserPage() {
     editingUser,
     deleteTarget,
     selectedUserIds,
-    filteredUsers,
-    totalUsers:
-      normalizedSearchTerm.length > 0
-        ? filteredUsers.length
-        : data?.totalElements ?? 0,
-    hidePagination: normalizedSearchTerm.length > 0,
+    users,
+    totalUsers: data?.totalElements ?? 0,
+    hidePagination: false,
     isLoading,
     isError,
     error,

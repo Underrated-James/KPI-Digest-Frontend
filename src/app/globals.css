@@ -250,4 +250,14 @@
   textarea::placeholder {
     color: var(--text-tertiary);
   }
+
+  select:hover {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  select option {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+  }
 }

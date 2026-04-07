@@ -18,7 +18,7 @@ export function UserPage() {
     editingUser,
     deleteTarget,
     selectedUserIds,
-    filteredUsers,
+    users,
     totalUsers,
     hidePagination,
     isLoading,
@@ -85,7 +85,7 @@ export function UserPage() {
               <UserPageErrorState error={error} onRetry={() => refetch()} />
             ) : (
               <UserTable
-                data={filteredUsers}
+                data={users}
                 total={totalUsers}
                 isMobile={isMobile}
                 onEdit={handleEditClick}

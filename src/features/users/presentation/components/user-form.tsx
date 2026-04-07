@@ -200,6 +200,7 @@ export function UserForm({
           <Button
             type="button"
             variant="outline"
+            className="hover:border-foreground/35 hover:bg-foreground/10 hover:text-foreground dark:hover:border-foreground/35 dark:hover:bg-foreground/15 dark:hover:text-foreground"
             onClick={onCancel}
             disabled={isLoading}
           >
