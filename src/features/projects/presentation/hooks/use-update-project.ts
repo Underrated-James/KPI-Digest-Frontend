@@ -4,11 +4,16 @@ import { ApiError } from "@/lib/api-error";
 import { UpdateProjectDTO } from "../../domain/types/project-types";
 import { projectService } from "../../infrastructure/project-service";
 import { projectKeys } from "../queries/project-keys";
+import { projectQueryMeta } from "../queries/project-query-options";
 
 export function useUpdateProject() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    meta: {
+      ...projectQueryMeta,
+      showErrorToast: false,
+    },
     mutationFn: ({ id, data }: { id: string; data: UpdateProjectDTO }) =>
       projectService.updateProject.execute(id, data),
     onSuccess: (data) => {

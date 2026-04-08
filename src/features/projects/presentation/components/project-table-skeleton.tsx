@@ -9,13 +9,10 @@ function SkeletonRow() {
         <Skeleton className="h-4 w-4 rounded-sm" />
       </td>
       <td className="p-4">
-        <Skeleton className="h-4 w-28 sm:w-36" />
+        <Skeleton className="h-4 w-28 sm:w-40" />
       </td>
-      <td className="hidden p-4 sm:table-cell">
-        <Skeleton className="h-4 w-40 sm:w-52" />
-      </td>
-      <td className="hidden p-4 md:table-cell">
-        <Skeleton className="h-4 w-16" />
+      <td className="p-4">
+        <Skeleton className="h-4 w-24 sm:w-32" />
       </td>
       <td className="p-4">
         <Skeleton className="h-6 w-20 rounded-full" />
@@ -65,7 +62,7 @@ export function ProjectsTableSkeleton({
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-        <table className="w-full md:min-w-[600px]">
+        <table className="w-full md:min-w-[520px]">
           <thead>
             <tr className="border-b border-border">
               <th className="w-12 p-4">
@@ -74,11 +71,8 @@ export function ProjectsTableSkeleton({
               <th className="p-4 text-left">
                 <Skeleton className="h-4 w-12" />
               </th>
-              <th className="hidden p-4 text-left sm:table-cell">
-                <Skeleton className="h-4 w-12" />
-              </th>
-              <th className="hidden p-4 text-left md:table-cell">
-                <Skeleton className="h-4 w-10" />
+              <th className="p-4 text-left">
+                <Skeleton className="h-4 w-20" />
               </th>
               <th className="p-4 text-left">
                 <Skeleton className="h-4 w-14" />
