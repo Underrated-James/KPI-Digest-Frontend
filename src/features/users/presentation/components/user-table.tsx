@@ -6,7 +6,7 @@ import {
   type Row,
   type Table as TanStackTable,
 } from "@tanstack/react-table";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ExpandableDataTable } from "@/components/data-table/expandable-data-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/pagination";
 import { User } from "../../domain/types/user-types";
 import { getColumns } from "./columns";
+import { pushUsersUrl } from "../utils/users-url-state";
 
 interface UserTableProps {
   data: User[];
@@ -43,7 +44,6 @@ export function UserTable({
 }: UserTableProps) {
   const pageSizeOptions = [5, 10, 20, 50];
   const searchParams = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
 
   const page = Number(searchParams.get("page")) || 1;
@@ -90,14 +90,14 @@ export function UserTable({
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", newPage.toString());
-    router.push(`${pathname}?${params.toString()}`);
+    pushUsersUrl(pathname, params);
   };
 
   const handlePageSizeChange = (newSize: number) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", "1");
     params.set("size", newSize.toString());
-    router.push(`${pathname}?${params.toString()}`);
+    pushUsersUrl(pathname, params);
   };
 
   const pageStart = total === 0 ? 0 : (page - 1) * size + 1;

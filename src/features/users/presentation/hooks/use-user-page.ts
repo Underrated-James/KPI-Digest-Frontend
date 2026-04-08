@@ -1,7 +1,7 @@
 "use client";
 
-import { startTransition, useEffect, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useAppDispatch, useAppSelector } from "@/lib/redux-hooks";
@@ -24,9 +24,9 @@ import {
   selectSelectedUserIds,
   setSelectedUserIds,
 } from "../store/user-slice";
+import { pushUsersUrl, replaceUsersUrl } from "../utils/users-url-state";
 
 export function useUserPage() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
@@ -69,13 +69,8 @@ export function useUserPage() {
 
     pendingSearchRef.current = normalizedSearchTerm;
     dispatch(clearSelectedUserIds());
-    startTransition(() => {
-      router.replace(
-        params.toString() ? `${pathname}?${params.toString()}` : pathname,
-        { scroll: false }
-      );
-    });
-  }, [debouncedSearchTerm, dispatch, pathname, router, search, searchParams]);
+    replaceUsersUrl(pathname, params);
+  }, [debouncedSearchTerm, dispatch, pathname, search, searchParams]);
 
   const { data, isLoading, isError, error, refetch } = useUsers({
     page,
@@ -100,9 +95,7 @@ export function useUserPage() {
     }
 
     dispatch(clearSelectedUserIds());
-    router.push(
-      params.toString() ? `${pathname}?${params.toString()}` : pathname
-    );
+    pushUsersUrl(pathname, params);
   };
 
   const handleCreate = (userData: CreateUserDTO) => {
