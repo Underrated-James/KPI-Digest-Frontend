@@ -9,6 +9,8 @@ import {
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { extractErrorMessage } from "./api-error";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
 
 function shouldShowErrorToast(meta: Record<string, unknown> | undefined) {
   return meta?.showErrorToast !== false;
@@ -52,6 +54,9 @@ export function ReactQueryProvider({
   return (
     <QueryClientProvider client={queryClient}>
       {children}
+      {process.env.NODE_ENV === "development" ? (
+        <ReactQueryDevtools initialIsOpen={false} />
+      ) : null}
     </QueryClientProvider>
   );
 }

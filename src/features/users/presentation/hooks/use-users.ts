@@ -4,8 +4,8 @@ import { UserQueryParams } from "../../domain/types/user-types";
 import { userService } from "../../infrastructure/user-service";
 import { normalizeUserQueryParams, userKeys } from "../queries/user-keys";
 import {
-  USER_QUERY_GC_TIME,
-  USER_QUERY_STALE_TIME,
+  USER_SEARCH_QUERY_GC_TIME,
+  USER_SEARCH_QUERY_STALE_TIME,
   userPageQueryMeta,
   userQueryRetry,
 } from "../queries/user-query-options";
@@ -17,8 +17,8 @@ export function useUsers(params?: UserQueryParams) {
   return useQuery<Awaited<ReturnType<typeof userService.getUsers.execute>>, ApiError, UsersListData>({
     queryKey: userKeys.list(normalizedParams),
     queryFn: () => userService.getUsers.execute(normalizedParams),
-    staleTime: USER_QUERY_STALE_TIME,
-    gcTime: USER_QUERY_GC_TIME,
+    staleTime: USER_SEARCH_QUERY_STALE_TIME,
+    gcTime: USER_SEARCH_QUERY_GC_TIME,
     retry: userQueryRetry,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
