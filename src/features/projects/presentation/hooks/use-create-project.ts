@@ -4,11 +4,16 @@ import { ApiError } from "@/lib/api-error";
 import { CreateProjectDTO } from "../../domain/types/project-types";
 import { projectService } from "../../infrastructure/project-service";
 import { projectKeys } from "../queries/project-keys";
+import { projectQueryMeta } from "../queries/project-query-options";
 
 export function useCreateProject() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    meta: {
+      ...projectQueryMeta,
+      showErrorToast: false,
+    },
     mutationFn: (data: CreateProjectDTO) => projectService.createProject.execute(data),
     onSuccess: () => {
       toast.success("Project created successfully");

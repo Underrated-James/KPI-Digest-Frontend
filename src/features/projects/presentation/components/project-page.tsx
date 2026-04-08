@@ -39,7 +39,6 @@ export function ProjectPage() {
     updateProjectFilters,
   } = useProjectPage();
   
-
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="mb-6">
