@@ -1,14 +1,11 @@
-import type { Metadata } from "next";
+import { Metadata } from "next";
+import { SprintPage } from "@/features/sprints";
 
 export const metadata: Metadata = {
-  title: "Sprints",
-  description: "Manage your sprints in KPI Digest",
+  title: "Sprints | KPI Digest",
+  description: "Manage your sprints.",
 };
 
 export default function Sprints() {
-  return (
-    <div>
-      <h1>Sprints</h1>
-    </div>
-  );
+  return <SprintPage />;
 }

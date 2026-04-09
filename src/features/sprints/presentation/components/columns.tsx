@@ -1,0 +1,271 @@
+"use client";
+
+import { ColumnDef } from "@tanstack/react-table";
+import { ChevronDown, Pencil, Trash, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Sprint } from "../../domain/types/sprint-types";
+import { format } from "date-fns";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+
+interface ColumnsProps {
+  onEdit: (sprint: Sprint) => void;
+  onDelete: (id: string) => void;
+}
+
+export const getSprintColumns = ({
+  onEdit,
+  onDelete,
+}: ColumnsProps): ColumnDef<Sprint>[] => [
+  {
+    accessorKey: "name",
+    header: "Sprint Name",
+    meta: {
+      mobileLabel: "Sprint Name",
+      mobileVisible: true,
+    },
+    cell: ({ row }) => (
+      <div className="flex min-w-0 items-center">
+        <div className="min-w-0 flex-1">
+          <span className="block truncate font-medium text-foreground">
+            {row.original.name}
+          </span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "projectName",
+    header: "Project Name",
+    meta: {
+      mobileLabel: "Project Name",
+    },
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">
+        {row.original.projectName || "N/A"}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    meta: {
+      mobileLabel: "Status",
+      mobileVisible: true,
+    },
+    cell: ({ row }) => {
+      const status = row.original.status;
+      const variants: Record<string, string> = {
+        active: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+        inactive: "border-red-500/30 bg-red-500/10 text-red-300",
+        draft: "border-slate-500/30 bg-slate-500/10 text-slate-300",
+        completed: "border-blue-500/30 bg-blue-500/10 text-blue-300",
+      };
+      const dotVariants: Record<string, string> = {
+        active: "bg-emerald-400",
+        inactive: "bg-red-400",
+        draft: "bg-slate-400",
+        completed: "bg-blue-400",
+      };
+      const labels: Record<string, string> = {
+        active: "Active",
+        inactive: "Inactive",
+        draft: "Draft",
+        completed: "Completed",
+      };
+      const label = labels[status] || status;
+      const variant =
+        variants[status] || "border-slate-500/30 bg-slate-500/10 text-slate-300";
+      const dotVariant = dotVariants[status] || "bg-slate-400";
+
+      return (
+        <>
+          <span
+            className={cn(
+              "hidden md:inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium",
+              variant,
+            )}
+          >
+            <span className={cn("h-2.5 w-2.5 rounded-full", dotVariant)} />
+            {label}
+          </span>
+
+          <div className="flex items-center justify-end gap-2 text-sm md:hidden">
+            {row.getCanExpand() ? (
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                    row.getIsExpanded() && "rotate-180 text-foreground",
+                  )}
+                  aria-hidden="true"
+                />
+              </span>
+            ) : null}
+
+            <span
+              className={cn(
+                "inline-flex min-w-[84px] items-center gap-2 whitespace-nowrap text-left font-medium",
+                status === "active"
+                  ? "text-emerald-300"
+                  : status === "inactive"
+                    ? "text-red-300"
+                    : status === "completed"
+                      ? "text-blue-300"
+                      : "text-slate-300",
+              )}
+            >
+              <span className={cn("h-2.5 w-2.5 rounded-full", dotVariant)} />
+              {label}
+            </span>
+          </div>
+        </>
+      );
+    },
+  },
+  {
+    header: "Dates",
+    meta: {
+      mobileLabel: "Dates",
+    },
+    cell: ({ row }) => {
+      const { startDate, endDate, officialStartDate, officialEndDate } = row.original;
+      const formatDate = (date: string | null | undefined) => date ? format(new Date(date), "MMM dd, yyyy") : "N/A";
+
+      return (
+        <div className="flex flex-col gap-1 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="w-16 text-muted-foreground">Start:</span>
+            <span className="font-medium">{formatDate(startDate)}</span>
+            {officialStartDate && (
+              <Badge variant="secondary" className="h-4 px-1 text-[10px] leading-none">Official: {formatDate(officialStartDate)}</Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-16 text-muted-foreground">End:</span>
+            <span className="font-medium">{formatDate(endDate)}</span>
+            {officialEndDate && (
+              <Badge variant="secondary" className="h-4 px-1 text-[10px] leading-none">Official: {formatDate(officialEndDate)}</Badge>
+            )}
+          </div>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "workingHoursDay",
+    header: "Hrs/Day",
+    meta: {
+      mobileLabel: "Hrs/Day",
+    },
+    cell: ({ row }) => <span className="font-mono">{row.original.workingHoursDay}h</span>,
+  },
+  {
+    accessorKey: "sprintDuration",
+    header: "Duration",
+    meta: {
+      mobileLabel: "Duration",
+    },
+    cell: ({ row }) => <span className="font-mono">{row.original.sprintDuration}d</span>,
+  },
+  {
+    header: "Days Off",
+    meta: {
+      mobileLabel: "Days Off",
+    },
+    cell: ({ row }) => {
+      const dayOffs = row.original.dayOff || [];
+      if (dayOffs.length === 0) return <span className="text-muted-foreground italic text-xs">None</span>;
+
+      return (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="h-7 gap-1.5 rounded-full border-dashed px-2 text-xs hover:bg-muted">
+              <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>{dayOffs.length} Day{dayOffs.length > 1 ? "s" : ""} Off</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-3" align="start">
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold leading-none">Specific Days Off</h4>
+              <div className="max-h-[200px] overflow-y-auto pr-1">
+                {dayOffs.map((day, idx) => (
+                  <div key={idx} className="flex flex-col border-b border-border/50 py-1.5 last:border-0">
+                    <span className="text-xs font-medium text-foreground">{day.label}</span>
+                    <span className="text-[11px] text-muted-foreground">{format(new Date(day.date), "EEEE, MMM dd, yyyy")}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+      );
+    },
+  },
+  {
+    id: "actions",
+    header: () => <div className="text-right">Actions</div>,
+    meta: {
+      mobileLabel: "Actions",
+      mobileSection: "actions",
+    },
+    cell: ({ row }) => {
+      const sprint = row.original;
+      return (
+        <div className="flex flex-col items-stretch gap-2 md:flex-row md:flex-wrap md:items-center md:justify-end">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground md:inline-flex"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit(sprint);
+            }}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-center border-border bg-background hover:border-foreground hover:bg-foreground hover:text-background md:hidden"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit(sprint);
+            }}
+          >
+            <Pencil className="h-4 w-4" />
+            Edit
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden h-8 w-8 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive md:inline-flex"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete(sprint.id);
+            }}
+          >
+            <Trash className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="w-full justify-center md:hidden"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete(sprint.id);
+            }}
+          >
+            <Trash className="h-4 w-4" />
+            Delete
+          </Button>
+        </div>
+      );
+    },
+  },
+];
