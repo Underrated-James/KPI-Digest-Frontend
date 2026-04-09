@@ -12,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
 import type { CreateSprintDTO, Sprint } from "../../domain/types/sprint-types"
 import {
   createSprintFormDefaultValues,
@@ -81,45 +80,46 @@ export function SprintForm({
   }
 
   return (
-    <Card className="mx-auto w-full max-w-2xl border border-border bg-card shadow-xl ring-1 ring-border/70">
-      <CardHeader className="border-b border-border/80 pb-5 text-center">
+    <Card className="mx-auto flex h-full w-full max-w-7xl max-h-[calc(100vh-2rem)] border border-border bg-card shadow-xl ring-1 ring-border/70">
+      <CardHeader className="border-b border-border/80 pb-4 text-center">
         <CardTitle>{initialData ? "Edit Sprint" : "Create New Sprint"}</CardTitle>
         <CardDescription>
           Configure your sprint details, schedule, and team working hours.
         </CardDescription>
       </CardHeader>
 
-      <CardContent
-        className={cn(
-          "px-8 pt-6",
-          fields.length > 0 && "max-h-[70vh] overflow-y-auto",
-        )}
-      >
+      <CardContent className="flex-1 min-h-0 overflow-hidden px-5 pt-5 sm:px-6">
         <form
           id="sprint-form"
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="space-y-6"
+          className="flex h-full min-h-0 flex-col space-y-5"
         >
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <SprintProjectField form={form} isLoading={isLoading} />
-            <SprintCoreFields
-              form={form}
-              isLoading={isLoading}
-              computedDuration={computedDuration}
-            />
-          </div>
+          <div className="grid flex-1 min-h-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(420px,1fr)] xl:grid-cols-[minmax(0,1fr)_minmax(460px,1.05fr)] xl:gap-6">
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <SprintProjectField form={form} isLoading={isLoading} />
+                <SprintCoreFields
+                  form={form}
+                  isLoading={isLoading}
+                  computedDuration={computedDuration}
+                />
+              </div>
+            </div>
 
-          <SprintDayOffSection
-            form={form}
-            fields={fields}
-            isLoading={isLoading}
-            onAppend={() => append({ label: "", date: "" })}
-            onRemove={remove}
-          />
+            <div className="lg:self-stretch">
+              <SprintDayOffSection
+                form={form}
+                fields={fields}
+                isLoading={isLoading}
+                onAppend={() => append({ label: "", date: "" })}
+                onRemove={remove}
+              />
+            </div>
+          </div>
         </form>
       </CardContent>
 
-      <CardFooter className="border-t border-border/80 bg-muted/30 px-8">
+      <CardFooter className="border-t border-border/80 bg-muted/30 px-5 py-4 sm:px-6">
         <div className="flex w-full items-center justify-end gap-3">
           <Button
             type="button"

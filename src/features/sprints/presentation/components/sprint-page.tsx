@@ -66,8 +66,8 @@ export function SprintPage() {
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {isFormOpen ? (
-          <div className="flex flex-1 items-start justify-center overflow-y-auto pb-6 pt-2">
-            <div className="w-full max-w-2xl animate-in fade-in zoom-in duration-300">
+          <div className="flex flex-1 items-center justify-center overflow-y-auto pb-6">
+            <div className="w-full max-w-7xl animate-in fade-in zoom-in duration-300">
               <SprintForm
                 initialData={editingSprint}
                 onSubmit={handleSubmit}

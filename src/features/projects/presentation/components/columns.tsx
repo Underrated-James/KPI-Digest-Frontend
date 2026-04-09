@@ -57,17 +57,22 @@ export const getProjectColumns = ({
       const status = row.original.status;
       const isActive = status === 'active';
       const isInProgress = status === 'inProgress';
-
       const getStatusStyles = () => {
-        if (isActive) return "border-emerald-500/30 bg-emerald-500/10 text-emerald-300";
-        if (isInProgress) return "border-amber-500/30 bg-amber-500/10 text-amber-300";
-        return "border-red-500/30 bg-red-500/10 text-red-300";
+        if (isActive) {
+          return "border-emerald-300 bg-emerald-100 text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300";
+        }
+
+        if (isInProgress) {
+          return "border-amber-300 bg-amber-100 text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300";
+        }
+
+        return "border-rose-300 bg-rose-100 text-rose-950 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300";
       };
 
       const getDotStyles = () => {
-        if (isActive) return "bg-emerald-400";
-        if (isInProgress) return "bg-amber-400";
-        return "bg-red-400";
+        if (isActive) return "bg-emerald-500 dark:bg-emerald-400";
+        if (isInProgress) return "bg-amber-500 dark:bg-amber-400";
+        return "bg-rose-500 dark:bg-rose-400";
       };
 
       const getStatusLabel = () => {
@@ -104,7 +109,11 @@ export const getProjectColumns = ({
             <span
               className={cn(
                 "inline-flex min-w-[84px] items-center gap-2 whitespace-nowrap text-left font-medium",
-                isActive ? "text-emerald-300" : isInProgress ? "text-amber-300" : "text-red-300"
+                isActive
+                  ? "text-emerald-950 dark:text-emerald-300"
+                  : isInProgress
+                    ? "text-amber-950 dark:text-amber-300"
+                    : "text-rose-950 dark:text-rose-300",
               )}
             >
               <span
@@ -123,7 +132,7 @@ export const getProjectColumns = ({
   },
   {
     id: "actions",
-    header: "Actions",
+    header: () => <div className="w-full text-center">Actions</div>,
     meta: {
       mobileLabel: "Actions",
       mobileSection: "actions",

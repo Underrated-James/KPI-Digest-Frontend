@@ -60,17 +60,33 @@ export const getSprintColumns = ({
     },
     cell: ({ row }) => {
       const status = row.original.status;
-      const variants: Record<string, string> = {
-        active: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
-        inactive: "border-red-500/30 bg-red-500/10 text-red-300",
-        draft: "border-slate-500/30 bg-slate-500/10 text-slate-300",
-        completed: "border-blue-500/30 bg-blue-500/10 text-blue-300",
+      const getStatusStyles = () => {
+        switch (status) {
+          case "active":
+            return "border-emerald-300 bg-emerald-100 text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300";
+          case "inactive":
+            return "border-rose-300 bg-rose-100 text-rose-950 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300";
+          case "draft":
+            return "border-amber-400/60 bg-amber-100 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300";
+          case "completed":
+            return "border-blue-300 bg-blue-100 text-blue-950 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-300";
+          default:
+            return "border-amber-400/60 bg-amber-100 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300";
+        }
       };
-      const dotVariants: Record<string, string> = {
-        active: "bg-emerald-400",
-        inactive: "bg-red-400",
-        draft: "bg-slate-400",
-        completed: "bg-blue-400",
+      const getDotStyles = () => {
+        switch (status) {
+          case "active":
+            return "bg-emerald-500 dark:bg-emerald-400";
+          case "inactive":
+            return "bg-rose-500 dark:bg-rose-400";
+          case "draft":
+            return "bg-amber-500 dark:bg-amber-400";
+          case "completed":
+            return "bg-blue-500 dark:bg-blue-400";
+          default:
+            return "bg-amber-500 dark:bg-amber-400";
+        }
       };
       const labels: Record<string, string> = {
         active: "Active",
@@ -79,19 +95,16 @@ export const getSprintColumns = ({
         completed: "Completed",
       };
       const label = labels[status] || status;
-      const variant =
-        variants[status] || "border-slate-500/30 bg-slate-500/10 text-slate-300";
-      const dotVariant = dotVariants[status] || "bg-slate-400";
 
       return (
         <>
           <span
             className={cn(
-              "hidden md:inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium",
-              variant,
+              "hidden md:inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+              getStatusStyles(),
             )}
           >
-            <span className={cn("h-2.5 w-2.5 rounded-full", dotVariant)} />
+            <span className={cn("h-2.5 w-2.5 rounded-full", getDotStyles())} />
             {label}
           </span>
 
@@ -112,15 +125,15 @@ export const getSprintColumns = ({
               className={cn(
                 "inline-flex min-w-[84px] items-center gap-2 whitespace-nowrap text-left font-medium",
                 status === "active"
-                  ? "text-emerald-300"
+                  ? "text-emerald-950 dark:text-emerald-300"
                   : status === "inactive"
-                    ? "text-red-300"
-                    : status === "completed"
-                      ? "text-blue-300"
-                      : "text-slate-300",
+                    ? "text-rose-950 dark:text-rose-300"
+                : status === "completed"
+                      ? "text-blue-950 dark:text-blue-300"
+                      : "text-amber-900 dark:text-amber-300",
               )}
             >
-              <span className={cn("h-2.5 w-2.5 rounded-full", dotVariant)} />
+              <span className={cn("h-2.5 w-2.5 rounded-full", getDotStyles())} />
               {label}
             </span>
           </div>
@@ -205,8 +218,9 @@ export const getSprintColumns = ({
               <Button
                 variant="outline"
                 size="sm"
-                className="hidden h-7 gap-1.5 rounded-full border-dashed px-2 text-xs hover:bg-muted md:inline-flex"
+                className="hidden h-7 gap-1.5 rounded-full border-dashed px-2 text-xs transition-colors duration-200 hover:border-foreground/30 hover:bg-muted hover:text-foreground md:inline-flex"
                 onClick={(event) => event.stopPropagation()}
+                title="View day off details"
               >
                 <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>
@@ -234,7 +248,7 @@ export const getSprintColumns = ({
   },
   {
     id: "actions",
-    header: () => <div className="text-right">Actions</div>,
+    header: () => <div className="w-full text-center">Actions</div>,
     meta: {
       mobileLabel: "Actions",
       mobileSection: "actions",
