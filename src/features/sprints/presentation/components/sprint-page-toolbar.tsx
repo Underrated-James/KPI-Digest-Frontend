@@ -34,6 +34,8 @@ export function SprintPageToolbar({
   onAddSprint,
   onBulkDelete,
 }: SprintPageToolbarProps) {
+  const applySearch = () => onSearchTermChange(searchTerm.trim())
+
   return (
     <div className="rounded-2xl border border-border bg-card/80 p-4 shadow-sm backdrop-blur sm:p-5">
       <div className="flex flex-col gap-4">
@@ -52,13 +54,26 @@ export function SprintPageToolbar({
                   id="sprint-search"
                   value={searchTerm}
                   onChange={(event) => onSearchTermChange(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      applySearch()
+                    }
+                  }}
                   placeholder={
                     isMobile
                       ? "Search sprints..."
                       : "Search by keyword..."
                   }
-                  className="h-11 border-border bg-background pl-9 text-foreground placeholder:text-muted-foreground"
+                  className="h-11 border-border bg-background pl-9 pr-11 text-foreground placeholder:text-muted-foreground"
                 />
+                <button
+                  type="button"
+                  onClick={applySearch}
+                  className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground transition hover:text-foreground"
+                  aria-label="Search"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
               </div>
             </div>
 

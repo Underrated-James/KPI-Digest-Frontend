@@ -30,6 +30,11 @@ import {
   SidebarGroupContent,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
@@ -71,7 +76,54 @@ const navItems: NavItem[] = [
 ];
 
 const sidebarButtonClassName =
-  "text-sidebar-foreground/70 transition-all duration-200 hover:bg-[var(--sidebar-hover)] hover:text-sidebar-foreground data-[active=true]:bg-[var(--sidebar-active)] data-[active=true]:text-[var(--sidebar-active-text)] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:hover:bg-transparent";
+  "text-sidebar-foreground/70 transition-all duration-200 hover:bg-[var(--sidebar-hover)] hover:text-sidebar-foreground data-[active=true]:bg-[var(--sidebar-active)] data-[active=true]:text-[var(--sidebar-active-text)] group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:rounded-xl group-data-[collapsible=icon]:hover:bg-transparent data-[active=true]:group-data-[collapsible=icon]:bg-transparent data-[active=true]:group-data-[collapsible=icon]:shadow-none";
+
+type ThemeOptionsProps = {
+  mounted: boolean;
+  theme: Theme;
+  setTheme: (value: Theme) => void;
+  onSelect?: () => void;
+};
+
+function ThemeOptions({
+  mounted,
+  theme,
+  setTheme,
+  onSelect,
+}: ThemeOptionsProps) {
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {[
+        { icon: Sun, label: "Light", value: "light" as Theme },
+        { icon: Moon, label: "Dark", value: "dark" as Theme },
+        { icon: Monitor, label: "System", value: "system" as Theme },
+      ].map(({ icon: Icon, label, value }) => {
+        const isActive = mounted && theme === value;
+
+        return (
+          <button
+            key={value}
+            type="button"
+            aria-label={`Switch to ${label.toLowerCase()} theme`}
+            onClick={() => {
+              setTheme(value);
+              onSelect?.();
+            }}
+            className={cn(
+              "flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-xs transition-colors",
+              isActive
+                ? "border-sidebar-border bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]"
+                : "border-sidebar-border bg-sidebar text-sidebar-foreground hover:bg-[var(--sidebar-hover)]",
+            )}
+          >
+            <Icon className="size-4" />
+            <span>{label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function SidebarBrandToggle() {
   const { state, toggleSidebar } = useSidebar();
@@ -134,14 +186,19 @@ function SidebarBrandToggle() {
 function SidebarNavButton({
   item,
   pathname,
-  onNavigate,
 }: {
   item: NavItem;
   pathname: string;
-  onNavigate?: () => void;
 }) {
+  const { isMobile, setOpenMobile } = useSidebar();
   const isActive =
     pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const navIconClassName = cn(
+    "flex size-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200",
+    isActive
+      ? "group-data-[collapsible=icon]:bg-white group-data-[collapsible=icon]:text-zinc-900 group-data-[collapsible=icon]:shadow-sm"
+      : "text-zinc-500 dark:text-zinc-400 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:text-zinc-600 group-data-[collapsible=icon]:dark:bg-zinc-800 group-data-[collapsible=icon]:dark:text-zinc-300 group-data-[collapsible=icon]:group-hover/menu-button:bg-zinc-700 group-data-[collapsible=icon]:group-hover/menu-button:text-white dark:group-data-[collapsible=icon]:group-hover/menu-button:bg-zinc-300 dark:group-data-[collapsible=icon]:group-hover/menu-button:text-black group-data-[collapsible=icon]:group-hover/menu-button:shadow-sm",
+  );
 
   return (
     <SidebarMenuItem key={item.title}>
@@ -152,20 +209,19 @@ function SidebarNavButton({
         className={cn(
           sidebarButtonClassName,
           isActive &&
-            "shadow-sm group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none",
+          "shadow-sm group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none",
         )}
       >
-        <Link href={item.href} onClick={onNavigate}>
-          <span
-            className={cn(
-              "flex size-7 shrink-0 items-center justify-center rounded-lg text-current transition-all duration-200",
-              "group-data-[collapsible=icon]:group-hover/menu-button:scale-105",
-              "group-data-[collapsible=icon]:group-hover/menu-button:text-current",
-              "group-data-[collapsible=icon]:group-hover/menu-button:bg-[var(--sidebar-hover)] group-data-[collapsible=icon]:group-hover/menu-button:shadow-sm",
-              isActive &&
-                "text-current group-data-[collapsible=icon]:bg-[var(--sidebar-active)] group-data-[collapsible=icon]:text-[var(--sidebar-active-text)] group-data-[collapsible=icon]:shadow-sm",
-            )}
-          >
+        <Link
+          href={item.href}
+          aria-label={item.title}
+          onClick={() => {
+            if (isMobile) {
+              setOpenMobile(false);
+            }
+          }}
+        >
+          <span className={navIconClassName}>
             <item.icon className="size-4" />
           </span>
           <span className="group-data-[collapsible=icon]:hidden">
@@ -198,7 +254,10 @@ function SidebarActionButton({
 
 function SidebarThemeMenu() {
   const { theme, resolvedTheme, setTheme } = useTheme();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
   const [isOpen, setIsOpen] = React.useState(false);
+  const [collapsedThemeOpen, setCollapsedThemeOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -215,31 +274,17 @@ function SidebarThemeMenu() {
 
   return (
     <SidebarMenuItem>
-      <div className="group-data-[collapsible=icon]:contents">
-        <SidebarMenuButton
-          tooltip="Settings"
-          className={sidebarButtonClassName}
-          onClick={() => setIsOpen((current) => !current)}
-        >
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200 group-data-[collapsible=icon]:group-hover/menu-button:scale-105 group-data-[collapsible=icon]:group-hover/menu-button:bg-[var(--sidebar-hover)] group-data-[collapsible=icon]:group-hover/menu-button:text-current group-data-[collapsible=icon]:group-hover/menu-button:shadow-sm">
-            <Settings className="size-4" />
-          </span>
-          <span className="group-data-[collapsible=icon]:hidden">Settings</span>
-          <span className="ml-auto flex size-7 shrink-0 items-center justify-center rounded-lg border border-sidebar-border/80 bg-[var(--sidebar-hover)] text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-            <ActiveThemeIcon className="size-4" />
-          </span>
-          <span className="flex size-7 shrink-0 items-center justify-center text-sidebar-foreground/60 transition-transform duration-200 group-data-[collapsible=icon]:hidden">
-            <ChevronDown className={cn("size-4", isOpen && "rotate-180")} />
-          </span>
-        </SidebarMenuButton>
-
-        <div
-          className={cn(
-            "overflow-hidden transition-all duration-200 ease-out group-data-[collapsible=icon]:hidden",
-            isOpen ? "max-h-48 pt-2 opacity-100" : "max-h-0 opacity-0",
-          )}
-        >
-          <div className="rounded-xl border border-sidebar-border bg-[var(--sidebar-hover)]/55 p-3">
+      {isCollapsed ? (
+        <Popover open={collapsedThemeOpen} onOpenChange={setCollapsedThemeOpen}>
+          <PopoverTrigger asChild>
+            <SidebarMenuButton tooltip="Settings" className={sidebarButtonClassName}>
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200 group-data-[collapsible=icon]:group-hover/menu-button:scale-105 group-data-[collapsible=icon]:group-hover/menu-button:bg-[var(--sidebar-hover)] group-data-[collapsible=icon]:group-hover/menu-button:text-current group-data-[collapsible=icon]:group-hover/menu-button:shadow-sm">
+                <Settings className="size-4" />
+              </span>
+              <span className="group-data-[collapsible=icon]:hidden">Settings</span>
+            </SidebarMenuButton>
+          </PopoverTrigger>
+          <PopoverContent className="w-72 rounded-xl border-sidebar-border bg-sidebar p-3">
             <div className="mb-3 flex items-center justify-between">
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sidebar-foreground/55">
                 Theme
@@ -251,55 +296,67 @@ function SidebarThemeMenu() {
                 {displayTheme}
               </div>
             </div>
+            <ThemeOptions
+              mounted={mounted}
+              theme={theme}
+              setTheme={setTheme}
+              onSelect={() => setCollapsedThemeOpen(false)}
+            />
+          </PopoverContent>
+        </Popover>
+      ) : (
+        <div className="group-data-[collapsible=icon]:contents">
+          <SidebarMenuButton
+            tooltip="Settings"
+            className={sidebarButtonClassName}
+            onClick={() => setIsOpen((current) => !current)}
+          >
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200 group-data-[collapsible=icon]:group-hover/menu-button:scale-105 group-data-[collapsible=icon]:group-hover/menu-button:bg-[var(--sidebar-hover)] group-data-[collapsible=icon]:group-hover/menu-button:text-current group-data-[collapsible=icon]:group-hover/menu-button:shadow-sm">
+              <Settings className="size-4" />
+            </span>
+            <span className="group-data-[collapsible=icon]:hidden">Settings</span>
+            <span className="ml-auto flex size-7 shrink-0 items-center justify-center rounded-lg border border-sidebar-border/80 bg-[var(--sidebar-hover)] text-sidebar-foreground group-data-[collapsible=icon]:hidden">
+              <ActiveThemeIcon className="size-4" />
+            </span>
+            <span className="flex size-7 shrink-0 items-center justify-center text-sidebar-foreground/60 transition-transform duration-200 group-data-[collapsible=icon]:hidden">
+              <ChevronDown className={cn("size-4", isOpen && "rotate-180")} />
+            </span>
+          </SidebarMenuButton>
 
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { icon: Sun, label: "Light", value: "light" as Theme },
-                { icon: Moon, label: "Dark", value: "dark" as Theme },
-                { icon: Monitor, label: "System", value: "system" as Theme },
-              ].map(({ icon: Icon, label, value }) => {
-                const isActive = mounted && theme === value;
+          <div
+            className={cn(
+              "overflow-hidden transition-all duration-200 ease-out group-data-[collapsible=icon]:hidden",
+              isOpen ? "max-h-48 pt-2 opacity-100" : "max-h-0 opacity-0",
+            )}
+          >
+            <div className="rounded-xl border border-sidebar-border bg-[var(--sidebar-hover)]/55 p-3">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sidebar-foreground/55">
+                  Theme
+                </div>
+                <div
+                  className="text-xs text-sidebar-foreground/65"
+                  suppressHydrationWarning
+                >
+                  {displayTheme}
+                </div>
+              </div>
 
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    aria-label={`Switch to ${label.toLowerCase()} theme`}
-                    onClick={() => setTheme(value)}
-                    className={cn(
-                      "flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-xs transition-colors",
-                      isActive
-                        ? "border-sidebar-border bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]"
-                        : "border-sidebar-border bg-sidebar text-sidebar-foreground hover:bg-[var(--sidebar-hover)]",
-                    )}
-                  >
-                    <Icon className="size-4" />
-                    <span>{label}</span>
-                  </button>
-                );
-              })}
+              <ThemeOptions
+                mounted={mounted}
+                theme={theme}
+                setTheme={setTheme}
+              />
             </div>
           </div>
         </div>
-      </div>
+      )}
     </SidebarMenuItem>
   );
 }
 
-export function AppSidebar() {
+function AppSidebarBase() {
   const pathname = usePathname();
-  const { isMobile, setOpen, setOpenMobile } = useSidebar();
-
-  const handleNavItemClick = () => {
-    if (isMobile) {
-      setOpenMobile(false);
-      return;
-    }
-
-    if (window.innerWidth < 1024) {
-      setOpen(false);
-    }
-  };
 
   return (
     <Sidebar
@@ -322,7 +379,6 @@ export function AppSidebar() {
                   key={item.title}
                   item={item}
                   pathname={pathname}
-                  onNavigate={handleNavItemClick}
                 />
               ))}
             </SidebarMenu>
@@ -339,3 +395,5 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
+export const AppSidebar = React.memo(AppSidebarBase);
