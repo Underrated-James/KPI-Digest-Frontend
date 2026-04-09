@@ -5,7 +5,7 @@ import type { CreateSprintDTO, Sprint } from "../../../domain/types/sprint-types
 import { calculateWorkingDays } from "./sprint-form-utils"
 
 const sprintDayOffSchema = z.object({
-  label: z.string().min(1, "Label is required"),
+  label: z.string().trim().min(1, "Label is required"),
   date: z.string().min(1, "Date is required"),
 })
 
