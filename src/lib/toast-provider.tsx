@@ -140,7 +140,7 @@ export function ToastProvider() {
 
   return (
     <div
-      className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)]"
+      className="fixed right-6 top-6 z-50 w-[380px] max-w-[calc(100vw-3rem)]"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -201,7 +201,7 @@ export function ToastProvider() {
                     : isTop
                       ? 1
                       : Math.max(0.5, 1 - reverseIndex * 0.25),
-                  y: isHovered ? 0 : -reverseIndex * 8,
+                  y: isHovered ? 0 : reverseIndex * 8,
                   scale: isHovered
                     ? 1
                     : Math.max(0.94, 1 - reverseIndex * 0.03),
@@ -223,7 +223,7 @@ export function ToastProvider() {
                     index === visibleToasts.length - 1
                       ? "relative"
                       : "absolute",
-                  bottom: 0,
+                  top: 0,
                   left: 0,
                   right: 0,
                 }}
