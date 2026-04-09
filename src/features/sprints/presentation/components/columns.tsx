@@ -129,6 +129,7 @@ export const getSprintColumns = ({
     },
   },
   {
+    id: "dates",
     header: "Dates",
     meta: {
       mobileLabel: "Dates",
@@ -174,36 +175,60 @@ export const getSprintColumns = ({
     cell: ({ row }) => <span className="font-mono">{row.original.sprintDuration}d</span>,
   },
   {
+    id: "dayOff",
     header: "Days Off",
     meta: {
       mobileLabel: "Days Off",
+      mobileVisible: true,
     },
     cell: ({ row }) => {
       const dayOffs = row.original.dayOff || [];
-      if (dayOffs.length === 0) return <span className="text-muted-foreground italic text-xs">None</span>;
+      if (dayOffs.length === 0) {
+        return (
+          <span className="text-xs text-muted-foreground md:italic">
+            None
+          </span>
+        );
+      }
 
       return (
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-7 gap-1.5 rounded-full border-dashed px-2 text-xs hover:bg-muted">
-              <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-              <span>{dayOffs.length} Day{dayOffs.length > 1 ? "s" : ""} Off</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 p-3" align="start">
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold leading-none">Specific Days Off</h4>
-              <div className="max-h-[200px] overflow-y-auto pr-1">
-                {dayOffs.map((day, idx) => (
-                  <div key={idx} className="flex flex-col border-b border-border/50 py-1.5 last:border-0">
-                    <span className="text-xs font-medium text-foreground">{day.label}</span>
-                    <span className="text-[11px] text-muted-foreground">{format(new Date(day.date), "EEEE, MMM dd, yyyy")}</span>
-                  </div>
-                ))}
+        <>
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground md:hidden">
+            <Calendar className="h-3.5 w-3.5" />
+            <span>
+              {dayOffs.length} Day{dayOffs.length > 1 ? "s" : ""} Off
+            </span>
+          </span>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden h-7 gap-1.5 rounded-full border-dashed px-2 text-xs hover:bg-muted md:inline-flex"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>
+                  {dayOffs.length} Day{dayOffs.length > 1 ? "s" : ""} Off
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-3" align="start">
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold leading-none">Specific Days Off</h4>
+                <div className="max-h-[200px] overflow-y-auto pr-1">
+                  {dayOffs.map((day, idx) => (
+                    <div key={idx} className="flex flex-col border-b border-border/50 py-1.5 last:border-0">
+                      <span className="text-xs font-medium text-foreground">{day.label}</span>
+                      <span className="text-[11px] text-muted-foreground">{format(new Date(day.date), "EEEE, MMM dd, yyyy")}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          </PopoverContent>
-        </Popover>
+            </PopoverContent>
+          </Popover>
+        </>
       );
     },
   },

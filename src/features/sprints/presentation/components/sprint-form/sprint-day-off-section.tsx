@@ -22,6 +22,8 @@ export function SprintDayOffSection({
   onAppend,
   onRemove,
 }: SprintDayOffSectionProps) {
+  const dayOffErrors = form.formState.errors.dayOff
+
   return (
     <div className="space-y-4 rounded-xl border border-border/50 bg-muted/20 p-4">
       <div className="flex items-center justify-between">
@@ -48,42 +50,47 @@ export function SprintDayOffSection({
 
       <div className="space-y-3">
         {fields.map((item, index) => (
-          <div
-            key={item.id}
-            className="flex items-start gap-3 animate-in fade-in slide-in-from-top-1 duration-200"
-          >
-            <div className="flex-1 space-y-1">
-              <Input
-                placeholder="Holiday label"
-                className="h-9 text-xs"
-                {...form.register(`dayOff.${index}.label` as const)}
+          <div key={item.id} className="animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="flex items-start gap-3">
+              <div className="flex-1 space-y-1">
+                <Input
+                  placeholder="Holiday label"
+                  className="h-9 text-xs"
+                  {...form.register(`dayOff.${index}.label` as const)}
+                  disabled={isLoading}
+                />
+                {Array.isArray(dayOffErrors) && dayOffErrors[index]?.label ? (
+                  <FieldError errors={[dayOffErrors[index].label]} />
+                ) : null}
+              </div>
+              <div className="w-40 space-y-1">
+                <Input
+                  type="date"
+                  className="h-9 text-xs"
+                  {...form.register(`dayOff.${index}.date` as const)}
+                  disabled={isLoading}
+                />
+                {Array.isArray(dayOffErrors) && dayOffErrors[index]?.date ? (
+                  <FieldError errors={[dayOffErrors[index].date]} />
+                ) : null}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-destructive hover:bg-destructive/10"
+                onClick={() => onRemove(index)}
                 disabled={isLoading}
-              />
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-            <div className="w-40 space-y-1">
-              <Input
-                type="date"
-                className="h-9 text-xs"
-                {...form.register(`dayOff.${index}.date` as const)}
-                disabled={isLoading}
-              />
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 text-destructive hover:bg-destructive/10"
-              onClick={() => onRemove(index)}
-              disabled={isLoading}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
           </div>
         ))}
       </div>
 
-      {form.formState.errors.dayOff ? (
-        <FieldError errors={[form.formState.errors.dayOff]} />
+      {!Array.isArray(dayOffErrors) && dayOffErrors ? (
+        <FieldError errors={[dayOffErrors]} />
       ) : null}
     </div>
   )
