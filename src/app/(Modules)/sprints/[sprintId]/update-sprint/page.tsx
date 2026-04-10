@@ -1,4 +1,4 @@
-export default async function UpdateProjectPage({
+export default async function UpdateSprintPage({
   params,
 }: {
   params: Promise<{ sprintId: string }>;
