@@ -1,14 +1,14 @@
 "use client";
 
-import { ProjectTable } from "./project-table";
-import { ProjectForm } from "./project-form";
-import { ProjectDeleteModal } from "./project-delete-modal";
-import { ProjectPageErrorState } from "./project-page-error-state";
-import { ProjectPageToolbar } from "./project-page-toolbar";
-import { ProjectsTableSkeleton } from "./project-table-skeleton";
-import { useProjectPage } from "../hooks/use-project-page";
+import { TeamTable } from "./team-table";
+import { TeamForm } from "./team-form";
+import { TeamDeleteModal } from "./team-delete-modal";
+import { TeamPageErrorState } from "./team-page-error-state";
+import { TeamPageToolbar } from "./team-page-toolbar";
+import { TeamsTableSkeleton } from "./team-table-skeleton";
+import { useTeamPage } from "../hooks/use-team-page";
 
-export function ProjectPage() {
+export function TeamPage() {
   const {
     searchTerm,
     setSearchTerm,
