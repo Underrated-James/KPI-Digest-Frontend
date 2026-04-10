@@ -21,8 +21,7 @@ export function ProjectPageErrorState({
           We couldn&apos;t load the projects table
         </h2>
         <p className="mt-3 text-sm text-foreground sm:text-base">
-          Search, filters, and actions are still available. Please check the
-          connection and try again in a moment.
+          Please check the connection and try again in a moment.
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
           {errorMessage || "An unexpected error occurred while fetching projects."}
