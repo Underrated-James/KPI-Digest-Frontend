@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Controller, useController, type UseFormReturn } from "react-hook-form"
 import {
   Field,
@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import type { SprintFormValues } from "./sprint-form-schema"
+import { parseDateInputValue, toDateInputValue } from "./sprint-form-utils"
 
 interface SprintCoreFieldsProps {
   form: UseFormReturn<SprintFormValues>
@@ -29,12 +30,6 @@ function SprintHoursPerDayField({
   const [inputValue, setInputValue] = useState(
     field.value === undefined || field.value === null ? "" : String(field.value),
   )
-
-  useEffect(() => {
-    setInputValue(
-      field.value === undefined || field.value === null ? "" : String(field.value),
-    )
-  }, [field.value])
 
   const commitValue = (nextValue: string) => {
     setInputValue(nextValue)
@@ -122,6 +117,9 @@ export function SprintCoreFields({
   isLoading,
   computedDuration,
 }: SprintCoreFieldsProps) {
+  const startDate = form.watch("startDate")
+  const endDate = form.watch("endDate")
+
   return (
     <>
       <Controller
@@ -169,12 +167,13 @@ export function SprintCoreFields({
             <FieldLabel>Start Date</FieldLabel>
             <Input
               type="date"
-              value={
-                field.value instanceof Date
-                  ? field.value.toISOString().split("T")[0]
-                  : ""
+              name={field.name}
+              value={toDateInputValue(field.value)}
+              onBlur={field.onBlur}
+              onChange={(event) =>
+                field.onChange(parseDateInputValue(event.target.value))
               }
-              onChange={(event) => field.onChange(new Date(event.target.value))}
+              ref={field.ref}
               disabled={isLoading}
             />
             {fieldState.invalid ? <FieldError errors={[fieldState.error]} /> : null}
@@ -190,12 +189,14 @@ export function SprintCoreFields({
             <FieldLabel>End Date</FieldLabel>
             <Input
               type="date"
-              value={
-                field.value instanceof Date
-                  ? field.value.toISOString().split("T")[0]
-                  : ""
+              name={field.name}
+              value={toDateInputValue(field.value)}
+              min={toDateInputValue(startDate)}
+              onBlur={field.onBlur}
+              onChange={(event) =>
+                field.onChange(parseDateInputValue(event.target.value))
               }
-              onChange={(event) => field.onChange(new Date(event.target.value))}
+              ref={field.ref}
               disabled={isLoading}
             />
             {fieldState.invalid ? <FieldError errors={[fieldState.error]} /> : null}
@@ -221,7 +222,9 @@ export function SprintCoreFields({
               className="bg-muted/40 text-muted-foreground"
             />
             <FieldDescription className="text-xs">
-              Calculated from working weekdays minus day-offs.
+              {startDate && endDate
+                ? "Calculated from working weekdays minus day-offs."
+                : "Set the sprint date range to enable holiday/day-off scheduling."}
             </FieldDescription>
             {fieldState.invalid ? <FieldError errors={[fieldState.error]} /> : null}
           </Field>
