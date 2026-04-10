@@ -2,7 +2,7 @@
 
 import * as z from "zod"
 import type { CreateSprintDTO, Sprint } from "../../../domain/types/sprint-types"
-import { calculateWorkingDays } from "./sprint-form-utils"
+import { calculateWorkingDays, isDayOffDateWithinRange } from "./sprint-form-utils"
 
 const sprintDayOffSchema = z.object({
   label: z.string().trim().min(1, "Label is required"),
@@ -14,8 +14,8 @@ export const sprintFormSchema = z
     projectId: z.string().min(1, "Project is required."),
     name: z.string().min(2, "Name must be at least 2 characters."),
     status: z.enum(["active", "inactive", "draft", "completed"]),
-    startDate: z.date({ message: "Start date is required." }),
-    endDate: z.date({ message: "End date is required." }),
+    startDate: z.date().optional(),
+    endDate: z.date().optional(),
     workingHoursDay: z.number().min(1).max(24),
     sprintDuration: z.number().min(0),
     officialStartDate: z.date().optional().nullable(),
@@ -23,6 +23,24 @@ export const sprintFormSchema = z
     dayOff: z.array(sprintDayOffSchema),
   })
   .superRefine((values, context) => {
+    if (!(values.startDate instanceof Date) || Number.isNaN(values.startDate.getTime())) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Start date is required.",
+        path: ["startDate"],
+      })
+      return
+    }
+
+    if (!(values.endDate instanceof Date) || Number.isNaN(values.endDate.getTime())) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "End date is required.",
+        path: ["endDate"],
+      })
+      return
+    }
+
     if (values.endDate.getTime() <= values.startDate.getTime()) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
@@ -31,6 +49,18 @@ export const sprintFormSchema = z
       })
       return
     }
+
+    values.dayOff.forEach((dayOff, index) => {
+      if (
+        !isDayOffDateWithinRange(dayOff.date, values.startDate, values.endDate)
+      ) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Holiday date must be within the sprint date range.",
+          path: ["dayOff", index, "date"],
+        })
+      }
+    })
 
     if (
       calculateWorkingDays(values.startDate, values.endDate, values.dayOff) < 2
@@ -54,10 +84,10 @@ export function createSprintFormDefaultValues(
     status: initialData?.status ?? "draft",
     startDate: initialData?.startDate
       ? new Date(initialData.startDate)
-      : new Date(),
-    endDate: initialData?.endDate ? new Date(initialData.endDate) : new Date(),
+      : undefined,
+    endDate: initialData?.endDate ? new Date(initialData.endDate) : undefined,
     workingHoursDay: initialData?.workingHoursDay ?? 8,
-    sprintDuration: initialData?.sprintDuration ?? 2,
+    sprintDuration: initialData?.sprintDuration ?? 0,
     officialStartDate: initialData?.officialStartDate
       ? new Date(initialData.officialStartDate)
       : null,
@@ -71,6 +101,10 @@ export function createSprintFormDefaultValues(
 export function toCreateSprintPayload(
   data: SprintFormValues,
 ): CreateSprintDTO {
+  if (!(data.startDate instanceof Date) || !(data.endDate instanceof Date)) {
+    throw new Error("Sprint start and end dates are required before submission.")
+  }
+
   return {
     ...data,
     startDate: data.startDate.toISOString(),
