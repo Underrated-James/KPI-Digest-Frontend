@@ -6,7 +6,7 @@ import {
   Briefcase,
   CheckSquare,
   ChevronDown,
-  Users2,
+  BarChart3,
   Settings,
   LogOut,
   CalendarDays,
@@ -49,24 +49,24 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    title: "Projects",
-    href: "/projects",
-    icon: Briefcase,
-  },
-  {
-    title: "Users",
-    href: "/users",
-    icon: Users,
-  },
-  {
-    title: "Teams",
-    href: "/teams",
-    icon: Users2,
+    title: "Dashboard",
+    href: "/",
+    icon: BarChart3,
   },
   {
     title: "Sprints",
     href: "/sprints",
     icon: CalendarDays,
+  },
+  {
+    title: "Projects",
+    href: "/projects",
+    icon: Briefcase,
+  },
+  {
+    title: "Teams",
+    href: "/users",
+    icon: Users,
   },
   {
     title: "Tickets",
