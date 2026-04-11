@@ -14,10 +14,12 @@ import { UsersListData } from "../queries/user-query-types";
 export function useUsers(params?: UserQueryParams) {
   const normalizedParams = normalizeUserQueryParams(params);
 
+  // If role is provided, we might want to still allow it for other parts of the app
+  // but for the sprint-teams page, we prefer the cached all-users list.
   return useQuery<Awaited<ReturnType<typeof userService.getUsers.execute>>, ApiError, UsersListData>({
     queryKey: userKeys.list(normalizedParams),
     queryFn: () => userService.getUsers.execute(normalizedParams),
-    staleTime: USER_SEARCH_QUERY_STALE_TIME,
+    staleTime: USER_SEARCH_QUERY_STALE_TIME, // Use 3 mins instead of 30s
     gcTime: USER_SEARCH_QUERY_GC_TIME,
     retry: userQueryRetry,
     refetchOnWindowFocus: false,

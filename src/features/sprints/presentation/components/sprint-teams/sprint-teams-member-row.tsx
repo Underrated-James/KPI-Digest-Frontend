@@ -1,22 +1,17 @@
 "use client";
 
-import type { SprintTeamMember } from "../../hooks/use-sprint-teams-page";
-import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { SprintTeamMember } from "../../hooks/use-sprint-teams-page";
 
 interface SprintTeamsMemberRowProps {
   member: SprintTeamMember;
   index: number;
-  hoursPerDay: number;
+  workingHoursDay: number;
   onRemove: (userId: string) => void;
-  onRoleChange: (userId: string, role: "DEVS" | "QA") => void;
   onAllocationChange: (userId: string, allocationPercentage: number) => void;
 }
-
-const roleBadgeColors: Record<string, string> = {
-  DEVS: "bg-indigo-500/15 text-indigo-600 dark:bg-indigo-400/15 dark:text-indigo-400",
-  QA: "bg-rose-500/15 text-rose-600 dark:bg-rose-400/15 dark:text-rose-400",
-};
 
 function getInitials(name: string) {
   return name
@@ -45,17 +40,39 @@ function getAvatarColor(name: string) {
   return colors[Math.abs(hash) % colors.length];
 }
 
+const roleBadgeColors: Record<string, string> = {
+  DEVS: "bg-indigo-500/15 text-indigo-600 dark:bg-indigo-400/15 dark:text-indigo-400",
+  QA: "bg-rose-500/15 text-rose-600 dark:bg-rose-400/15 dark:text-rose-400",
+};
+
 export function SprintTeamsMemberRow({
   member,
   index,
-  hoursPerDay,
+  workingHoursDay,
   onRemove,
-  onRoleChange,
   onAllocationChange,
 }: SprintTeamsMemberRowProps) {
   const effectiveHours =
-    Math.round(((hoursPerDay * member.allocationPercentage) / 100) * 10) / 10;
+    Math.round(((workingHoursDay * member.allocationPercentage) / 100) * 10) /
+    10;
   const avatarColor = getAvatarColor(member.name);
+  const [allocationDraft, setAllocationDraft] = useState(
+    String(member.allocationPercentage),
+  );
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAllocationDraft(String(member.allocationPercentage));
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [member.allocationPercentage]);
+
+  const commitAllocation = (value: string) => {
+    if (value.trim() === "") return;
+    const val = Math.min(100, Math.max(1, Number(value) || 1));
+    onAllocationChange(member.userId, val);
+  };
 
   return (
     <div
@@ -64,7 +81,6 @@ export function SprintTeamsMemberRow({
         index % 2 === 0 ? "bg-background" : "bg-muted/10",
       )}
     >
-      {/* Avatar */}
       <div
         className={cn(
           "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold",
@@ -74,58 +90,65 @@ export function SprintTeamsMemberRow({
         {getInitials(member.name)}
       </div>
 
-      {/* Info */}
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground">
-          {member.name}
-        </p>
-        <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex min-w-0 items-center gap-2">
+          <p className="truncate text-sm font-semibold text-foreground">
+            {member.name}
+          </p>
           <span
             className={cn(
-              "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold",
-              roleBadgeColors[member.role] ?? "bg-muted text-muted-foreground",
+              "shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide",
+              roleBadgeColors[member.role] ??
+                "bg-muted text-muted-foreground",
             )}
           >
             {member.role}
           </span>
-          <span className="text-[11px] text-muted-foreground">
-            {member.allocationPercentage}% · {effectiveHours}h/d
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+          <span>Allocation {member.allocationPercentage}%</span>
+          <span className="h-1 w-1 rounded-full bg-muted-foreground/50" />
+          <span>{effectiveHours}h/day</span>
+        </div>
+      </div>
+
+      <div className="hidden min-w-[124px] items-center justify-end md:flex">
+        <div className="flex items-center gap-1 rounded-lg border border-border bg-background px-2 py-1">
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={allocationDraft}
+            onChange={(e) => {
+              const nextValue = e.target.value.replace(/[^\d]/g, "");
+              setAllocationDraft(nextValue);
+              commitAllocation(nextValue);
+            }}
+            onBlur={() => {
+              if (allocationDraft.trim() === "") {
+                setAllocationDraft(String(member.allocationPercentage));
+                return;
+              }
+              commitAllocation(allocationDraft);
+            }}
+            className="h-7 w-12 bg-transparent text-center text-sm font-semibold text-foreground outline-none"
+            aria-label={`Allocation percentage for ${member.name}`}
+          />
+          <span className="text-[10px] font-medium text-muted-foreground">
+            %
           </span>
         </div>
       </div>
 
-      {/* Role select */}
-      <select
-        value={member.role}
-        onChange={(e) =>
-          onRoleChange(member.userId, e.target.value as "DEVS" | "QA")
-        }
-        className="hidden h-7 w-[70px] appearance-none rounded-md border border-border bg-background px-2 text-[11px] font-medium text-foreground outline-none transition focus:ring-1 focus:ring-ring/50 md:block"
-      >
-        <option value="DEVS">DEVS</option>
-        <option value="QA">QA</option>
-      </select>
-
-      {/* Allocation input */}
-      <div className="hidden items-center gap-1 md:flex">
-        <input
-          type="number"
-          min={1}
-          max={100}
-          value={member.allocationPercentage}
-          onChange={(e) => {
-            const val = Math.min(100, Math.max(1, Number(e.target.value) || 1));
-            onAllocationChange(member.userId, val);
-          }}
-          className="h-7 w-14 rounded-md border border-border bg-background px-2 text-center text-[11px] font-mono text-foreground outline-none transition focus:ring-1 focus:ring-ring/50"
-        />
-        <span className="text-[10px] text-muted-foreground">%</span>
+      <div className="hidden min-w-[72px] justify-center md:flex">
+        <span className="font-mono text-sm font-semibold text-foreground">
+          {effectiveHours}h
+        </span>
       </div>
 
-      {/* Remove */}
       <button
         onClick={() => onRemove(member.userId)}
-        className="shrink-0 rounded-md p-1.5 text-transparent transition-colors group-hover:text-destructive hover:bg-destructive/10"
+        className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
         title={`Remove ${member.name}`}
       >
         <Trash2 className="h-3.5 w-3.5" />

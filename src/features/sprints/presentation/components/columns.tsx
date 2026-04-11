@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, Pencil, Trash, Calendar, UserPlus, Users } from "lucide-react";
+import { ChevronDown, Pencil, Trash, Calendar, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Sprint } from "../../domain/types/sprint-types";
@@ -260,8 +260,8 @@ export const getSprintColumns = ({
     cell: ({ row }) => {
       const sprint = row.original;
       const hasTeam = teamSprintMap?.has(sprint.id) ?? false;
-      const TeamIcon = hasTeam ? Users : UserPlus;
-      const teamLabel = hasTeam ? "View Teams" : "Create Teams";
+      const TeamIcon = hasTeam ? Pencil : UserPlus;
+      const teamLabel = hasTeam ? "Edit Team" : "Create Team";
       return (
         <div className="flex flex-col items-stretch gap-2 md:flex-row md:flex-wrap md:items-center md:justify-end">
           <Button
@@ -321,7 +321,7 @@ export const getSprintColumns = ({
             }}
           >
             <TeamIcon className="h-4 w-4" />
-            {hasTeam ? "View" : "Teams"}
+            {hasTeam ? "Edit" : "Create"}
           </Button>
           <Button
             variant="ghost"

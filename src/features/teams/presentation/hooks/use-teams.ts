@@ -15,7 +15,7 @@ export function useTeams(params?: TeamQueryParams) {
   return useQuery<Awaited<ReturnType<typeof teamService.getTeams.execute>>, ApiError, TeamsListData>({
     queryKey: teamKeys.list(params),
     queryFn: () => teamService.getTeams.execute(params),
-    staleTime: TEAM_SEARCH_QUERY_STALE_TIME,
+    staleTime: TEAM_SEARCH_QUERY_STALE_TIME, // Use 3 mins instead of 30s
     gcTime: TEAM_SEARCH_QUERY_GC_TIME,
     retry: teamQueryRetry,
     refetchOnWindowFocus: false,

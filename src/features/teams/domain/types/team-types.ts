@@ -4,8 +4,9 @@ import { UserRole } from "@/features/users/domain/types/user-types";
 
 export interface ListOfUsers {
     userId: string;
-    name: string;
+    name?: string;
     allocationPercentage: number;
+    hoursPerDay: number;
     role: UserRole;
     leave?: LeaveDays[];
 }
@@ -31,9 +32,7 @@ export interface Team {
     sprintId: string;
     sprintName?: string;
     sprintStatus: SprintStatus;
-    hoursDay: number;
-    userIds: ListOfUsers[];
-    calculatedHoursDay: number;
+    users: ListOfUsers[];
     createdAt: string;
     updatedAt: string;
 }
@@ -41,9 +40,7 @@ export interface Team {
 export interface CreateTeamDTO {
     projectId: string;
     sprintId: string;
-    hoursDay: number;
     userIds: ListOfUsers[];
-    calculatedHoursPerDay: number;
 }
 
 export type UpdateTeamDTO = Partial<CreateTeamDTO>;

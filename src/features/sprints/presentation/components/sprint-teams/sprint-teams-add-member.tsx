@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Plus, Check, X, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/features/users/domain/types/user-types";
@@ -11,6 +11,7 @@ interface SprintTeamsAddMemberProps {
   onUserSearchChange: (query: string) => void;
   onAddMember: (user: User) => void;
   isLoading: boolean;
+  roleFilter: "ALL" | "DEVS" | "QA";
 }
 
 const roleBadgeColors: Record<string, string> = {
@@ -18,6 +19,12 @@ const roleBadgeColors: Record<string, string> = {
   QA: "bg-rose-500/15 text-rose-600 dark:bg-rose-400/15 dark:text-rose-400",
   ADMIN:
     "bg-amber-500/15 text-amber-600 dark:bg-amber-400/15 dark:text-amber-400",
+};
+
+const roleFilterLabels: Record<"ALL" | "DEVS" | "QA", string> = {
+  ALL: "All roles",
+  DEVS: "Devs only",
+  QA: "QA only",
 };
 
 function getInitials(name: string) {
@@ -35,11 +42,27 @@ export function SprintTeamsAddMember({
   onUserSearchChange,
   onAddMember,
   isLoading,
+  roleFilter,
 }: SprintTeamsAddMemberProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [selected, setSelected] = useState<User | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleConfirm = useCallback(() => {
+    if (selected) {
+      onAddMember(selected);
+      setSelected(null);
+      onUserSearchChange("");
+      setIsSearching(false);
+    }
+  }, [onAddMember, onUserSearchChange, selected]);
+
+  const handleCancel = useCallback(() => {
+    setSelected(null);
+    onUserSearchChange("");
+    setIsSearching(false);
+  }, [onUserSearchChange]);
 
   useEffect(() => {
     if (isSearching && inputRef.current) {
@@ -60,22 +83,7 @@ export function SprintTeamsAddMember({
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [isSearching]);
-
-  const handleConfirm = () => {
-    if (selected) {
-      onAddMember(selected);
-      setSelected(null);
-      onUserSearchChange("");
-      setIsSearching(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setSelected(null);
-    onUserSearchChange("");
-    setIsSearching(false);
-  };
+  }, [handleCancel, isSearching]);
 
   const handleSelect = (user: User) => {
     setSelected(user);
@@ -103,7 +111,7 @@ export function SprintTeamsAddMember({
       ref={containerRef}
       className="relative border-b border-dashed border-primary/30 bg-muted/20"
     >
-      <div className="flex h-14 items-center gap-2 px-4">
+      <div className="flex h-16 items-center gap-2 px-4">
         <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
         <input
           ref={inputRef}
@@ -113,8 +121,11 @@ export function SprintTeamsAddMember({
             setSelected(null);
           }}
           placeholder="Search by name or role..."
-          className="min-w-0 flex-1 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground"
+          className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
         />
+        <span className="shrink-0 rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          {roleFilterLabels[roleFilter]}
+        </span>
         <button
           onClick={handleConfirm}
           disabled={!selected}
@@ -137,7 +148,7 @@ export function SprintTeamsAddMember({
 
       {/* Dropdown */}
       {!selected && (
-        <div className="absolute left-0 right-0 top-14 z-30 max-h-52 overflow-y-auto rounded-b-lg border border-border bg-popover shadow-xl">
+        <div className="absolute left-0 right-0 top-16 z-30 max-h-64 overflow-y-auto rounded-b-xl border border-border bg-popover shadow-xl">
           {isLoading ? (
             <div className="px-4 py-3 text-center text-xs text-muted-foreground">
               Loading users...
@@ -151,28 +162,30 @@ export function SprintTeamsAddMember({
               <button
                 key={user.id}
                 onClick={() => handleSelect(user)}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-accent/50"
+                className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/50"
               >
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
+                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
                   {getInitials(user.name)}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-foreground">
-                    {user.name}
-                  </p>
-                  <p className="truncate text-[10px] text-muted-foreground">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {user.name}
+                    </p>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide",
+                        roleBadgeColors[user.role] ??
+                          "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {user.role}
+                    </span>
+                  </div>
+                  <p className="truncate text-xs text-muted-foreground">
                     {user.email}
                   </p>
                 </div>
-                <span
-                  className={cn(
-                    "shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold",
-                    roleBadgeColors[user.role] ??
-                      "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {user.role}
-                </span>
               </button>
             ))
           )}

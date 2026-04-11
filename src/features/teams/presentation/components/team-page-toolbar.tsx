@@ -4,9 +4,8 @@ import { Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SprintStatus } from "@/features/sprints/domain/types/sprint-types";
-import { ProjectStatus } from "@/features/projects/domain/types/project-types";
 
-const SprintstatusOptions: Array<{ label: string; value: SprintStatus | "ALL" }> = [
+const SprintStatusOptions: Array<{ label: string; value: SprintStatus | "ALL" }> = [
   { label: "All Status", value: "ALL" },
   { label: "Active", value: "active" },
   { label: "Inactive", value: "inactive" },
@@ -14,34 +13,25 @@ const SprintstatusOptions: Array<{ label: string; value: SprintStatus | "ALL" }>
   { label: "Completed", value: "completed" },
 ];
 
-const ProjectstatusOptions: Array<{ label: string; value: ProjectStatus | "ALL" }> = [
-  { label: "All Status", value: "ALL" },
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
-  { label: "In-Progress", value: "inProgress" },
-];
 interface TeamPageToolbarProps {
   searchTerm: string;
   selectedStatus: SprintStatus | null;
-  selectedProjectCount: number;
+  selectedTeamCount: number;
   isMobile: boolean;
   onSearchTermChange: (value: string) => void;
-  onProjectStatusChange: (status: ProjectStatus | "ALL") => void;
-  onSprintStatusChange: (status: SprintStatus | "ALL") => void;
-  onAddProject: () => void;
+  onStatusChange: (status: SprintStatus | "ALL") => void;
+  onAddTeam: () => void;
   onBulkDelete: () => void;
 }
 
 export function TeamPageToolbar({
   searchTerm,
   selectedStatus,
-  selectedProjectCount,
-  selectedSprintCount,
+  selectedTeamCount,
   isMobile,
   onSearchTermChange,
   onStatusChange,
-  onAddProject,
-  onAddSprint,
+  onAddTeam,
   onBulkDelete,
 }: TeamPageToolbarProps) {
   return (
@@ -77,18 +67,18 @@ export function TeamPageToolbar({
                 htmlFor="team-status-filter"
                 className="mb-2 block text-sm font-medium text-foreground"
               >
-                Filter By Project
+                Filter By Sprint Status
               </label>
               <div className="relative">
                 <select
                   id="team-status-filter"
                   value={selectedStatus ?? "ALL"}
                   onChange={(event) =>
-                    onProjectStatusChange(event.target.value as ProjectStatus | "ALL")
+                    onStatusChange(event.target.value as SprintStatus | "ALL")
                   }
                   className="flex h-11 w-full appearance-none rounded-lg border border-border bg-background px-3 py-2 pr-10 text-sm text-foreground outline-none transition focus:ring-2 focus:ring-ring/50"
                 >
-                  {statusOptions.map((option) => (
+                  {SprintStatusOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
