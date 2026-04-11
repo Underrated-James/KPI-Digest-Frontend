@@ -77,9 +77,10 @@ export type SprintFormValues = z.infer<typeof sprintFormSchema>
 
 export function createSprintFormDefaultValues(
   initialData?: Sprint,
+  defaultProjectId?: string,
 ): SprintFormValues {
   return {
-    projectId: initialData?.projectId ?? "",
+    projectId: initialData?.projectId ?? defaultProjectId ?? "",
     name: initialData?.name ?? "",
     status: initialData?.status ?? "draft",
     startDate: initialData?.startDate

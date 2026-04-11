@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useAppDispatch, useAppSelector } from "@/lib/redux-hooks";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { CreateSprintDTO, Sprint, SprintStatus } from "../../domain/types/sprint-types";
+import {
+  CreateSprintDTO,
+  Sprint,
+  SprintStatus,
+} from "../../domain/types/sprint-types";
 import { useSprints } from "./use-sprints";
 import { useCreateSprint } from "./use-create-sprint";
 import { useUpdateSprint } from "./use-update-sprint";
@@ -25,73 +29,181 @@ import {
   setSelectedSprintIds,
 } from "../store/sprint-slice";
 import { pushSprintsUrl, replaceSprintsUrl } from "../utils/sprint-url-state";
+import { useProjects } from "@/features/projects/presentation/hooks/use-projects";
+import { Project, ProjectStatus } from "@/features/projects/domain/types/project-types";
+import { useProjectById } from "@/features/projects/presentation/hooks/use-project-by-id";
 
 export function useSprintPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const isMobile = useIsMobile();
-  const search = searchParams.get("search") ?? "";
-  const [searchTerm, setSearchTerm] = useState(search);
-  const debouncedSearchTerm = useDebouncedValue(searchTerm, 200);
-  const pendingSearchRef = useRef<string | null>(null);
 
-  const page = Number(searchParams.get("page")) || 1;
-  const size = Number(searchParams.get("size")) || 10;
-  const selectedStatus = searchParams.get("status") as SprintStatus | null;
+  const selectedProjectId = searchParams.get("projectId");
+  const selectedProjectNameFromUrl = searchParams.get("projectName") ?? "";
+  const isSprintView = Boolean(selectedProjectId);
+
+  const projectSearch = searchParams.get("projectSearch") ?? "";
+  const [projectSearchTerm, setProjectSearchTerm] = useState(projectSearch);
+  const debouncedProjectSearchTerm = useDebouncedValue(projectSearchTerm, 200);
+
+  const sprintSearch = searchParams.get("sprintSearch") ?? "";
+  const [sprintSearchTerm, setSprintSearchTerm] = useState(sprintSearch);
+  const debouncedSprintSearchTerm = useDebouncedValue(sprintSearchTerm, 200);
+
+  const projectPage = Number(searchParams.get("projectPage")) || 1;
+  const projectSize = Number(searchParams.get("projectSize")) || 10;
+  const selectedProjectStatus = searchParams.get("projectStatus") as
+    | ProjectStatus
+    | null;
+
+  const sprintPage = Number(searchParams.get("sprintPage")) || 1;
+  const sprintSize = Number(searchParams.get("sprintSize")) || 10;
+  const selectedSprintStatus = searchParams.get("sprintStatus") as
+    | SprintStatus
+    | null;
 
   const isFormOpen = useAppSelector(selectIsSprintFormOpen);
   const editingSprint = useAppSelector(selectEditingSprint) ?? undefined;
   const deleteTarget = useAppSelector(selectDeleteTarget);
   const selectedSprintIds = useAppSelector(selectSelectedSprintIds);
 
+  const projectsQuery = useProjects(
+    {
+      page: projectPage,
+      size: projectSize,
+      search: projectSearch || undefined,
+      status: selectedProjectStatus ?? undefined,
+    },
+    !isSprintView,
+  );
+
+  const sprintQuery = useSprints(
+    {
+      page: sprintPage,
+      size: sprintSize,
+      search: sprintSearch || undefined,
+      status: selectedSprintStatus ?? undefined,
+      projectId: selectedProjectId ?? undefined,
+    },
+    isSprintView,
+  );
+
+  const projectDetailQuery = useProjectById(selectedProjectId);
+  const createSprint = useCreateSprint();
+  const updateSprint = useUpdateSprint();
+  const deleteSprint = useDeleteSprint();
+
   useEffect(() => {
-    if (pendingSearchRef.current === search) {
-      pendingSearchRef.current = null;
+    setProjectSearchTerm(projectSearch);
+  }, [projectSearch]);
+
+  useEffect(() => {
+    setSprintSearchTerm(sprintSearch);
+  }, [sprintSearch]);
+
+  useEffect(() => {
+    if (isSprintView) {
+      return;
     }
-  }, [search]);
 
-  useEffect(() => {
-    const normalizedSearchTerm = debouncedSearchTerm.trim();
+    const normalizedProjectSearch = debouncedProjectSearchTerm.trim();
 
-    if (normalizedSearchTerm === search) {
+    if (normalizedProjectSearch === projectSearch) {
       return;
     }
 
     const params = new URLSearchParams(searchParams.toString());
-    params.set("page", "1");
+    params.set("projectPage", "1");
 
-    if (normalizedSearchTerm.length === 0) {
-      params.delete("search");
+    if (normalizedProjectSearch.length === 0) {
+      params.delete("projectSearch");
     } else {
-      params.set("search", normalizedSearchTerm);
+      params.set("projectSearch", normalizedProjectSearch);
     }
 
-    pendingSearchRef.current = normalizedSearchTerm;
-    dispatch(clearSelectedSprintIds());
     replaceSprintsUrl(pathname, params);
-  }, [debouncedSearchTerm, dispatch, pathname, search, searchParams]);
+  }, [debouncedProjectSearchTerm, isSprintView, pathname, projectSearch, searchParams]);
 
-  const { data, isLoading, isError, error, refetch } = useSprints({
-    page,
-    size,
-    search: search || undefined,
-    status: selectedStatus ?? undefined,
-  });
-  const createSprint = useCreateSprint();
-  const updateSprint = useUpdateSprint();
-  const deleteSprint = useDeleteSprint();
-  const sprints = data?.content ?? [];
+  useEffect(() => {
+    if (!isSprintView) {
+      return;
+    }
+
+    const normalizedSprintSearch = debouncedSprintSearchTerm.trim();
+
+    if (normalizedSprintSearch === sprintSearch) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("sprintPage", "1");
+
+    if (normalizedSprintSearch.length === 0) {
+      params.delete("sprintSearch");
+    } else {
+      params.set("sprintSearch", normalizedSprintSearch);
+    }
+
+    replaceSprintsUrl(pathname, params);
+  }, [debouncedSprintSearchTerm, isSprintView, pathname, searchParams, sprintSearch]);
+
+  useEffect(() => {
+    dispatch(clearSelectedSprintIds());
+    dispatch(closeDeleteSprintModal());
+    dispatch(closeSprintForm());
+  }, [dispatch, selectedProjectId]);
+
+  const handleOpenProject = (project: Project) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set("projectId", project.id);
+    params.set("projectName", project.name);
+    params.set("sprintPage", "1");
+    params.delete("sprintSearch");
+    params.delete("sprintStatus");
+    dispatch(clearSelectedSprintIds());
+    dispatch(closeDeleteSprintModal());
+    if (isFormOpen) {
+      dispatch(closeSprintForm());
+    }
+    pushSprintsUrl(pathname, params);
+  };
+
+  const handleBackToProjects = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("projectId");
+    params.delete("projectName");
+    dispatch(clearSelectedSprintIds());
+    dispatch(closeDeleteSprintModal());
+    if (isFormOpen) {
+      dispatch(closeSprintForm());
+    }
+    pushSprintsUrl(pathname, params);
+  };
+
+  const updateProjectFilters = (nextStatus: ProjectStatus | "ALL") => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("projectPage", "1");
+
+    if (nextStatus === "ALL") {
+      params.delete("projectStatus");
+    } else {
+      params.set("projectStatus", nextStatus);
+    }
+
+    dispatch(clearSelectedSprintIds());
+    pushSprintsUrl(pathname, params);
+  };
 
   const updateSprintFilters = (nextStatus: SprintStatus | "ALL") => {
     const params = new URLSearchParams(searchParams.toString());
-
-    params.set("page", "1");
+    params.set("sprintPage", "1");
 
     if (nextStatus === "ALL") {
-      params.delete("status");
+      params.delete("sprintStatus");
     } else {
-      params.set("status", nextStatus);
+      params.set("sprintStatus", nextStatus);
     }
 
     dispatch(clearSelectedSprintIds());
@@ -117,7 +229,7 @@ export function useSprintPage() {
         onSuccess: () => {
           dispatch(closeSprintForm());
         },
-      }
+      },
     );
   };
 
@@ -144,7 +256,7 @@ export function useSprintPage() {
     toast.success(
       totalSelectedSprints === 1
         ? "Sprint deleted successfully"
-        : `${totalSelectedSprints} sprints deleted successfully`
+        : `${totalSelectedSprints} sprints deleted successfully`,
     );
     dispatch(clearSelectedSprintIds());
     dispatch(closeDeleteSprintModal());
@@ -159,7 +271,7 @@ export function useSprintPage() {
       openDeleteSprintModal({
         id: sprint.id,
         name: sprint.name,
-      })
+      }),
     );
   };
 
@@ -176,7 +288,7 @@ export function useSprintPage() {
       dispatch(
         openDeleteSprintModal({
           name: `${selectedSprintIds.length} selected sprints`,
-        })
+        }),
       );
     }
   };
@@ -197,24 +309,49 @@ export function useSprintPage() {
     dispatch(closeDeleteSprintModal());
   };
 
+  const projects = projectsQuery.data?.content ?? [];
+  const sprints = sprintQuery.data?.content ?? [];
+
+  const activeProjectName =
+    projectDetailQuery.data?.name ?? selectedProjectNameFromUrl;
+
+  const isLoading = isSprintView ? sprintQuery.isLoading : projectsQuery.isLoading;
+  const isError = isSprintView ? sprintQuery.isError : projectsQuery.isError;
+  const error = isSprintView ? sprintQuery.error : projectsQuery.error;
+  const refetch = isSprintView ? sprintQuery.refetch : projectsQuery.refetch;
+
   return {
-    searchTerm,
-    setSearchTerm,
-    selectedStatus,
+    isProjectView: !isSprintView,
+    isSprintView,
+    selectedProjectId,
+    selectedProjectName: activeProjectName,
+    projectSearchTerm,
+    setProjectSearchTerm,
+    selectedProjectStatus,
+    projectPage,
+    projectSize,
+    projects,
+    totalProjects: projectsQuery.data?.totalElements ?? 0,
+    sprintSearchTerm,
+    setSprintSearchTerm,
+    selectedSprintStatus,
+    sprintPage,
+    sprintSize,
+    sprints,
+    totalSprints: sprintQuery.data?.totalElements ?? 0,
     isMobile,
     isFormOpen,
     editingSprint,
     deleteTarget,
     selectedSprintIds,
-    sprints,
-    totalSprints: data?.totalElements ?? 0,
-    hidePagination: false,
     isLoading,
     isError,
     error,
     refetch,
     isSubmitting: createSprint.isPending || updateSprint.isPending,
     isDeleteLoading: deleteSprint.isPending,
+    handleOpenProject,
+    handleBackToProjects,
     handleSubmit: editingSprint ? handleUpdate : handleCreate,
     handleDeleteConfirm,
     handleEditClick,
@@ -224,6 +361,7 @@ export function useSprintPage() {
     handleCancel,
     handleSelectionChange,
     handleCloseDeleteModal,
+    updateProjectFilters,
     updateSprintFilters,
   };
 }

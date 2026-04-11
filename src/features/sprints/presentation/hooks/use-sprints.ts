@@ -11,13 +11,14 @@ import {
 } from "../queries/sprint-query-options";
 import { SprintsListData } from "../queries/sprint-query-types";
 
-export function useSprints(params?: SprintQueryParams) {
+export function useSprints(params?: SprintQueryParams, enabled = true) {
   return useQuery<Awaited<ReturnType<typeof sprintService.getSprints.execute>>, ApiError, SprintsListData>({
     queryKey: sprintKeys.list(params),
     queryFn: () => sprintService.getSprints.execute(params),
     staleTime: SPRINT_SEARCH_QUERY_STALE_TIME,
     gcTime: SPRINT_SEARCH_QUERY_GC_TIME,
     retry: sprintQueryRetry,
+    enabled,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     placeholderData: keepPreviousData,
