@@ -5,6 +5,7 @@ export interface Project {
   name: string;
   status: ProjectStatus;
   finishDate: string; // Changed from Date to string based on backend response
+  sprintCount: number;
   createdAt: string;
   updatedAt: string;
 }

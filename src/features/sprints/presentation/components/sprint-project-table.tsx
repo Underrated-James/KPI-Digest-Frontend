@@ -1,13 +1,9 @@
 "use client";
 
 import * as React from "react";
-import {
-  type ColumnDef,
-  type Row,
-  type Table as TanStackTable,
-} from "@tanstack/react-table";
 import { usePathname, useSearchParams } from "next/navigation";
-import { ExpandableDataTable } from "@/components/data-table/expandable-data-table";
+import { format } from "date-fns";
+import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -17,86 +13,76 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Sprint } from "../../domain/types/sprint-types";
-import { getSprintColumns } from "./columns";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { Project, ProjectStatus } from "@/features/projects/domain/types/project-types";
 import { pushSprintsUrl } from "../utils/sprint-url-state";
 
-interface SprintTableProps {
-  data: Sprint[];
+interface SprintProjectTableProps {
+  data: Project[];
   total: number;
-  isMobile: boolean;
-  onEdit: (sprint: Sprint) => void;
-  onDelete: (id: string) => void;
-  selectedSprintIds: string[];
-  onSelectionChange: (ids: string[]) => void;
+  onProjectSelect: (project: Project) => void;
   hidePagination?: boolean;
 }
 
-export function SprintTable({
+function getStatusStyles(status: ProjectStatus) {
+  switch (status) {
+    case "active":
+      return "border-emerald-300 bg-emerald-100 text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300";
+    case "inactive":
+      return "border-rose-300 bg-rose-100 text-rose-950 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300";
+    case "inProgress":
+      return "border-amber-300 bg-amber-100 text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300";
+    default:
+      return "border-border bg-muted text-foreground";
+  }
+}
+
+function getStatusLabel(status: ProjectStatus) {
+  switch (status) {
+    case "active":
+      return "Active";
+    case "inactive":
+      return "Inactive";
+    case "inProgress":
+      return "In Progress";
+    default:
+      return status;
+  }
+}
+
+export function SprintProjectTable({
   data,
   total,
-  isMobile,
-  onEdit,
-  onDelete,
-  selectedSprintIds,
-  onSelectionChange,
+  onProjectSelect,
   hidePagination = false,
-}: SprintTableProps) {
+}: SprintProjectTableProps) {
   const pageSizeOptions = [5, 10, 20, 50];
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  const page = Number(searchParams.get("sprintPage")) || 1;
-  const size = Number(searchParams.get("sprintSize")) || 10;
+  const page = Number(searchParams.get("projectPage")) || 1;
+  const size = Number(searchParams.get("projectSize")) || 10;
   const totalPages = Math.max(1, Math.ceil(total / size));
-
-  const columns = React.useMemo<ColumnDef<Sprint>[]>(
-    () => [
-      {
-        id: "select",
-        header: ({ table }: { table: TanStackTable<Sprint> }) => (
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded border-border bg-background accent-primary"
-            checked={table.getIsAllPageRowsSelected()}
-            onChange={(event) =>
-              table.toggleAllPageRowsSelected(event.target.checked)
-            }
-            onClick={(event) => event.stopPropagation()}
-            aria-label="Select all"
-          />
-        ),
-        cell: ({ row }: { row: Row<Sprint> }) => (
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded border-border bg-background accent-primary"
-            checked={row.getIsSelected()}
-            onChange={(event) => row.toggleSelected(event.target.checked)}
-            onClick={(event) => event.stopPropagation()}
-            aria-label={`Select ${row.original.name}`}
-          />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-        meta: {
-          mobileVisible: true,
-        },
-      },
-      ...getSprintColumns({ onEdit, onDelete }),
-    ],
-    [onDelete, onEdit],
-  );
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("sprintPage", newPage.toString());
+    params.set("projectPage", newPage.toString());
     pushSprintsUrl(pathname, params);
   };
 
   const handlePageSizeChange = (newSize: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("sprintPage", "1");
-    params.set("sprintSize", newSize.toString());
+    params.set("projectPage", "1");
+    params.set("projectSize", newSize.toString());
     pushSprintsUrl(pathname, params);
   };
 
@@ -119,26 +105,101 @@ export function SprintTable({
     return [page - 1, page, page + 1];
   }, [page, totalPages]);
 
+  if (data.length === 0) {
+    return (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 py-14 text-center text-muted-foreground">
+          <p className="text-base font-medium text-foreground">No projects found.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Try adjusting the search or status filter.
+          </p>
+        </div>
+    );
+  }
+
   return (
     <div className="w-full space-y-4">
-      <ExpandableDataTable
-        data={data}
-        columns={columns}
-        isMobile={isMobile}
-        getRowId={(sprint) => sprint.id}
-        selectedRowIds={selectedSprintIds}
-        onSelectionChange={onSelectionChange}
-        emptyState={<p>No sprints found.</p>}
-        getExpandedRowLabel={(sprint) => sprint.name}
-      />
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <Table className="relative w-full table-fixed md:min-w-[920px]">
+          <TableHeader className="sticky top-0 z-10 bg-card">
+            <TableRow className="border-border hover:bg-transparent">
+              <TableHead className="py-3 pl-4 pr-3 text-muted-foreground md:p-4">
+                Project Name
+              </TableHead>
+              <TableHead className="py-3 px-3 text-muted-foreground md:p-4">
+                Number of Sprints
+              </TableHead>
+              <TableHead className="py-3 px-3 text-muted-foreground md:p-4">
+                Project Status
+              </TableHead>
+              <TableHead className="py-3 px-3 text-muted-foreground md:p-4">
+                Created Date
+              </TableHead>
+              <TableHead className="py-3 pl-3 pr-4 text-muted-foreground md:p-4">
+                Updated Date
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((project) => (
+              <TableRow
+                key={project.id}
+                tabIndex={0}
+                role="button"
+                aria-label={`Open ${project.name} sprints`}
+                onClick={() => onProjectSelect(project)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onProjectSelect(project);
+                  }
+                }}
+                className="cursor-pointer border-border transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+              >
+                <TableCell className="py-4 pl-4 pr-3 align-middle">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <span className="block truncate font-medium text-foreground">
+                        {project.name}
+                      </span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  </div>
+                </TableCell>
+                <TableCell className="py-4 px-3 align-middle">
+                  <span className="font-mono text-foreground">
+                    {project.sprintCount}
+                  </span>
+                </TableCell>
+                <TableCell className="py-4 px-3 align-middle">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "inline-flex rounded-full border px-3 py-1 text-xs font-medium",
+                      getStatusStyles(project.status),
+                    )}
+                  >
+                    {getStatusLabel(project.status)}
+                  </Badge>
+                </TableCell>
+                <TableCell className="py-4 px-3 align-middle text-muted-foreground">
+                  {format(new Date(project.createdAt), "MMM dd, yyyy")}
+                </TableCell>
+                <TableCell className="py-4 pl-3 pr-4 align-middle text-muted-foreground">
+                  {format(new Date(project.updatedAt), "MMM dd, yyyy")}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
-      {!hidePagination && (
+      {!hidePagination && data.length > 0 ? (
         <div className="mt-6 flex w-full flex-col gap-3 pb-6 text-sm sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
-            <label htmlFor="sprint-page-size">Rows per page:</label>
+            <label htmlFor="project-page-size">Rows per page:</label>
             <div className="relative">
               <select
-                id="sprint-page-size"
+                id="project-page-size"
                 value={size}
                 onChange={(event) =>
                   handlePageSizeChange(Number(event.target.value))
@@ -272,7 +333,7 @@ export function SprintTable({
             </PaginationContent>
           </Pagination>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

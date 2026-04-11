@@ -10,6 +10,7 @@ export function normalizeSprintQueryParams(
     ...(params?.size ? { size: params.size } : {}),
     ...(normalizedSearch ? { search: normalizedSearch } : {}),
     ...(params?.status ? { status: params.status } : {}),
+    ...(params?.projectId ? { projectId: params.projectId } : {}),
   };
 }
 

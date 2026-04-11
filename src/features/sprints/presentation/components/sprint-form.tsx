@@ -30,6 +30,7 @@ import {
 
 interface SprintFormProps {
   initialData?: Sprint;
+  defaultProjectId?: string;
   onSubmit: (data: CreateSprintDTO) => void;
   isLoading: boolean;
   onCancel: () => void;
@@ -37,13 +38,14 @@ interface SprintFormProps {
 
 export function SprintForm({
   initialData,
+  defaultProjectId,
   onSubmit,
   isLoading,
   onCancel,
 }: SprintFormProps) {
   const form = useForm<SprintFormValues>({
     resolver: zodResolver(sprintFormSchema),
-    defaultValues: createSprintFormDefaultValues(initialData),
+    defaultValues: createSprintFormDefaultValues(initialData, defaultProjectId),
   });
 
   const { fields, append, remove } = useFieldArray({

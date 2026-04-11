@@ -11,13 +11,14 @@ import {
 } from "../queries/project-query-options";
 import { ProjectsListData } from "../queries/project-query-types";
 
-export function useProjects(params?: ProjectQueryParams) {
+export function useProjects(params?: ProjectQueryParams, enabled = true) {
   return useQuery<Awaited<ReturnType<typeof projectService.getProjects.execute>>, ApiError, ProjectsListData>({
     queryKey: projectKeys.list(params),
     queryFn: () => projectService.getProjects.execute(params),
     staleTime: PROJECT_SEARCH_QUERY_STALE_TIME,
     gcTime: PROJECT_SEARCH_QUERY_GC_TIME,
     retry: projectQueryRetry,
+    enabled,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     placeholderData: keepPreviousData,
