@@ -71,4 +71,5 @@ export interface TeamQueryParams {
     search?: string;
     status?: SprintStatus;
     projectId?: string;
+    sprintId?: string;
 }

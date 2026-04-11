@@ -44,6 +44,7 @@ export function SprintPage() {
     handleSubmit,
     handleDeleteConfirm,
     handleEditClick,
+    handleCreateTeamsClick,
     handleDeleteById,
     handleBulkDeleteClick,
     handleAddClick,
@@ -54,6 +55,7 @@ export function SprintPage() {
     updateSprintFilters,
     handleOpenProject,
     handleBackToProjects,
+    teamSprintMap,
   } = useSprintPage();
 
   const projectTitle = selectedProjectName || selectedProjectId || "Selected Project";
@@ -192,10 +194,12 @@ export function SprintPage() {
                 total={totalSprints}
                 isMobile={isMobile}
                 onEdit={handleEditClick}
+                onCreateTeams={handleCreateTeamsClick}
                 onDelete={handleDeleteById}
                 selectedSprintIds={selectedSprintIds}
                 onSelectionChange={handleSelectionChange}
                 hidePagination={false}
+                teamSprintMap={teamSprintMap}
               />
             </motion.div>
           )}

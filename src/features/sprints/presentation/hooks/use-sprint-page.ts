@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useAppDispatch, useAppSelector } from "@/lib/redux-hooks";
@@ -32,9 +32,11 @@ import { pushSprintsUrl, replaceSprintsUrl } from "../utils/sprint-url-state";
 import { useProjects } from "@/features/projects/presentation/hooks/use-projects";
 import { Project, ProjectStatus } from "@/features/projects/domain/types/project-types";
 import { useProjectById } from "@/features/projects/presentation/hooks/use-project-by-id";
+import { useTeams } from "@/features/teams/presentation/hooks/use-teams";
 
 export function useSprintPage() {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const isMobile = useIsMobile();
@@ -93,6 +95,20 @@ export function useSprintPage() {
   const createSprint = useCreateSprint();
   const updateSprint = useUpdateSprint();
   const deleteSprint = useDeleteSprint();
+
+  // Fetch teams for current project to build sprint→team lookup
+  const teamsForProject = useTeams(
+    selectedProjectId ? { projectId: selectedProjectId, size: 100 } : undefined,
+  );
+
+  const teamSprintMap = useMemo(() => {
+    const map = new Map<string, string>();
+    const teams = teamsForProject.data?.content ?? [];
+    for (const team of teams) {
+      map.set(team.sprintId, team.id);
+    }
+    return map;
+  }, [teamsForProject.data?.content]);
 
   useEffect(() => {
     setProjectSearchTerm(projectSearch);
@@ -266,6 +282,16 @@ export function useSprintPage() {
     dispatch(openEditSprintForm(sprint));
   };
 
+  const handleCreateTeamsClick = (sprint: Sprint) => {
+    const params = new URLSearchParams();
+    params.set("sprintName", sprint.name);
+    if (selectedProjectId) params.set("projectId", selectedProjectId);
+    if (activeProjectName) params.set("projectName", activeProjectName);
+    router.push(
+      `/sprints/${sprint.id}/create-teams?${params.toString()}`,
+    );
+  };
+
   const handleDeleteClick = (sprint: Sprint) => {
     dispatch(
       openDeleteSprintModal({
@@ -352,6 +378,7 @@ export function useSprintPage() {
     isDeleteLoading: deleteSprint.isPending,
     handleOpenProject,
     handleBackToProjects,
+    handleCreateTeamsClick,
     handleSubmit: editingSprint ? handleUpdate : handleCreate,
     handleDeleteConfirm,
     handleEditClick,
@@ -363,5 +390,6 @@ export function useSprintPage() {
     handleCloseDeleteModal,
     updateProjectFilters,
     updateSprintFilters,
+    teamSprintMap,
   };
 }

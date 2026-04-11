@@ -26,10 +26,12 @@ interface SprintTableProps {
   total: number;
   isMobile: boolean;
   onEdit: (sprint: Sprint) => void;
+  onCreateTeams: (sprint: Sprint) => void;
   onDelete: (id: string) => void;
   selectedSprintIds: string[];
   onSelectionChange: (ids: string[]) => void;
   hidePagination?: boolean;
+  teamSprintMap?: Map<string, string>;
 }
 
 export function SprintTable({
@@ -37,10 +39,12 @@ export function SprintTable({
   total,
   isMobile,
   onEdit,
+  onCreateTeams,
   onDelete,
   selectedSprintIds,
   onSelectionChange,
   hidePagination = false,
+  teamSprintMap,
 }: SprintTableProps) {
   const pageSizeOptions = [5, 10, 20, 50];
   const searchParams = useSearchParams();
@@ -82,9 +86,9 @@ export function SprintTable({
           mobileVisible: true,
         },
       },
-      ...getSprintColumns({ onEdit, onDelete }),
+      ...getSprintColumns({ onEdit, onDelete, onCreateTeams, teamSprintMap }),
     ],
-    [onDelete, onEdit],
+    [onCreateTeams, onDelete, onEdit, teamSprintMap],
   );
 
   const handlePageChange = (newPage: number) => {

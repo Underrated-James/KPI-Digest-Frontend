@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, Pencil, Trash, Calendar } from "lucide-react";
+import { ChevronDown, Pencil, Trash, Calendar, UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Sprint } from "../../domain/types/sprint-types";
@@ -16,11 +16,15 @@ import { Badge } from "@/components/ui/badge";
 interface ColumnsProps {
   onEdit: (sprint: Sprint) => void;
   onDelete: (id: string) => void;
+  onCreateTeams: (sprint: Sprint) => void;
+  teamSprintMap?: Map<string, string>;
 }
 
 export const getSprintColumns = ({
   onEdit,
   onDelete,
+  onCreateTeams,
+  teamSprintMap,
 }: ColumnsProps): ColumnDef<Sprint>[] => [
   {
     accessorKey: "name",
@@ -255,6 +259,9 @@ export const getSprintColumns = ({
     },
     cell: ({ row }) => {
       const sprint = row.original;
+      const hasTeam = teamSprintMap?.has(sprint.id) ?? false;
+      const TeamIcon = hasTeam ? Users : UserPlus;
+      const teamLabel = hasTeam ? "View Teams" : "Create Teams";
       return (
         <div className="flex flex-col items-stretch gap-2 md:flex-row md:flex-wrap md:items-center md:justify-end">
           <Button
@@ -265,8 +272,26 @@ export const getSprintColumns = ({
               event.stopPropagation();
               onEdit(sprint);
             }}
+            title="Edit Sprint"
           >
             <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "hidden h-8 w-8 shrink-0 md:inline-flex",
+              hasTeam
+                ? "text-primary hover:bg-primary/10 hover:text-primary"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+            onClick={(event) => {
+              event.stopPropagation();
+              onCreateTeams(sprint);
+            }}
+            title={teamLabel}
+          >
+            <TeamIcon className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
@@ -276,9 +301,27 @@ export const getSprintColumns = ({
               event.stopPropagation();
               onEdit(sprint);
             }}
+            title="Edit Sprint"
           >
             <Pencil className="h-4 w-4" />
             Edit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn(
+              "w-full justify-center border-border bg-background md:hidden",
+              hasTeam
+                ? "border-primary/30 text-primary hover:border-primary hover:bg-primary hover:text-primary-foreground"
+                : "hover:border-foreground hover:bg-foreground hover:text-background",
+            )}
+            onClick={(event) => {
+              event.stopPropagation();
+              onCreateTeams(sprint);
+            }}
+          >
+            <TeamIcon className="h-4 w-4" />
+            {hasTeam ? "View" : "Teams"}
           </Button>
           <Button
             variant="ghost"

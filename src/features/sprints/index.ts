@@ -1,4 +1,5 @@
 export { SprintPage } from "./presentation/components/sprint-page";
+export { SprintTeamsPage } from "./presentation/components/sprint-teams/sprint-teams-page";
 
 export {
   clearSelectedSprintIds,
