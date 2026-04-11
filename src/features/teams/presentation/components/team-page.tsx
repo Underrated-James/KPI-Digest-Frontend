@@ -15,11 +15,11 @@ export function TeamPage() {
     selectedStatus,
     isMobile,
     isFormOpen,
-    editingProject,
+    editingTeam,
     deleteTarget,
-    selectedProjectIds,
-    projects,
-    totalProjects,
+    selectedTeamIds,
+    teams,
+    totalTeams,
     hidePagination,
     isLoading,
     isError,
@@ -36,8 +36,8 @@ export function TeamPage() {
     handleCancel,
     handleSelectionChange,
     handleCloseDeleteModal,
-    updateProjectFilters,
-  } = useProjectPage();
+    updateTeamFilters,
+  } = useTeamPage();
   
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
@@ -45,19 +45,19 @@ export function TeamPage() {
         <div className="flex flex-col gap-5">
           <div className="flex items-start justify-between">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              Projects
+              Teams
             </h1>
           </div>
 
           {!isFormOpen && !isLoading && (
-            <ProjectPageToolbar
+            <TeamPageToolbar
               searchTerm={searchTerm}
               selectedStatus={selectedStatus}
-              selectedProjectCount={selectedProjectIds.length}
+              selectedTeamCount={selectedTeamIds.length}
               isMobile={isMobile}
               onSearchTermChange={setSearchTerm}
-              onStatusChange={updateProjectFilters}
-              onAddProject={handleAddClick}
+              onStatusChange={updateTeamFilters}
+              onAddTeam={handleAddClick}
               onBulkDelete={handleBulkDeleteClick}
             />
           )}
@@ -67,29 +67,31 @@ export function TeamPage() {
       <div className="flex flex-1 flex-col overflow-hidden">
         {isFormOpen ? (
           <div className="flex flex-1 items-center justify-center overflow-y-auto pb-6">
-            <div className="w-full max-w-md animate-in fade-in zoom-in duration-300">
-              <ProjectForm
-                initialData={editingProject}
+            <div className="w-full max-w-4xl animate-in fade-in zoom-in duration-300">
+              <TeamForm
+                initialData={editingTeam}
                 onSubmit={handleSubmit}
+                onDelete={handleDeleteById}
                 isLoading={isSubmitting}
+                isDeleting={isDeleteLoading}
                 onCancel={handleCancel}
               />
             </div>
           </div>
         ) : isLoading ? (
-          <ProjectsTableSkeleton />
+          <TeamsTableSkeleton />
         ) : (
           <div className="flex flex-1 flex-col overflow-hidden">
             {isError ? (
-              <ProjectPageErrorState error={error} onRetry={() => refetch()} />
+              <TeamPageErrorState error={error} onRetry={() => refetch()} />
             ) : (
-              <ProjectTable
-                data={projects}
-                total={totalProjects}
+              <TeamTable
+                data={teams}
+                total={totalTeams}
                 isMobile={isMobile}
                 onEdit={handleEditClick}
                 onDelete={handleDeleteById}
-                selectedProjectIds={selectedProjectIds}
+                selectedTeamIds={selectedTeamIds}
                 onSelectionChange={handleSelectionChange}
                 hidePagination={hidePagination}
               />
@@ -98,11 +100,11 @@ export function TeamPage() {
         )}
       </div>
 
-      <ProjectDeleteModal
+      <TeamDeleteModal
         isOpen={Boolean(deleteTarget)}
         onClose={handleCloseDeleteModal}
         onConfirm={handleDeleteConfirm}
-        projectName={deleteTarget?.name ?? ""}
+        teamName={deleteTarget?.name ?? ""}
         isLoading={isDeleteLoading}
       />
     </div>

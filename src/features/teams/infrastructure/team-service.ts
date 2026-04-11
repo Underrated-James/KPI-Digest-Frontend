@@ -3,7 +3,7 @@ import { DeleteTeamUseCase } from "../application/use-cases/delete-teams-use-cas
 import { GetTeamByIdUseCase } from "../application/use-cases/get-teams-by-id-use-case";
 import { GetTeamsUseCase } from "../application/use-cases/get-teams-use-case";
 import { UpdateTeamUseCase } from "../application/use-cases/update-teams-use-case";
-import { TeamRepositoryImpl } from "./impl/sprint-impl";
+import { TeamRepositoryImpl } from "./impl/team-impl";
 
 
 

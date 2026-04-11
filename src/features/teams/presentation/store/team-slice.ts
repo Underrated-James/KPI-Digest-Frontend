@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Team } from "../../domain/types/team-types";
+import type { RootState } from "@/lib/store";
 
 interface DeleteTarget {
   id?: string;
@@ -51,10 +52,6 @@ const teamUiSlice = createSlice({
   },
 });
 
-type TeamUiRootState = {
-  teamUi: TeamUiState;
-};
-
 export const {
   openCreateTeamForm,
   openEditTeamForm,
@@ -65,14 +62,14 @@ export const {
   clearSelectedTeamIds,
 } = teamUiSlice.actions;
 
-export const selectTeamUi = (state: TeamUiRootState) => state.teamUi;
-export const selectIsTeamFormOpen = (state: TeamUiRootState) =>
+export const selectTeamUi = (state: RootState) => state.teamUi;
+export const selectIsTeamFormOpen = (state: RootState) =>
   state.teamUi.isFormOpen;
-export const selectEditingTeam = (state: TeamUiRootState) =>
+export const selectEditingTeam = (state: RootState) =>
   state.teamUi.editingTeam;
-export const selectDeleteTarget = (state: TeamUiRootState) =>
+export const selectDeleteTarget = (state: RootState) =>
   state.teamUi.deleteTarget;
-export const selectSelectedTeamIds = (state: TeamUiRootState) =>
+export const selectSelectedTeamIds = (state: RootState) =>
   state.teamUi.selectedTeamIds;
 
 export const teamUiReducer = teamUiSlice.reducer;

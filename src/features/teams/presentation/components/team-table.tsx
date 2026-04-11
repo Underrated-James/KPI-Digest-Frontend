@@ -39,7 +39,6 @@ export function TeamTable({
   onEdit,
   onDelete,
   selectedTeamIds,
-  selectedSprintIds,
   onSelectionChange,
   hidePagination = false,
 }: TeamTableProps) {

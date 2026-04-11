@@ -287,6 +287,12 @@ export function useSprintPage() {
     params.set("sprintName", sprint.name);
     if (selectedProjectId) params.set("projectId", selectedProjectId);
     if (activeProjectName) params.set("projectName", activeProjectName);
+
+    const teamId = teamSprintMap.get(sprint.id);
+    if (teamId) {
+      params.set("teamId", teamId);
+    }
+
     router.push(
       `/sprints/${sprint.id}/create-teams?${params.toString()}`,
     );

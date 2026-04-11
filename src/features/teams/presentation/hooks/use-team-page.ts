@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import toast from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useAppDispatch, useAppSelector } from "@/lib/redux-hooks";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -25,7 +25,7 @@ import {
   setSelectedTeamIds,
 } from "../store/team-slice";
 import { pushTeamsUrl, replaceTeamsUrl } from "../utils/teams-url-state";
-import { CreateProjectDTO, ProjectStatus } from "@/features/projects/domain/types/project-types";
+import { SprintStatus } from "@/features/sprints/domain/types/sprint-types";
 
 export function useTeamPage() {
   const pathname = usePathname();
@@ -39,7 +39,7 @@ export function useTeamPage() {
 
   const page = Number(searchParams.get("page")) || 1;
   const size = Number(searchParams.get("size")) || 10;
-  const selectedStatus = searchParams.get("status") as ProjectStatus | null;
+  const selectedStatus = searchParams.get("status") as SprintStatus | null;
 
   const isFormOpen = useAppSelector(selectIsTeamFormOpen);
   const editingTeam = useAppSelector(selectEditingTeam) ?? undefined;
@@ -84,7 +84,7 @@ export function useTeamPage() {
   const deleteTeam = useDeleteTeam();
   const teams = data?.content ?? [];
 
-  const updateTeamFilters = (nextStatus: Status | "ALL") => {
+  const updateTeamFilters = (nextStatus: SprintStatus | "ALL") => {
     const params = new URLSearchParams(searchParams.toString());
 
     params.set("page", "1");
@@ -122,11 +122,20 @@ export function useTeamPage() {
     );
   };
 
+  const handleSubmit = (teamData: CreateTeamDTO) => {
+    if (editingTeam) {
+      handleUpdate(teamData);
+    } else {
+      handleCreate(teamData);
+    }
+  };
+
   const handleDeleteConfirm = async () => {
     if (deleteTarget?.id) {
       deleteTeam.mutate(deleteTarget.id, {
         onSuccess: () => {
           dispatch(closeDeleteTeamModal());
+          dispatch(closeTeamForm());
         },
       });
       return;
@@ -159,7 +168,7 @@ export function useTeamPage() {
     dispatch(
       openDeleteTeamModal({
         id: team.id,
-        name: team.name,
+        name: `${team.projectName ?? "N/A"} - ${team.sprintName ?? "N/A"}`,
       })
     );
   };
@@ -216,7 +225,7 @@ export function useTeamPage() {
     refetch,
     isSubmitting: createTeam.isPending || updateTeam.isPending,
     isDeleteLoading: deleteTeam.isPending,
-    handleSubmit: editingTeam ? handleUpdate : handleCreate,
+    handleSubmit,
     handleDeleteConfirm,
     handleEditClick,
     handleDeleteById,

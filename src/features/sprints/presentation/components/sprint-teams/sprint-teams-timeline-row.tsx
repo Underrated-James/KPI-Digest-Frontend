@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import {
   isWeekend,
   formatDate,
+  normalizeDate,
   type SprintTeamMember,
 } from "../../hooks/use-sprint-teams-page";
 import { SprintTeamsLeavePopover } from "./sprint-teams-leave-popover";
@@ -32,28 +33,28 @@ const leaveColors: Record<
   { bg: string; border: string; label: string }
 > = {
   sick: {
-    bg: "bg-red-500/25",
-    border: "border-red-500/40",
+    bg: "bg-red-500 text-white",
+    border: "border-red-600 shadow-sm shadow-red-500/20",
     label: "Sick Leave",
   },
   vacation: {
-    bg: "bg-emerald-500/25",
-    border: "border-emerald-500/40",
+    bg: "bg-emerald-500 text-white",
+    border: "border-emerald-600 shadow-sm shadow-emerald-500/20",
     label: "Vacation",
   },
   wholeDayLeave: {
-    bg: "bg-amber-500/25",
-    border: "border-amber-500/40",
+    bg: "bg-amber-500 text-white",
+    border: "border-amber-600 shadow-sm shadow-amber-500/20",
     label: "Whole Day",
   },
   halfDayLeave: {
-    bg: "bg-sky-500/25",
-    border: "border-sky-500/40",
+    bg: "bg-sky-500 text-white",
+    border: "border-sky-600 shadow-sm shadow-sky-500/20",
     label: "Half Day",
   },
   other: {
-    bg: "bg-violet-500/25",
-    border: "border-violet-500/40",
+    bg: "bg-violet-500 text-white",
+    border: "border-violet-600 shadow-sm shadow-violet-500/20",
     label: "Other Leave",
   },
 };
@@ -81,7 +82,7 @@ export function SprintTeamsTimelineRow({
   } | null>(null);
 
   const originalLeaveMap = new Map(
-    (member.leave ?? []).map((l) => [l.leaveDate, l.leaveType[0] as LeaveType]),
+    (member.leave ?? []).map((l) => [normalizeDate(l.leaveDate), l.leaveType[0] as LeaveType]),
   );
 
   const handleCellClick = (e: React.MouseEvent, dateStr: string) => {
@@ -130,7 +131,6 @@ export function SprintTeamsTimelineRow({
         const dateStr = formatDate(d);
         const weekend = isWeekend(d);
         const isDayOff = dayOffs.includes(dateStr);
-        const isBlocked = weekend || isDayOff;
         const originalLeave = originalLeaveMap.get(dateStr);
         const leaveType = getEffectiveLeave(
           member.userId,
@@ -140,25 +140,17 @@ export function SprintTeamsTimelineRow({
         const isToday = dateStr === formatDate(new Date());
         const lc = leaveType ? leaveColors[leaveType] : null;
 
+        // Allow click on ANY day (user can add/remove leave on weekends/holidays too)
         return (
           <div
             key={dateStr}
             className={cn(
-              "relative shrink-0 border-r border-border/60 transition-colors",
-              isBlocked
-                ? "cursor-not-allowed"
-                : "cursor-pointer hover:bg-muted/30",
+              "relative shrink-0 border-r border-border/60 transition-colors cursor-pointer hover:bg-muted/30",
               isToday && "bg-primary/5",
-              isDayOff &&
-                !leaveType &&
-                "bg-amber-500/10 dark:bg-amber-400/10",
-              weekend &&
-                !isDayOff &&
-                !leaveType &&
-                "bg-muted/40",
+              weekend && !leaveType && "bg-muted/40",
             )}
             style={{ width: colWidth, minWidth: colWidth }}
-            onClick={(e) => !isBlocked && handleCellClick(e, dateStr)}
+            onClick={(e) => handleCellClick(e, dateStr)}
             onMouseEnter={() => {
               if (leaveType && lc) {
                 setTooltip({
@@ -184,15 +176,21 @@ export function SprintTeamsTimelineRow({
             {leaveType && lc && (
               <div
                 className={cn(
-                  "absolute inset-x-1 bottom-2 top-2 flex items-center justify-center rounded-md border transition-transform hover:scale-105",
+                  "absolute inset-x-1 bottom-2 top-2 flex items-center justify-center rounded-md border text-[10px] font-bold transition-transform hover:scale-105",
                   lc.bg,
                   lc.border,
                 )}
               >
+                {leaveType === "sick" && "S"}
+                {leaveType === "vacation" && "V"}
+                {leaveType === "wholeDayLeave" && "W"}
+                {leaveType === "other" && "O"}
                 {leaveType === "halfDayLeave" && (
-                  <div className="flex h-full w-full">
-                    <div className="w-1/2 rounded-l-md bg-sky-500/20" />
-                    <div className="w-1/2 rounded-r-md" />
+                  <div className="flex h-full w-full items-center justify-center">
+                    <div className="flex h-full w-1/2 items-center justify-center rounded-l-md bg-white/30 text-white">
+                      H
+                    </div>
+                    <div className="w-1/2" />
                   </div>
                 )}
               </div>

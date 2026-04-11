@@ -5,6 +5,7 @@ import { SprintTeamsHeader } from "./sprint-teams-header";
 import { SprintTeamsMemberList } from "./sprint-teams-member-list";
 import { SprintTeamsTimeline } from "./sprint-teams-timeline";
 import { SprintTeamsSkeleton } from "./sprint-teams-skeleton";
+import { TeamDeleteModal } from "@/features/teams/presentation/components/team-delete-modal";
 
 interface SprintTeamsPageProps {
   sprintId: string;
@@ -32,16 +33,12 @@ export function SprintTeamsPage({ sprintId }: SprintTeamsPageProps) {
     roleFilter,
     setRoleFilter,
 
-    hoursPerDay,
-    setHoursPerDay,
-
     userSearchQuery,
     setUserSearchQuery,
     availableUsers,
     addMember,
 
     removeMember,
-    updateMemberRole,
     updateMemberAllocation,
 
     hoveredUserId,
@@ -52,9 +49,15 @@ export function SprintTeamsPage({ sprintId }: SprintTeamsPageProps) {
 
     handleSave,
     handleCancel,
+    handleDelete,
+    handleDeleteConfirm,
+    closeDeleteModal,
+    isDeleteModalOpen,
+    isDirty,
 
     isLoading,
     isSaving,
+    isDeleting,
     isUsersLoading,
   } = useSprintTeamsPage({ sprintId });
 
@@ -73,33 +76,34 @@ export function SprintTeamsPage({ sprintId }: SprintTeamsPageProps) {
         onSearchChange={setSearchQuery}
         roleFilter={roleFilter}
         onRoleFilterChange={setRoleFilter}
-        hoursPerDay={hoursPerDay}
-        onHoursPerDayChange={setHoursPerDay}
         showWeekends={showWeekends}
         onShowWeekendsChange={setShowWeekends}
         sprintStartDate={sprint?.startDate}
         sprintEndDate={sprint?.endDate}
         onCancel={handleCancel}
         onSave={handleSave}
+        onDelete={handleDelete}
+        isDirty={isDirty}
         isSaving={isSaving}
+        isDeleting={isDeleting}
         isMobile={isMobile}
       />
 
       {/* Two-panel layout: Left = member list, Right = timeline */}
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row">
         {/* Left panel: Member list */}
-        <div className="flex w-full shrink-0 flex-col md:w-72 lg:w-80">
+        <div className="flex w-full shrink-0 flex-col md:w-[24rem] lg:w-[28rem]">
           <SprintTeamsMemberList
             members={members}
             filteredMembers={filteredMembers}
-            hoursPerDay={hoursPerDay}
+            workingHoursDay={sprint?.workingHoursDay ?? 0}
             isMobile={isMobile}
+            roleFilter={roleFilter}
             availableUsers={availableUsers}
             userSearchQuery={userSearchQuery}
             onUserSearchChange={setUserSearchQuery}
             onAddMember={addMember}
             onRemoveMember={removeMember}
-            onRoleChange={updateMemberRole}
             onAllocationChange={updateMemberAllocation}
             isUsersLoading={isUsersLoading}
           />
@@ -120,6 +124,14 @@ export function SprintTeamsPage({ sprintId }: SprintTeamsPageProps) {
           />
         )}
       </div>
+
+      <TeamDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+        onConfirm={handleDeleteConfirm}
+        teamName={`${sprintName}${projectName ? ` (${projectName})` : ""}`}
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

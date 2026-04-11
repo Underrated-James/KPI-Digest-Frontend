@@ -16,54 +16,64 @@ export const getTeamColumns = ({
   onDelete,
 }: ColumnsProps): ColumnDef<Team>[] => [
   {
-    accessorKey: "name",
-    header: "Name",
+    accessorKey: "projectName",
+    header: "Project",
     meta: {
-      mobileLabel: "Name",
+      mobileLabel: "Project",
       mobileVisible: true,
     },
     cell: ({ row }) => (
-      <div className="flex min-w-0 items-center">
-        <div className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-foreground">
-            {row.original.name}
-          </span>
-        </div>
-      </div>
+      <span className="font-medium">{row.original.projectName ?? "N/A"}</span>
     ),
   },
-  
   {
-    accessorKey: "finishDate",
-    header: "Finish Date",
+    accessorKey: "sprintName",
+    header: "Sprint",
     meta: {
-      mobileLabel: "Finish Date",
+      mobileLabel: "Sprint",
+      mobileVisible: true,
+    },
+    cell: ({ row }) => (
+      <span className="font-medium">{row.original.sprintName ?? "N/A"}</span>
+    ),
+  },
+  {
+    accessorKey: "users",
+    header: "Members",
+    meta: {
+      mobileLabel: "Members",
     },
     cell: ({ row }) => {
-      const dateStr = row.original.finishDate;
-      const formattedDate = new Date(dateStr).toLocaleDateString();
-      return <span className="capitalize">{formattedDate}</span>;
+      const users = row.original.users ?? [];
+      return <span>{users.length} members</span>;
     },
   },
 
   {
-    accessorKey: "status",
+    accessorKey: "sprintStatus",
     header: "Status",
     meta: {
       mobileLabel: "Status",
       mobileVisible: true,
     },
     cell: ({ row }) => {
-      const status = row.original.status;
+      const status = row.original.sprintStatus;
       const isActive = status === 'active';
-      const isInProgress = status === 'inProgress';
+      const isDraft = status === 'draft';
+      const isCompleted = status === 'completed';
+      const isInactive = status === 'inactive';
+
       const getStatusStyles = () => {
         if (isActive) {
           return "border-emerald-300 bg-emerald-100 text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300";
         }
 
-        if (isInProgress) {
+        if (isDraft) {
           return "border-amber-300 bg-amber-100 text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300";
+        }
+
+        if (isCompleted) {
+          return "border-blue-300 bg-blue-100 text-blue-950 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-300";
         }
 
         return "border-rose-300 bg-rose-100 text-rose-950 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300";
@@ -71,14 +81,17 @@ export const getTeamColumns = ({
 
       const getDotStyles = () => {
         if (isActive) return "bg-emerald-500 dark:bg-emerald-400";
-        if (isInProgress) return "bg-amber-500 dark:bg-amber-400";
+        if (isDraft) return "bg-amber-500 dark:bg-amber-400";
+        if (isCompleted) return "bg-blue-500 dark:bg-blue-400";
         return "bg-rose-500 dark:bg-rose-400";
       };
 
       const getStatusLabel = () => {
         if (isActive) return "Active";
-        if (isInProgress) return "In Progress";
-        return "Inactive";
+        if (isDraft) return "Draft";
+        if (isCompleted) return "Completed";
+        if (isInactive) return "Inactive";
+        return status;
       };
 
       return (
@@ -111,7 +124,7 @@ export const getTeamColumns = ({
                 "inline-flex min-w-[84px] items-center gap-2 whitespace-nowrap text-left font-medium",
                 isActive
                   ? "text-emerald-950 dark:text-emerald-300"
-                  : isInProgress
+                  : isDraft
                     ? "text-amber-950 dark:text-amber-300"
                     : "text-rose-950 dark:text-rose-300",
               )}

@@ -62,11 +62,9 @@ export function SprintTeamsTimelineHeader({
               className={`flex flex-col items-center justify-center border-r border-border/60 transition-colors ${
                 isToday
                   ? "border-primary/30 bg-primary/15"
-                  : isDayOff
-                    ? "bg-amber-500/10 dark:bg-amber-400/10"
-                    : weekend
-                      ? "bg-muted/50"
-                      : "bg-card"
+                  : weekend
+                    ? "bg-muted/50"
+                    : "bg-card"
               }`}
               style={{ width: colWidth, minWidth: colWidth }}
             >
