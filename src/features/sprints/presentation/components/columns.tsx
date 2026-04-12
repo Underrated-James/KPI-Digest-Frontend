@@ -263,7 +263,7 @@ export const getSprintColumns = ({
       const TeamIcon = hasTeam ? Pencil : UserPlus;
       const teamLabel = hasTeam ? "Edit Team" : "Create Team";
       return (
-        <div className="flex flex-col items-stretch gap-2 md:flex-row md:flex-wrap md:items-center md:justify-end">
+        <div className="flex flex-col items-stretch gap-2 md:flex-row md:flex-wrap md:items-center md:justify-center">
           <Button
             variant="ghost"
             size="icon"

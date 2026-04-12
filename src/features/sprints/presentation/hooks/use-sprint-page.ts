@@ -170,6 +170,16 @@ export function useSprintPage() {
     dispatch(closeSprintForm());
   }, [dispatch, selectedProjectId]);
 
+  useEffect(() => {
+    if (!selectedProjectId || searchParams.get("createSprint") !== "1") {
+      return;
+    }
+    dispatch(openCreateSprintForm());
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("createSprint");
+    replaceSprintsUrl(pathname, params);
+  }, [dispatch, pathname, searchParams, selectedProjectId]);
+
   const handleOpenProject = (project: Project) => {
     const params = new URLSearchParams(searchParams.toString());
 

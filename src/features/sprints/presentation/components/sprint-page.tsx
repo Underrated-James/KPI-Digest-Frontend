@@ -60,8 +60,8 @@ export function SprintPage() {
 
   const projectTitle = selectedProjectName || selectedProjectId || "Selected Project";
 
-  const panelTransition = {
-    duration: 0.22,
+  const pageTransition = {
+    duration: 0.18,
     ease: [0.22, 1, 0.36, 1] as const,
   };
 
@@ -117,12 +117,12 @@ export function SprintPage() {
         <AnimatePresence mode="wait" initial={false}>
           {isProjectView ? (
             <motion.div
-              key="project-list"
+              key="sprint-project-view"
               className="flex flex-1 flex-col overflow-hidden"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={panelTransition}
+              exit={{ opacity: 0, y: -8 }}
+              transition={pageTransition}
             >
               {isLoading ? (
                 <SprintProjectTableSkeleton />
@@ -140,15 +140,11 @@ export function SprintPage() {
               )}
             </motion.div>
           ) : isFormOpen ? (
-            <motion.div
+            <div
               key="sprint-form"
-              className="flex min-h-0 flex-1 items-start justify-center overflow-y-auto pb-6"
-              initial={{ opacity: 0, y: 24, scale: 0.985 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 18, scale: 0.99 }}
-              transition={panelTransition}
+              className="flex flex-1 items-center justify-center overflow-y-auto pb-6"
             >
-              <div className="w-full max-w-7xl">
+              <div className="w-full max-w-7xl animate-in fade-in zoom-in duration-300">
                 <SprintForm
                   initialData={editingSprint}
                   defaultProjectId={selectedProjectId ?? undefined}
@@ -157,15 +153,15 @@ export function SprintPage() {
                   onCancel={handleCancel}
                 />
               </div>
-            </motion.div>
+            </div>
           ) : isLoading ? (
             <motion.div
-              key="sprint-table-skeleton"
+              key="sprint-loading"
               className="flex flex-1 flex-col overflow-hidden"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={panelTransition}
+              transition={pageTransition}
             >
               <SprintsTableSkeleton />
             </motion.div>
@@ -173,10 +169,10 @@ export function SprintPage() {
             <motion.div
               key="sprint-error"
               className="flex flex-1 flex-col overflow-hidden"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={panelTransition}
+              exit={{ opacity: 0, y: -8 }}
+              transition={pageTransition}
             >
               <SprintPageErrorState error={error} onRetry={() => refetch()} />
             </motion.div>
@@ -184,10 +180,10 @@ export function SprintPage() {
             <motion.div
               key="sprint-table"
               className="flex flex-1 flex-col overflow-hidden"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={panelTransition}
+              exit={{ opacity: 0, y: -8 }}
+              transition={pageTransition}
             >
               <SprintTable
                 data={sprints}

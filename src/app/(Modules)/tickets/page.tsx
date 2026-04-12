@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import TicketPage from "@/features/tickets/presentation/components/ticket-page";
 
 export const metadata: Metadata = {
   title: "Tickets",
@@ -6,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Tickets() {
-  return (
-    <div>
-      <h1>Tickets</h1>
-    </div>
-  );
+  return <TicketPage />;
 }
