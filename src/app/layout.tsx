@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import { ReactQueryProvider } from "@/lib/react-query-provider";
@@ -24,16 +23,6 @@ const themeInitScript = `
   } catch (_) {}
 })();
 `;
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 const nevera = localFont({
   src: "../../public/fonts/Nevera-Regular.otf",
@@ -62,7 +51,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.className} ${geistSans.variable} ${geistMono.variable} ${nevera.variable} h-full antialiased`}
+      className={`${nevera.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

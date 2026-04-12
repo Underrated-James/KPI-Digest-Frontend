@@ -11,13 +11,14 @@ import {
 } from "../queries/team-query-options";
 import { TeamsListData } from "../queries/team-query-types";
 
-export function useTeams(params?: TeamQueryParams) {
+export function useTeams(params?: TeamQueryParams, enabled = true) {
   return useQuery<Awaited<ReturnType<typeof teamService.getTeams.execute>>, ApiError, TeamsListData>({
     queryKey: teamKeys.list(params),
     queryFn: () => teamService.getTeams.execute(params),
     staleTime: TEAM_SEARCH_QUERY_STALE_TIME, // Use 3 mins instead of 30s
     gcTime: TEAM_SEARCH_QUERY_GC_TIME,
     retry: teamQueryRetry,
+    enabled,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     placeholderData: keepPreviousData,

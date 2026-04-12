@@ -50,7 +50,7 @@ function SprintHoursPerDayField({
 
   return (
     <Field data-invalid={fieldState.invalid}>
-      <FieldLabel>Hrs/Day</FieldLabel>
+      <FieldLabel>Working Hours Per Day</FieldLabel>
       <div className="flex items-center gap-2">
         <Button
           type="button"
