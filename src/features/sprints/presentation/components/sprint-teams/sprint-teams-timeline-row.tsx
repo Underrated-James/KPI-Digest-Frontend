@@ -82,7 +82,10 @@ export function SprintTeamsTimelineRow({
   } | null>(null);
 
   const originalLeaveMap = new Map(
-    (member.leave ?? []).map((l) => [normalizeDate(l.leaveDate), l.leaveType[0] as LeaveType]),
+    (member.leave ?? []).map((l) => [
+      normalizeDate(l.leaveDate),
+      l.leaveType[0] as LeaveType,
+    ]),
   );
 
   const handleCellClick = (e: React.MouseEvent, dateStr: string) => {
@@ -139,6 +142,11 @@ export function SprintTeamsTimelineRow({
         );
         const isToday = dateStr === formatDate(new Date());
         const lc = leaveType ? leaveColors[leaveType] : null;
+
+        // console.log(
+        //   "DAYS:",
+        //   days.map((d) => d.toISOString()),
+        // );
 
         // Allow click on ANY day (user can add/remove leave on weekends/holidays too)
         return (

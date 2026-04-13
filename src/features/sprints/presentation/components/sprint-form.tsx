@@ -24,6 +24,7 @@ import { SprintDayOffSection } from "./sprint-form/sprint-day-off-section";
 import { SprintProjectField } from "./sprint-form/sprint-project-field";
 import {
   calculateSprintDurationDays,
+  getSprintEndDateFromPreset,
   isValidDateValue,
   toDateInputValue,
 } from "./sprint-form/sprint-form-utils";
@@ -53,9 +54,9 @@ export function SprintForm({
     name: "dayOff",
   });
 
-  const [startDate, endDate, dayOffs] = useWatch({
+  const [startDate, endDate, dayOffs, durationPreset] = useWatch({
     control: form.control,
-    name: ["startDate", "endDate", "dayOff"],
+    name: ["startDate", "endDate", "dayOff", "durationPreset"],
   });
 
   const isUpdateMode = Boolean(initialData);
@@ -83,6 +84,36 @@ export function SprintForm({
       shouldValidate: form.formState.isSubmitted,
     });
   }, [computedDuration, form, form.formState.isSubmitted]);
+
+  useEffect(() => {
+    if (durationPreset === "custom" || !isValidDateValue(startDate)) {
+      return;
+    }
+
+    const nextEndDate = getSprintEndDateFromPreset(startDate, durationPreset);
+
+    if (!nextEndDate) {
+      return;
+    }
+
+    if (
+      isValidDateValue(endDate) &&
+      endDate.getTime() === nextEndDate.getTime()
+    ) {
+      return;
+    }
+
+    form.setValue("endDate", nextEndDate, {
+      shouldDirty: true,
+      shouldValidate: form.formState.isSubmitted,
+    });
+  }, [
+    durationPreset,
+    endDate,
+    form,
+    form.formState.isSubmitted,
+    startDate,
+  ]);
 
   const handleSubmit = (data: SprintFormValues) => {
     if (isUnchangedUpdate) {

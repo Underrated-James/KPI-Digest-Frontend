@@ -11,7 +11,11 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import type { SprintFormValues } from "./sprint-form-schema"
-import { parseDateInputValue, toDateInputValue } from "./sprint-form-utils"
+import {
+  parseDateInputValue,
+  sprintDurationPresetValues,
+  toDateInputValue,
+} from "./sprint-form-utils"
 
 interface SprintCoreFieldsProps {
   form: UseFormReturn<SprintFormValues>
@@ -119,6 +123,16 @@ export function SprintCoreFields({
 }: SprintCoreFieldsProps) {
   const startDate = form.watch("startDate")
   const endDate = form.watch("endDate")
+  const durationPreset = form.watch("durationPreset")
+  const durationLabels: Record<
+    (typeof sprintDurationPresetValues)[number],
+    string
+  > = {
+    "1w": "1 Week",
+    "2w": "2 Weeks",
+    "4w": "4 Weeks",
+    custom: "Custom",
+  }
 
   return (
     <>
@@ -160,6 +174,33 @@ export function SprintCoreFields({
       />
 
       <Controller
+        name="durationPreset"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel>Duration</FieldLabel>
+            <select
+              {...field}
+              disabled={isLoading}
+              className="flex h-8 w-full rounded-lg border border-border bg-background px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+            >
+              {sprintDurationPresetValues.map((option) => (
+                <option key={option} value={option}>
+                  {durationLabels[option]}
+                </option>
+              ))}
+            </select>
+            <FieldDescription className="text-xs">
+              {field.value === "custom"
+                ? "Choose both start and end dates manually."
+                : "Choose a start date and the end date will be set automatically."}
+            </FieldDescription>
+            {fieldState.invalid ? <FieldError errors={[fieldState.error]} /> : null}
+          </Field>
+        )}
+      />
+
+      <Controller
         name="startDate"
         control={form.control}
         render={({ field, fieldState }) => (
@@ -187,18 +228,34 @@ export function SprintCoreFields({
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel>End Date</FieldLabel>
-            <Input
-              type="date"
-              name={field.name}
-              value={toDateInputValue(field.value)}
-              min={toDateInputValue(startDate)}
-              onBlur={field.onBlur}
-              onChange={(event) =>
-                field.onChange(parseDateInputValue(event.target.value))
-              }
-              ref={field.ref}
-              disabled={isLoading}
-            />
+            {durationPreset === "custom" ? (
+              <Input
+                type="date"
+                name={field.name}
+                value={toDateInputValue(field.value)}
+                min={toDateInputValue(startDate)}
+                onBlur={field.onBlur}
+                onChange={(event) =>
+                  field.onChange(parseDateInputValue(event.target.value))
+                }
+                ref={field.ref}
+                disabled={isLoading}
+              />
+            ) : (
+              <Input
+                type="text"
+                value={toDateInputValue(field.value)}
+                readOnly
+                aria-readonly="true"
+                disabled
+                className="bg-muted/40 text-muted-foreground"
+              />
+            )}
+            <FieldDescription className="text-xs">
+              {durationPreset === "custom"
+                ? "Set the sprint end date manually."
+                : "End date is locked to the selected duration."}
+            </FieldDescription>
             {fieldState.invalid ? <FieldError errors={[fieldState.error]} /> : null}
           </Field>
         )}

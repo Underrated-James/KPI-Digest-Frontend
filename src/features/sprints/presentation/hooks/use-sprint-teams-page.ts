@@ -59,7 +59,7 @@ export function isWeekend(date: Date): boolean {
 }
 
 export function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
+  return date.toLocaleDateString("en-CA"); // YYYY-MM-DD format
 }
 
 function serializeTeamMembers(members: SprintTeamMember[]): string {
@@ -107,12 +107,12 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
 
   // Fetch existing team for this sprint
   // Use a smaller size and specific sprintId filter
-  const teamsQuery = useTeams({ 
-    sprintId, 
-    page: 1, 
-    size: 10 // realistic size instead of 1000
+  const teamsQuery = useTeams({
+    sprintId,
+    page: 1,
+    size: 10, // realistic size instead of 1000
   });
-  
+
   const teamByIdQuery = useQuery({
     queryKey: teamKeys.detail(teamIdFromUrl),
     queryFn: () => teamService.getTeamById.execute(teamIdFromUrl),
@@ -130,7 +130,7 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
 
   // Fetch users for Add Member dropdown
   const [userSearchQuery, setUserSearchQuery] = useState("");
-  
+
   // Use a single user query and filter locally
   // Increased staleTime to prevent redundant fetches
   const usersQuery = useUsers({ size: 100 });
@@ -140,19 +140,20 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
   );
 
   const normalizedUserSearch = userSearchQuery.trim().toLowerCase();
-  
+
   // Local filtering instead of multiple API calls (Eliminates role=DEVS and role=QA calls)
   const filteredUsers = useMemo(() => {
     let result = allUsers;
     if (normalizedUserSearch) {
-      result = result.filter(u => 
-        u.name.toLowerCase().includes(normalizedUserSearch) || 
-        u.email?.toLowerCase().includes(normalizedUserSearch)
+      result = result.filter(
+        (u) =>
+          u.name.toLowerCase().includes(normalizedUserSearch) ||
+          u.email?.toLowerCase().includes(normalizedUserSearch),
       );
     }
     return result;
   }, [allUsers, normalizedUserSearch]);
-  
+
   const [members, setMembers] = useState<SprintTeamMember[]>([]);
 
   const availableUsers = useMemo(() => {
@@ -171,7 +172,7 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
   const deleteTeam = useDeleteTeam();
 
   // Local state
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<"ALL" | "DEVS" | "QA">("ALL");
   const [showWeekends, setShowWeekends] = useState(true);
@@ -433,7 +434,7 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
 
   const handleDeleteConfirm = useCallback(() => {
     if (!teamId) return;
-    
+
     deleteTeam.mutate(teamId, {
       onSuccess: () => {
         setIsDeleteModalOpen(false);

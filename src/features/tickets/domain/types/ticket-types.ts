@@ -3,7 +3,7 @@ export type TicketStatus = 'open' | 'inProgress' | 'done' | 'cancelled';
 export interface Ticket {
   id: string;
   projectId: string;
-  sprintId: string;
+  sprintId: string | null;
   teamId: string | null;
   assignedDevId: string | null;
   assignedQaId: string | null;
@@ -11,8 +11,8 @@ export interface Ticket {
   status: TicketStatus;
   ticketTitle: string;
   descriptionLink: string;
-  estimationTesting: number;
-  developmentEstimation: number;
+  estimationTesting?: number | null;
+  developmentEstimation?: number | null;
   projectName?: string;
   projectStatus?: string;
   sprintName?: string;
@@ -27,14 +27,14 @@ export interface Ticket {
 
 export interface CreateTicketDTO {
   projectId: string;
-  sprintId: string;
+  sprintId?: string;
   assignedDevId?: string | null;
   assignedQaId?: string | null;
   ticketNumber: string;
   ticketTitle: string;
   descriptionLink: string;
-  estimationTesting: number;
-  developmentEstimation: number;
+  estimationTesting?: number | null;
+  developmentEstimation?: number | null;
 }
 
 export interface UpdateTicketDTO extends Partial<CreateTicketDTO> {
