@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, Pencil, Trash, Calendar, UserPlus } from "lucide-react";
+import { ChevronDown, Pencil, Trash, Calendar, UserPlus, MoreHorizontal, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Sprint } from "../../domain/types/sprint-types";
@@ -12,11 +12,20 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ColumnsProps {
   onEdit: (sprint: Sprint) => void;
   onDelete: (id: string) => void;
   onCreateTeams: (sprint: Sprint) => void;
+  onCapacityPlanning: (sprint: Sprint) => void;
   teamSprintMap?: Map<string, string>;
 }
 
@@ -24,6 +33,7 @@ export const getSprintColumns = ({
   onEdit,
   onDelete,
   onCreateTeams,
+  onCapacityPlanning,
   teamSprintMap,
 }: ColumnsProps): ColumnDef<Sprint>[] => [
   {
@@ -264,35 +274,37 @@ export const getSprintColumns = ({
       const teamLabel = hasTeam ? "Edit Team" : "Create Team";
       return (
         <div className="flex flex-col items-stretch gap-2 md:flex-row md:flex-wrap md:items-center md:justify-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hidden h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground md:inline-flex"
-            onClick={(event) => {
-              event.stopPropagation();
-              onEdit(sprint);
-            }}
-            title="Edit Sprint"
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "hidden h-8 w-8 shrink-0 md:inline-flex",
-              hasTeam
-                ? "text-primary hover:bg-primary/10 hover:text-primary"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
-            onClick={(event) => {
-              event.stopPropagation();
-              onCreateTeams(sprint);
-            }}
-            title={teamLabel}
-          >
-            <TeamIcon className="h-4 w-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="hidden h-8 w-8 shrink-0 p-0 md:inline-flex"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <span className="sr-only">Open actions</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => onEdit(sprint)}>
+                <Pencil className="mr-2 h-4 w-4" /> Edit Sprint
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onCreateTeams(sprint)}>
+                <TeamIcon className="mr-2 h-4 w-4" /> {teamLabel}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onCapacityPlanning(sprint)}>
+                <Layers className="mr-2 h-4 w-4" /> Plan Capacity
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => onDelete(sprint.id)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash className="mr-2 h-4 w-4" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="outline"
             size="sm"
@@ -324,15 +336,16 @@ export const getSprintColumns = ({
             {hasTeam ? "Edit" : "Create"}
           </Button>
           <Button
-            variant="ghost"
-            size="icon"
-            className="hidden h-8 w-8 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive md:inline-flex"
+            variant="outline"
+            size="sm"
+            className="w-full justify-center border-border bg-background hover:border-foreground hover:bg-foreground hover:text-background md:hidden"
             onClick={(event) => {
               event.stopPropagation();
-              onDelete(sprint.id);
+              onCapacityPlanning(sprint);
             }}
           >
-            <Trash className="h-4 w-4" />
+            <Layers className="h-4 w-4" />
+            Plan Capacity
           </Button>
           <Button
             variant="destructive"

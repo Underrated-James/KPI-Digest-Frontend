@@ -308,6 +308,13 @@ export function useSprintPage() {
     );
   };
 
+  const handleCapacityPlanningClick = (sprint: Sprint) => {
+    const params = new URLSearchParams();
+    if (selectedProjectId) params.set("projectId", selectedProjectId);
+    if (activeProjectName) params.set("projectName", activeProjectName);
+    router.push(`/sprints/${sprint.id}/capacity-planning?${params.toString()}`);
+  };
+
   const handleDeleteClick = (sprint: Sprint) => {
     dispatch(
       openDeleteSprintModal({
@@ -395,6 +402,7 @@ export function useSprintPage() {
     handleOpenProject,
     handleBackToProjects,
     handleCreateTeamsClick,
+    handleCapacityPlanningClick,
     handleSubmit: editingSprint ? handleUpdate : handleCreate,
     handleDeleteConfirm,
     handleEditClick,

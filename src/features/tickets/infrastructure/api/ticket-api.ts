@@ -39,6 +39,14 @@ export const ticketApi = {
     return data.data;
   },
 
+  async bulkUpdateTickets(tickets: ({ id: string } & UpdateTicketDTO)[]): Promise<Ticket[]> {
+    const { data } = await api.patch<BackendResponse<Ticket[]>>(
+      "/tickets",
+      { tickets }
+    );
+    return data.data;
+  },
+
   async putTicket(id: string, ticketData: PutTicketDTO): Promise<Ticket> {
     const { data } = await api.put<BackendResponse<Ticket>>(
       `/tickets/${id}`,

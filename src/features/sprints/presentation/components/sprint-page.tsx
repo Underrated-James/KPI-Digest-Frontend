@@ -45,6 +45,7 @@ export function SprintPage() {
     handleDeleteConfirm,
     handleEditClick,
     handleCreateTeamsClick,
+    handleCapacityPlanningClick,
     handleDeleteById,
     handleBulkDeleteClick,
     handleAddClick,
@@ -191,6 +192,7 @@ export function SprintPage() {
                 isMobile={isMobile}
                 onEdit={handleEditClick}
                 onCreateTeams={handleCreateTeamsClick}
+                onCapacityPlanning={handleCapacityPlanningClick}
                 onDelete={handleDeleteById}
                 selectedSprintIds={selectedSprintIds}
                 onSelectionChange={handleSelectionChange}

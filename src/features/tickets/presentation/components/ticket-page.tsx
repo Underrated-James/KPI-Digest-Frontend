@@ -27,6 +27,10 @@ export default function TicketsPage() {
     onSelectionChange,
     onBulkDelete,
     isFormOpen,
+    deleteTarget,
+    isDeleteLoading,
+    handleDeleteConfirm,
+    handleCloseDeleteModal,
     refetch,
   } = useTicketPage();
 
@@ -102,7 +106,13 @@ export default function TicketsPage() {
         </AnimatePresence>
       </div>
 
-      <TicketDeleteModal />
+      <TicketDeleteModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleDeleteConfirm}
+        ticketNumber={deleteTarget?.ticketNumber ?? ""}
+        isLoading={isDeleteLoading}
+      />
     </div>
   );
 }
