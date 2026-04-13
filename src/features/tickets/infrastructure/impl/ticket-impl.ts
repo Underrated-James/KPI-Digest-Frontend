@@ -24,6 +24,10 @@ export class TicketRepositoryImpl implements TicketRepository {
     return ticketApi.updateTicket(id, data);
   }
 
+  async bulkUpdateTickets(tickets: ({ id: string } & UpdateTicketDTO)[]) {
+    return ticketApi.bulkUpdateTickets(tickets);
+  }
+
   async putTicket(id: string, data: PutTicketDTO) {
     return ticketApi.putTicket(id, data);
   }

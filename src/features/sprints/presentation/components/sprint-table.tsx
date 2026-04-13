@@ -27,6 +27,7 @@ interface SprintTableProps {
   isMobile: boolean;
   onEdit: (sprint: Sprint) => void;
   onCreateTeams: (sprint: Sprint) => void;
+  onCapacityPlanning: (sprint: Sprint) => void;
   onDelete: (id: string) => void;
   selectedSprintIds: string[];
   onSelectionChange: (ids: string[]) => void;
@@ -40,6 +41,7 @@ export function SprintTable({
   isMobile,
   onEdit,
   onCreateTeams,
+  onCapacityPlanning,
   onDelete,
   selectedSprintIds,
   onSelectionChange,
@@ -86,9 +88,9 @@ export function SprintTable({
           mobileVisible: true,
         },
       },
-      ...getSprintColumns({ onEdit, onDelete, onCreateTeams, teamSprintMap }),
+      ...getSprintColumns({ onEdit, onDelete, onCreateTeams, onCapacityPlanning, teamSprintMap }),
     ],
-    [onCreateTeams, onDelete, onEdit, teamSprintMap],
+    [onCapacityPlanning, onCreateTeams, onDelete, onEdit, teamSprintMap],
   );
 
   const handlePageChange = (newPage: number) => {
