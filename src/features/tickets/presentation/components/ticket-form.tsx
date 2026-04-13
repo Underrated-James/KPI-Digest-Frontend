@@ -74,8 +74,16 @@ function ticketToFormValues(ticket: Ticket): TicketFormValues {
     status: safeStatus,
     assignedDevId: ticket.assignedDevId ?? null,
     assignedQaId: ticket.assignedQaId ?? null,
-    developmentEstimation: Number(ticket.developmentEstimation ?? 0),
-    estimationTesting: Number(ticket.estimationTesting ?? 0),
+    developmentEstimation:
+      ticket.developmentEstimation !== undefined &&
+      ticket.developmentEstimation !== null
+        ? Number(ticket.developmentEstimation)
+        : null,
+    estimationTesting:
+      ticket.estimationTesting !== undefined &&
+      ticket.estimationTesting !== null
+        ? Number(ticket.estimationTesting)
+        : null,
   };
 }
 
@@ -101,6 +109,7 @@ export function TicketForm() {
 
   const form = useForm<TicketFormValues>({
     resolver: zodResolver(ticketFormSchema),
+    mode: "onChange",
     defaultValues: {
       projectId: "",
       sprintId: "",
@@ -110,14 +119,22 @@ export function TicketForm() {
       status: "open",
       assignedDevId: null,
       assignedQaId: null,
-      developmentEstimation: 0,
-      estimationTesting: 0,
+      developmentEstimation: null,
+      estimationTesting: null,
     },
   });
+  const {
+    isDirty,
+    isValid,
+  } = form.formState;
 
   const selectedProjectId = useWatch({
     control: form.control,
     name: "projectId",
+  });
+  const [ticketNumberValue, ticketTitleValue, descriptionLinkValue] = useWatch({
+    control: form.control,
+    name: ["ticketNumber", "ticketTitle", "descriptionLink"],
   });
   const selectedSprintId = useWatch({
     control: form.control,
@@ -125,9 +142,7 @@ export function TicketForm() {
   });
   const selectedProject = React.useMemo(
     () =>
-      projectsData?.content.find(
-        (project) => project.id === selectedProjectId,
-      ),
+      projectsData?.content.find((project) => project.id === selectedProjectId),
     [projectsData, selectedProjectId],
   );
 
@@ -148,8 +163,7 @@ export function TicketForm() {
   );
 
   const selectedSprint = React.useMemo(
-    () =>
-      sprintsData?.content.find((sprint) => sprint.id === selectedSprintId),
+    () => sprintsData?.content.find((sprint) => sprint.id === selectedSprintId),
     [selectedSprintId, sprintsData],
   );
 
@@ -203,8 +217,8 @@ export function TicketForm() {
       status: "open",
       assignedDevId: null,
       assignedQaId: null,
-      developmentEstimation: 0,
-      estimationTesting: 0,
+      developmentEstimation: null,
+      estimationTesting: null,
     }),
     [],
   );
@@ -286,13 +300,13 @@ export function TicketForm() {
     if (editingTicket) {
       const payload: PutTicketDTO = {
         projectId: values.projectId,
-        sprintId: values.sprintId,
         ticketNumber: values.ticketNumber.trim(),
         ticketTitle: values.ticketTitle.trim(),
         descriptionLink: values.descriptionLink.trim(),
         status: values.status,
         developmentEstimation: values.developmentEstimation,
         estimationTesting: values.estimationTesting,
+        ...(values.sprintId ? { sprintId: values.sprintId } : {}),
         ...(values.assignedDevId
           ? { assignedDevId: values.assignedDevId }
           : {}),
@@ -309,12 +323,12 @@ export function TicketForm() {
         [
           {
             projectId: values.projectId,
-            sprintId: values.sprintId,
             ticketNumber: values.ticketNumber.trim(),
             ticketTitle: values.ticketTitle.trim(),
             descriptionLink: values.descriptionLink.trim(),
             developmentEstimation: values.developmentEstimation,
             estimationTesting: values.estimationTesting,
+            ...(values.sprintId ? { sprintId: values.sprintId } : {}),
             assignedDevId: values.assignedDevId ?? undefined,
             assignedQaId: values.assignedQaId ?? undefined,
           },
@@ -332,9 +346,21 @@ export function TicketForm() {
 
   const isEditBlocked =
     Boolean(editingTicket) && (isLoadingTicketDetail || isTicketDetailError);
+  const hasRequiredVisibleFields =
+    Boolean(selectedProjectId) &&
+    Boolean(ticketNumberValue?.trim()) &&
+    Boolean(ticketTitleValue?.trim()) &&
+    Boolean(descriptionLinkValue?.trim());
+  const isSubmitDisabled =
+    isCreating ||
+    isUpdating ||
+    isEditBlocked ||
+    !hasRequiredVisibleFields ||
+    !isValid ||
+    (Boolean(editingTicket) && !isDirty);
 
   return (
-    <Card className="mx-auto flex h-full min-h-0 w-full max-w-7xl max-h-[calc(100dvh-0.75rem)] flex-col border border-border bg-card shadow-xl ring-1 ring-border/70 sm:max-h-[calc(100vh-2rem)]">
+    <Card className="mx-auto flex h-full min-h-0 w-full max-w-4xl max-h-[calc(100dvh-0.75rem)] flex-col border border-border bg-card shadow-xl ring-1 ring-border/70 sm:max-h-[calc(100vh-2rem)]">
       <CardHeader className="shrink-0 border-b border-border/80 px-4 pb-3 pt-4 text-center sm:px-6 sm:pb-4 sm:pt-6">
         <CardTitle className="text-xl sm:text-2xl">
           {editingTicket ? "Edit Ticket" : "Create New Ticket"}
@@ -362,307 +388,153 @@ export function TicketForm() {
             className="flex h-full min-h-0 flex-col space-y-5"
           >
             <div
-              className={`grid min-h-0 flex-1 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] ${isEditBlocked ? "pointer-events-none opacity-50" : ""}`}
+              className={`mx-auto grid min-h-0 flex-1 w-full max-w-2xl grid-cols-1 gap-5 md:grid-cols-2 ${isEditBlocked ? "pointer-events-none opacity-50" : ""}`}
             >
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="projectId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Project</FormLabel>
-                          <Select
-                          key={`project-select-${selectSurfaceKey}`}
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            form.setValue("sprintId", "");
-                            form.setValue("assignedDevId", null);
-                            form.setValue("assignedQaId", null);
-                          }}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select project" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {selectedProjectId && !selectedProject ? (
-                              <SelectItem value={selectedProjectId}>
-                                {orphanProjectLabel}
-                              </SelectItem>
-                            ) : null}
-                            {projectsData?.content.map((project) => (
-                              <SelectItem key={project.id} value={project.id}>
-                                {project.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <FormField
+                control={form.control}
+                name="projectId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Project</FormLabel>
+                    <Select
+                      key={`project-select-${selectSurfaceKey}`}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        form.setValue("sprintId", "");
+                        form.setValue("assignedDevId", null);
+                        form.setValue("assignedQaId", null);
+                      }}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select project" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {selectedProjectId && !selectedProject ? (
+                          <SelectItem value={selectedProjectId}>
+                            {orphanProjectLabel}
+                          </SelectItem>
+                        ) : null}
+                        {projectsData?.content.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                  <FormField
-                    control={form.control}
-                    name="sprintId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Sprint</FormLabel>
-                          <Select
-                          key={`sprint-select-${selectSurfaceKey}`}
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            form.setValue("assignedDevId", null);
-                            form.setValue("assignedQaId", null);
-                          }}
-                          value={field.value}
-                          disabled={!selectedProjectId}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select sprint" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {selectedSprintId && !selectedSprint ? (
-                              <SelectItem value={selectedSprintId}>
-                                {orphanSprintLabel}
-                              </SelectItem>
-                            ) : null}
-                            {sprintsData?.content.map((sprint) => (
-                              <SelectItem key={sprint.id} value={sprint.id}>
-                                {sprint.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  {showNoSprintsForProject ? (
-                    <p className="text-sm text-muted-foreground md:col-span-2">
-                      This project has no sprints yet.{" "}
-                      <Link
-                        href={createSprintHref}
-                        className="font-medium text-primary underline-offset-4 hover:underline"
-                      >
-                        Create sprint
-                      </Link>
-                    </p>
-                  ) : null}
-                </div>
-
+              {editingTicket ? (
                 <FormField
                   control={form.control}
-                  name="ticketNumber"
+                  name="status"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ticket Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. KPI-101" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="ticketTitle"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ticket title" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="descriptionLink"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description Link</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="https://jira.example.com/..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {editingTicket ? (
-                    <FormField
-                      control={form.control}
-                      name="status"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Status</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="open">
-                                {TICKET_STATUS_LABELS.open}
-                              </SelectItem>
-                              <SelectItem value="inProgress">
-                                {TICKET_STATUS_LABELS.inProgress}
-                              </SelectItem>
-                              <SelectItem value="done">
-                                {TICKET_STATUS_LABELS.done}
-                              </SelectItem>
-                              <SelectItem value="cancelled">
-                                {TICKET_STATUS_LABELS.cancelled}
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ) : (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <div className="flex min-h-10 flex-col gap-2 rounded-md border border-input bg-muted/40 px-3 py-2.5 sm:py-2">
-                        <Badge
-                          variant="outline"
-                          className="w-fit border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                        >
-                          {TICKET_STATUS_LABELS.open}
-                        </Badge>
-                        <FormDescription className="!mt-0 text-xs leading-snug">
-                          New tickets are always created with status Open. You
-                          can change status after the ticket exists by editing
-                          it.
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-
-                  <FormField
-                    control={form.control}
-                    name="developmentEstimation"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Dev Estimation (hours)</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            min="0" 
-                            {...field} 
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                          />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="assignedDevId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Assigned Developer</FormLabel>
-                        <Select
-                          onValueChange={(val) =>
-                            field.onChange(val === "unassigned" ? null : val)
-                          }
-                          value={field.value || "unassigned"}
-                          disabled={!selectedSprintId}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select developer" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="unassigned">Unassigned</SelectItem>
-                            {membersData.devs.map((dev) => (
-                              <SelectItem key={dev.userId} value={dev.userId}>
-                                {dev.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="assignedQaId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Assigned QA</FormLabel>
-                        <Select
-                          onValueChange={(val) =>
-                            field.onChange(val === "unassigned" ? null : val)
-                          }
-                          value={field.value || "unassigned"}
-                          disabled={!selectedSprintId}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select QA" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="unassigned">Unassigned</SelectItem>
-                            {membersData.qas.map((qa) => (
-                              <SelectItem key={qa.userId} value={qa.userId}>
-                                {qa.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="estimationTesting"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>QA Estimation (hours)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          min="0" 
-                          {...field} 
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
+                        <SelectContent>
+                          <SelectItem value="open">
+                            {TICKET_STATUS_LABELS.open}
+                          </SelectItem>
+                          <SelectItem value="inProgress">
+                            {TICKET_STATUS_LABELS.inProgress}
+                          </SelectItem>
+                          <SelectItem value="done">
+                            {TICKET_STATUS_LABELS.done}
+                          </SelectItem>
+                          <SelectItem value="cancelled">
+                            {TICKET_STATUS_LABELS.cancelled}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
+              ) : (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <div className="flex min-h-10 flex-col gap-2 rounded-md border border-input bg-muted/40 px-3 py-2.5 sm:py-2">
+                    <Badge
+                      variant="outline"
+                      className="w-fit border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                    >
+                      {TICKET_STATUS_LABELS.open}
+                    </Badge>
+                    <FormDescription className="!mt-0 text-xs leading-snug">
+                      New tickets are always created with status Open. You can
+                      change status after the ticket exists by editing it.
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+
+              {showNoSprintsForProject ? (
+                <p className="text-sm text-muted-foreground md:col-span-2">
+                  This project has no sprints yet.{" "}
+                  <Link
+                    href={createSprintHref}
+                    className="font-medium text-primary underline-offset-4 hover:underline"
+                  >
+                    Create sprint
+                  </Link>
+                </p>
+              ) : null}
+
+              <FormField
+                control={form.control}
+                name="ticketNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ticket Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. KPI-101" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="ticketTitle"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ticket title" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="descriptionLink"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Description Link</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="https://jira.example.com/..."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </form>
         </Form>
@@ -683,7 +555,7 @@ export function TicketForm() {
             type="submit"
             form="ticket-form"
             className="h-11 w-full px-8 sm:h-10 sm:w-auto"
-            disabled={isCreating || isUpdating || isEditBlocked}
+            disabled={isSubmitDisabled}
           >
             {isCreating || isUpdating
               ? "Saving..."

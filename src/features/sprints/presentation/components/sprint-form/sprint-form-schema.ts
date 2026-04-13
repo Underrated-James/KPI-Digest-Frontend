@@ -2,7 +2,12 @@
 
 import * as z from "zod"
 import type { CreateSprintDTO, Sprint } from "../../../domain/types/sprint-types"
-import { calculateWorkingDays, isDayOffDateWithinRange } from "./sprint-form-utils"
+import {
+  calculateWorkingDays,
+  inferSprintDurationPreset,
+  isDayOffDateWithinRange,
+  sprintDurationPresetValues,
+} from "./sprint-form-utils"
 
 const sprintDayOffSchema = z.object({
   label: z.string().trim().min(1, "Label is required"),
@@ -14,6 +19,7 @@ export const sprintFormSchema = z
     projectId: z.string().min(1, "Project is required."),
     name: z.string().min(2, "Name must be at least 2 characters."),
     status: z.enum(["active", "inactive", "draft", "completed"]),
+    durationPreset: z.enum(sprintDurationPresetValues),
     startDate: z.date().optional(),
     endDate: z.date().optional(),
     workingHoursDay: z.number().min(1).max(24),
@@ -83,6 +89,10 @@ export function createSprintFormDefaultValues(
     projectId: initialData?.projectId ?? defaultProjectId ?? "",
     name: initialData?.name ?? "",
     status: initialData?.status ?? "draft",
+    durationPreset: inferSprintDurationPreset(
+      initialData?.startDate ? new Date(initialData.startDate) : undefined,
+      initialData?.endDate ? new Date(initialData.endDate) : undefined,
+    ),
     startDate: initialData?.startDate
       ? new Date(initialData.startDate)
       : undefined,
@@ -102,12 +112,14 @@ export function createSprintFormDefaultValues(
 export function toCreateSprintPayload(
   data: SprintFormValues,
 ): CreateSprintDTO {
+  const { durationPreset: _durationPreset, ...payload } = data
+
   if (!(data.startDate instanceof Date) || !(data.endDate instanceof Date)) {
     throw new Error("Sprint start and end dates are required before submission.")
   }
 
   return {
-    ...data,
+    ...payload,
     startDate: data.startDate.toISOString(),
     endDate: data.endDate.toISOString(),
     officialStartDate: data.officialStartDate?.toISOString() ?? null,

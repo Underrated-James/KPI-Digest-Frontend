@@ -34,6 +34,10 @@ interface ColumnProps {
   onDelete: (ticket: Ticket) => void;
 }
 
+function formatEstimate(value: number | null | undefined) {
+  return value == null ? "" : `${value}h`;
+}
+
 export const getColumns = ({ onEdit, onDelete }: ColumnProps): ColumnDef<Ticket>[] => [
   {
     accessorKey: "ticketNumber",
@@ -116,7 +120,9 @@ export const getColumns = ({ onEdit, onDelete }: ColumnProps): ColumnDef<Ticket>
     meta: {
       mobileLabel: "Dev estimation",
     },
-    cell: ({ row }) => <div>{row.getValue("developmentEstimation")}h</div>,
+    cell: ({ row }) => (
+      <div>{formatEstimate(row.original.developmentEstimation)}</div>
+    ),
   },
   {
     accessorKey: "estimationTesting",
@@ -124,7 +130,9 @@ export const getColumns = ({ onEdit, onDelete }: ColumnProps): ColumnDef<Ticket>
     meta: {
       mobileLabel: "QA estimation",
     },
-    cell: ({ row }) => <div>{row.getValue("estimationTesting")}h</div>,
+    cell: ({ row }) => (
+      <div>{formatEstimate(row.original.estimationTesting)}</div>
+    ),
   },
   {
     id: "actions",
