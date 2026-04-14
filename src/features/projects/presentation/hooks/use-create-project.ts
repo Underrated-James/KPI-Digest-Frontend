@@ -18,6 +18,7 @@ export function useCreateProject() {
     onSuccess: () => {
       toast.success("Project created successfully");
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: projectKeys.membersAll() });
     },
     onError: (error: ApiError) => {
       toast.error(error.message || "Failed to create project");

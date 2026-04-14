@@ -35,9 +35,9 @@ export const getProjectColumns = ({
   
   {
     accessorKey: "finishDate",
-    header: "Finish Date",
+    header: "Target Finish Date",
     meta: {
-      mobileLabel: "Finish Date",
+      mobileLabel: "Target Finish Date",
     },
     cell: ({ row }) => {
       const dateStr = row.original.finishDate;

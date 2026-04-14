@@ -46,7 +46,7 @@ export function UserPage() {
         <div className="flex flex-col gap-5">
           <div className="flex items-start justify-between">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              Users
+              Team Members
             </h1>
           </div>
 

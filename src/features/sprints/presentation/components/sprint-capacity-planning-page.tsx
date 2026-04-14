@@ -98,13 +98,21 @@ export function SprintCapacityPlanningPage({
           </Button>
           <Button
             onClick={save}
-            disabled={isSaving || hasOverCapacity || !team}
+            disabled={isSaving || hasOverCapacity}
           >
             <Save className="mr-2 h-4 w-4" />
             {isSaving ? "Saving..." : "Save Bulk Update"}
           </Button>
         </div>
       </div>
+
+      {!team ? (
+        <div className="rounded-lg border border-border bg-muted/40 px-4 py-2 text-sm text-muted-foreground">
+          No team exists for this sprint yet. You can still add tickets to the
+          sprint now and leave assignees and estimations empty until planning is
+          ready.
+        </div>
+      ) : null}
 
       {hasOverCapacity ? (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">

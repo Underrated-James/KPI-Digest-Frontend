@@ -20,6 +20,7 @@ export function useUpdateProject() {
       toast.success("Project updated successfully");
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
       queryClient.invalidateQueries({ queryKey: projectKeys.detail(data.id) });
+      queryClient.invalidateQueries({ queryKey: projectKeys.members(data.id) });
     },
     onError: (error: ApiError) => {
       toast.error(error.message || "Failed to update project");

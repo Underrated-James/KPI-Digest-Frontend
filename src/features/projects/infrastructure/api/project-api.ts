@@ -5,6 +5,7 @@ import {
   PaginatedData,
   UpdateProjectDTO,
   Project,
+  ProjectMember,
   ProjectQueryParams,
 } from "../../domain/types/project-types";
 
@@ -20,6 +21,30 @@ export const projectApi = {
 
   async getProjectById(id: string): Promise<Project> {
     const { data } = await api.get<BackendResponse<Project>>(`/projects/${id}`);
+
+    return data.data;
+  },
+
+  async getProjectMembers(id: string): Promise<ProjectMember[]> {
+    const { data } = await api.get<BackendResponse<ProjectMember[]>>(
+      `/projects/${id}/members`
+    );
+
+    return data.data;
+  },
+
+  async getProjectDevelopers(id: string): Promise<ProjectMember[]> {
+    const { data } = await api.get<BackendResponse<ProjectMember[]>>(
+      `/projects/${id}/members/developers`
+    );
+
+    return data.data;
+  },
+
+  async getProjectQa(id: string): Promise<ProjectMember[]> {
+    const { data } = await api.get<BackendResponse<ProjectMember[]>>(
+      `/projects/${id}/members/qa`
+    );
 
     return data.data;
   },
