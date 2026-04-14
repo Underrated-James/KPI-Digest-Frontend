@@ -26,10 +26,14 @@ function utilizationColor(utilization: number) {
 
 function statusLabel(status?: string) {
   if (!status) return "N/A";
-  return status.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
+  return status
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (c) => c.toUpperCase());
 }
 
-export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningPageProps) {
+export function SprintCapacityPlanningPage({
+  sprintId,
+}: SprintCapacityPlanningPageProps) {
   const {
     sprint,
     team,
@@ -62,7 +66,11 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
   } = useSprintCapacityPlanning(sprintId);
 
   if (isLoading) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading sprint capacity planner...</div>;
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        Loading sprint capacity planner...
+      </div>
+    );
   }
 
   return (
@@ -74,9 +82,12 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
             Back
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Sprint Capacity Planner</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Sprint Capacity Planner
+            </h1>
             <p className="text-sm text-muted-foreground">
-              {sprint?.name ?? "Sprint"} {sprint?.projectName ? `- ${sprint.projectName}` : ""}
+              {sprint?.name ?? "Sprint"}{" "}
+              {sprint?.projectName ? `- ${sprint.projectName}` : ""}
             </p>
           </div>
         </div>
@@ -85,7 +96,10 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
             <Plus className="mr-2 h-4 w-4" />
             Add Ticket
           </Button>
-          <Button onClick={save} disabled={isSaving || hasOverCapacity || !team}>
+          <Button
+            onClick={save}
+            disabled={isSaving || hasOverCapacity || !team}
+          >
             <Save className="mr-2 h-4 w-4" />
             {isSaving ? "Saving..." : "Save Bulk Update"}
           </Button>
@@ -94,14 +108,17 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
 
       {hasOverCapacity ? (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
-          Over capacity: one or more members have committed hours exceeding available capacity.
+          Over capacity: one or more members have committed hours exceeding
+          available capacity.
         </div>
       ) : null}
 
       <div className="grid gap-3 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Sprint Capacity</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Sprint Capacity
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">{totalSprintCapacity}h</p>
@@ -109,7 +126,9 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Committed</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Committed
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">{totalCommitted}h</p>
@@ -117,7 +136,9 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Available</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Available
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">{totalAvailable}h</p>
@@ -125,7 +146,9 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Team Size</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Team Size
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">{members.length}</p>
@@ -155,7 +178,13 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
                     <td className="px-2 py-2">
                       <div className="flex items-center gap-2">
                         <span>{member.name}</span>
-                        <Badge variant={member.role === "QA" ? "secondary" : "default"}>{member.role}</Badge>
+                        <Badge
+                          variant={
+                            member.role === "QA" ? "secondary" : "default"
+                          }
+                        >
+                          {member.role}
+                        </Badge>
                         {member.isZeroCapacity ? (
                           <Badge variant="destructive" className="ml-1">
                             0 capacity
@@ -165,7 +194,9 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
                     </td>
                     <td className="px-2 py-2">{member.sprintCapacity}h</td>
                     <td className="px-2 py-2">{member.committed}h</td>
-                    <td className={`px-2 py-2 ${member.available < 0 ? "text-destructive" : ""}`}>
+                    <td
+                      className={`px-2 py-2 ${member.available < 0 ? "text-destructive" : ""}`}
+                    >
                       {member.available}h
                     </td>
                     <td className="px-2 py-2">
@@ -173,7 +204,9 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
                         <div className="h-2 w-40 overflow-hidden rounded bg-muted">
                           <div
                             className={`h-2 ${utilizationColor(member.utilization)}`}
-                            style={{ width: `${Math.min(member.utilization, 100)}%` }}
+                            style={{
+                              width: `${Math.min(member.utilization, 100)}%`,
+                            }}
                           />
                         </div>
                         <span>{member.utilization}%</span>
@@ -209,14 +242,19 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
               <tbody>
                 {tickets.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-2 py-8 text-center text-muted-foreground">
+                    <td
+                      colSpan={8}
+                      className="px-2 py-8 text-center text-muted-foreground"
+                    >
                       No tickets yet. Use Add Ticket to start planning.
                     </td>
                   </tr>
                 ) : null}
                 {tickets.map((ticket) => (
                   <tr key={ticket.ticketId} className="border-b">
-                    <td className="px-2 py-2 font-medium">{ticket.ticketNumber}</td>
+                    <td className="px-2 py-2 font-medium">
+                      {ticket.ticketNumber}
+                    </td>
                     <td className="px-2 py-2">{ticket.title}</td>
                     <td className="px-2 py-2">{statusLabel(ticket.status)}</td>
                     <td className="px-2 py-2">
@@ -262,7 +300,9 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
                         value={ticket.developmentEstimation}
                         onChange={(event) =>
                           updateTicket(ticket.ticketId, {
-                            developmentEstimation: Number(event.target.value || 0),
+                            developmentEstimation: Number(
+                              event.target.value || 0,
+                            ),
                           })
                         }
                       />
@@ -280,7 +320,11 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
                       />
                     </td>
                     <td className="px-2 py-2">
-                      <Button variant="ghost" size="icon" onClick={() => removeTicket(ticket.ticketId)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeTicket(ticket.ticketId)}
+                      >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </td>
@@ -300,7 +344,8 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
               Add Ticket to Sprint Plan
             </DialogTitle>
             <DialogDescription>
-              Search tickets from external source and add them to this sprint planner.
+              Search tickets from external source and add them to this sprint
+              planner.
             </DialogDescription>
           </DialogHeader>
           <Input
@@ -310,11 +355,17 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
           />
           <div className="h-72 overflow-y-auto rounded border border-border">
             {ticketSearchLoading ? (
-              <p className="p-3 text-sm text-muted-foreground">Searching tickets...</p>
+              <p className="p-3 text-sm text-muted-foreground">
+                Searching tickets...
+              </p>
             ) : ticketSearchError ? (
-              <p className="p-3 text-sm text-destructive">{ticketSearchError}</p>
+              <p className="p-3 text-sm text-destructive">
+                {ticketSearchError}
+              </p>
             ) : ticketSearchResults.length === 0 ? (
-              <p className="p-3 text-sm text-muted-foreground">No tickets found.</p>
+              <p className="p-3 text-sm text-muted-foreground">
+                No tickets found.
+              </p>
             ) : (
               <div className="divide-y">
                 {ticketSearchResults.map((item) => {
@@ -325,11 +376,17 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
                       className="flex w-full items-center justify-between px-3 py-2"
                     >
                       <div>
-                        <p className="text-sm font-medium">{item.ticketNumber}</p>
-                        <p className="text-xs text-muted-foreground">{item.ticketTitle}</p>
+                        <p className="text-sm font-medium">
+                          {item.ticketNumber}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.ticketTitle}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline">{statusLabel(item.status)}</Badge>
+                        <Badge variant="outline">
+                          {statusLabel(item.status)}
+                        </Badge>
                         <Button
                           size="sm"
                           variant={isAdded ? "secondary" : "outline"}
@@ -349,7 +406,9 @@ export function SprintCapacityPlanningPage({ sprintId }: SprintCapacityPlanningP
             )}
           </div>
           <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Page {ticketSearchPage}</p>
+            <p className="text-xs text-muted-foreground">
+              Page {ticketSearchPage}
+            </p>
             <Button
               type="button"
               variant="outline"
