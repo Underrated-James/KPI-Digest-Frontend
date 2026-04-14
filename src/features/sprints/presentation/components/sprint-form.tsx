@@ -107,13 +107,7 @@ export function SprintForm({
       shouldDirty: true,
       shouldValidate: form.formState.isSubmitted,
     });
-  }, [
-    durationPreset,
-    endDate,
-    form,
-    form.formState.isSubmitted,
-    startDate,
-  ]);
+  }, [durationPreset, endDate, form, form.formState.isSubmitted, startDate]);
 
   const handleSubmit = (data: SprintFormValues) => {
     if (isUnchangedUpdate) {
