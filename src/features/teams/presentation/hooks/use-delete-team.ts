@@ -4,6 +4,7 @@ import { ApiError } from "@/lib/api-error";
 import { teamService } from "../../infrastructure/team-service";
 import { teamKeys } from "../queries/team-keys";
 import { teamQueryMeta } from "../queries/team-query-options";
+import { ticketKeys } from "@/features/tickets/presentation/queries/ticket-keys";
 
 export function useDeleteTeam() {
   const queryClient = useQueryClient();
@@ -17,6 +18,7 @@ export function useDeleteTeam() {
     onSuccess: () => {
       toast.success("Team deleted successfully");
       queryClient.invalidateQueries({ queryKey: teamKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ticketKeys.all });
     },
     onError: (error: ApiError) => {
       toast.error(error.message || "Failed to delete team");

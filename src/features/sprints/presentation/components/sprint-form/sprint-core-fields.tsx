@@ -228,33 +228,33 @@ export function SprintCoreFields({
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel>End Date</FieldLabel>
-            {durationPreset === "custom" ? (
-              <Input
-                type="date"
-                name={field.name}
-                value={toDateInputValue(field.value)}
-                min={toDateInputValue(startDate)}
-                onBlur={field.onBlur}
-                onChange={(event) =>
-                  field.onChange(parseDateInputValue(event.target.value))
-                }
-                ref={field.ref}
-                disabled={isLoading}
-              />
-            ) : (
-              <Input
-                type="text"
-                value={toDateInputValue(field.value)}
-                readOnly
-                aria-readonly="true"
-                disabled
-                className="bg-muted/40 text-muted-foreground"
-              />
-            )}
+            <Input
+              type="date"
+              name={field.name}
+              value={toDateInputValue(field.value)}
+              min={toDateInputValue(startDate)}
+              onBlur={field.onBlur}
+              onChange={(event) =>
+                field.onChange(parseDateInputValue(event.target.value))
+              }
+              ref={field.ref}
+              disabled={isLoading || durationPreset !== "custom"}
+              aria-readonly={durationPreset !== "custom"}
+              title={
+                durationPreset === "custom"
+                  ? "Set the sprint end date manually."
+                  : "End date is auto-calculated from the selected duration."
+              }
+              className={
+                durationPreset === "custom"
+                  ? undefined
+                  : "cursor-not-allowed bg-muted/40 text-muted-foreground disabled:opacity-100"
+              }
+            />
             <FieldDescription className="text-xs">
               {durationPreset === "custom"
                 ? "Set the sprint end date manually."
-                : "End date is locked to the selected duration."}
+                : "End date is locked and recalculates automatically from the selected duration."}
             </FieldDescription>
             {fieldState.invalid ? <FieldError errors={[fieldState.error]} /> : null}
           </Field>

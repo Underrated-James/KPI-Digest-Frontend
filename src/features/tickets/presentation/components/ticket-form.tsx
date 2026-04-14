@@ -21,10 +21,13 @@ import {
 import type { PutTicketDTO, Ticket } from "../../domain/types/ticket-types";
 import { TICKET_STATUS_LABELS } from "../utils/ticket-status-ui";
 import { useProjectById } from "@/features/projects/presentation/hooks/use-project-by-id";
+import {
+  useProjectDevelopers,
+  useProjectQa,
+} from "@/features/projects/presentation/hooks/use-project-members";
 import { useProjects } from "@/features/projects/presentation/hooks/use-projects";
 import { useSprintById } from "@/features/sprints/presentation/hooks/use-sprint-by-id";
 import { useSprints } from "@/features/sprints/presentation/hooks/use-sprints";
-import { useTeams } from "@/features/teams/presentation/hooks/use-teams";
 import {
   Form,
   FormControl,
@@ -140,6 +143,14 @@ export function TicketForm() {
     control: form.control,
     name: "sprintId",
   });
+  const selectedAssignedDevId = useWatch({
+    control: form.control,
+    name: "assignedDevId",
+  });
+  const selectedAssignedQaId = useWatch({
+    control: form.control,
+    name: "assignedQaId",
+  });
   const selectedProject = React.useMemo(
     () =>
       projectsData?.content.find((project) => project.id === selectedProjectId),
@@ -188,24 +199,26 @@ export function TicketForm() {
     return `/sprints?${params.toString()}`;
   }, [selectedProjectId, projectNameForSprintsLink]);
 
-  const { data: teamsData } = useTeams(
-    { sprintId: selectedSprintId },
-    !!selectedSprintId,
+  const {
+    data: projectDevelopers = [],
+    isLoading: isLoadingDevelopers,
+  } = useProjectDevelopers(selectedProjectId || null);
+  const {
+    data: projectQa = [],
+    isLoading: isLoadingQa,
+  } = useProjectQa(selectedProjectId || null);
+
+  const selectedDeveloper = React.useMemo(
+    () =>
+      projectDevelopers.find(
+        (developer) => developer.id === selectedAssignedDevId,
+      ),
+    [projectDevelopers, selectedAssignedDevId],
   );
-
-  const team = teamsData?.content[0];
-  const membersData = React.useMemo(() => {
-    if (!team) return { devs: [], qas: [] };
-
-    return {
-      devs: team.users
-        .filter((user) => user.role === "DEVS")
-        .map((user) => ({ userId: user.userId, name: user.name || "Unknown" })),
-      qas: team.users
-        .filter((user) => user.role === "QA")
-        .map((user) => ({ userId: user.userId, name: user.name || "Unknown" })),
-    };
-  }, [team]);
+  const selectedQa = React.useMemo(
+    () => projectQa.find((qa) => qa.id === selectedAssignedQaId),
+    [projectQa, selectedAssignedQaId],
+  );
 
   const emptyFormDefaults = React.useMemo(
     (): TicketFormValues => ({
@@ -295,6 +308,16 @@ export function TicketForm() {
     editingTicket?.sprintName ??
     sprintDetail?.name ??
     "Selected sprint";
+
+  const orphanDeveloperLabel =
+    ticketDetail?.assignedDevName ??
+    editingTicket?.assignedDevName ??
+    "Current developer";
+
+  const orphanQaLabel =
+    ticketDetail?.assignedQaName ??
+    editingTicket?.assignedQaName ??
+    "Current QA";
 
   const onSubmit = (values: TicketFormValues) => {
     if (editingTicket) {
@@ -531,6 +554,208 @@ export function TicketForm() {
                         {...field}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="sprintId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sprint</FormLabel>
+                    <Select
+                      key={`sprint-select-${selectSurfaceKey}`}
+                      onValueChange={(value) =>
+                        field.onChange(value === "__none__" ? "" : value)
+                      }
+                      value={field.value || "__none__"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="No sprint" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="__none__">No sprint</SelectItem>
+                        {selectedSprintId && !selectedSprint && selectedSprintId !== "__none__" ? (
+                          <SelectItem value={selectedSprintId}>
+                            {orphanSprintLabel}
+                          </SelectItem>
+                        ) : null}
+                        {sprintsData?.content.map((sprint) => (
+                          <SelectItem key={sprint.id} value={sprint.id}>
+                            {sprint.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Optional. Tickets can be created before a sprint exists.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="assignedDevId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Assigned Developer</FormLabel>
+                    <Select
+                      key={`dev-select-${selectSurfaceKey}-${selectedProjectId || "none"}`}
+                      onValueChange={(value) =>
+                        field.onChange(value === "__none__" ? null : value)
+                      }
+                      value={field.value || "__none__"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Unassigned" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="__none__">Unassigned</SelectItem>
+                        {field.value && !selectedDeveloper ? (
+                          <SelectItem value={field.value}>
+                            {orphanDeveloperLabel}
+                          </SelectItem>
+                        ) : null}
+                        {isLoadingDevelopers ? (
+                          <SelectItem value="__loading-dev" disabled>
+                            Loading developers...
+                          </SelectItem>
+                        ) : projectDevelopers.length === 0 ? (
+                          <SelectItem value="__no-devs" disabled>
+                            No project developers available
+                          </SelectItem>
+                        ) : (
+                          projectDevelopers.map((developer) => (
+                            <SelectItem key={developer.id} value={developer.id}>
+                              {developer.name} ({developer.email})
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Optional. Leave this unassigned if you do not have members
+                      or teams set up yet.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="assignedQaId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Assigned QA</FormLabel>
+                    <Select
+                      key={`qa-select-${selectSurfaceKey}-${selectedProjectId || "none"}`}
+                      onValueChange={(value) =>
+                        field.onChange(value === "__none__" ? null : value)
+                      }
+                      value={field.value || "__none__"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Unassigned" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="__none__">Unassigned</SelectItem>
+                        {field.value && !selectedQa ? (
+                          <SelectItem value={field.value}>
+                            {orphanQaLabel}
+                          </SelectItem>
+                        ) : null}
+                        {isLoadingQa ? (
+                          <SelectItem value="__loading-qa" disabled>
+                            Loading QA members...
+                          </SelectItem>
+                        ) : projectQa.length === 0 ? (
+                          <SelectItem value="__no-qa" disabled>
+                            No project QA members available
+                          </SelectItem>
+                        ) : (
+                          projectQa.map((qa) => (
+                            <SelectItem key={qa.id} value={qa.id}>
+                              {qa.name} ({qa.email})
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Optional. QA can also be left unassigned until the team is
+                      ready.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="developmentEstimation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Development Estimate</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.5"
+                        placeholder="e.g. 8"
+                        value={field.value ?? ""}
+                        onChange={(event) =>
+                          field.onChange(
+                            event.target.value === ""
+                              ? null
+                              : Number(event.target.value),
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Optional hours estimate for development work.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="estimationTesting"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>QA Estimate</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.5"
+                        placeholder="e.g. 4"
+                        value={field.value ?? ""}
+                        onChange={(event) =>
+                          field.onChange(
+                            event.target.value === ""
+                              ? null
+                              : Number(event.target.value),
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Optional hours estimate for testing work.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

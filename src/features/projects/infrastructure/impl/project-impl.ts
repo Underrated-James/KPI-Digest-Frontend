@@ -15,6 +15,18 @@ export class ProjectRepositoryImpl implements ProjectRepository {
     return projectApi.getProjectById(id);
   }
 
+  async getProjectMembers(id: string) {
+    return projectApi.getProjectMembers(id);
+  }
+
+  async getProjectDevelopers(id: string) {
+    return projectApi.getProjectDevelopers(id);
+  }
+
+  async getProjectQa(id: string) {
+    return projectApi.getProjectQa(id);
+  }
+
   async createProject(data: CreateProjectDTO) {
     return projectApi.createProject(data);
   }

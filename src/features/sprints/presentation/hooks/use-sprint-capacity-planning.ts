@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import api from "@/features/tickets/infrastructure/api/axios-instance";
@@ -9,6 +9,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useSprintById } from "./use-sprint-by-id";
 import { useTeams } from "@/features/teams/presentation/hooks/use-teams";
 import { LeaveType } from "@/features/teams/domain/types/team-types";
+import { ticketKeys } from "@/features/tickets/presentation/queries/ticket-keys";
 
 type TeamMember = {
   userId: string;
@@ -55,6 +56,8 @@ type TicketListEnvelope = {
 
 type LoadedTicket = {
   id: string;
+  sprintId?: string | null;
+  teamId?: string | null;
   ticketNumber: string;
   ticketTitle: string;
   status?: string;
@@ -135,6 +138,7 @@ function getLeaveWeight(leaveTypes: LeaveType[] = []) {
 
 export function useSprintCapacityPlanning(sprintId: string) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [addedTickets, setAddedTickets] = useState<EditableTicket[]>([]);
   const [removedTicketIds, setRemovedTicketIds] = useState<string[]>([]);
   const [ticketPatches, setTicketPatches] = useState<Record<string, Partial<EditableTicket>>>({});
@@ -161,9 +165,18 @@ export function useSprintCapacityPlanning(sprintId: string) {
   }, [team]);
 
   const attachedTicketsQuery = useQuery({
-    queryKey: ["attached-sprint-tickets", sprintId],
-    enabled: Boolean(sprintId),
+    queryKey: [
+      "attached-sprint-tickets",
+      sprintId,
+      sprint?.projectId ?? null,
+      team?.id ?? null,
+    ],
+    enabled: Boolean(sprintId && sprint?.projectId),
     queryFn: async (): Promise<EditableTicket[]> => {
+      if (!sprint?.projectId) {
+        return [];
+      }
+
       const all: EditableTicket[] = [];
       let page = 1;
       let totalPages = 1;
@@ -173,7 +186,7 @@ export function useSprintCapacityPlanning(sprintId: string) {
           params: {
             page,
             size: 100,
-            sprintId,
+            projectId: sprint.projectId,
           },
         });
 
@@ -185,7 +198,13 @@ export function useSprintCapacityPlanning(sprintId: string) {
             ? nestedData.content
             : []) as LoadedTicket[];
 
-        all.push(...content.map(mapLoadedTicketToEditable));
+        const attachedTickets = content.filter(
+          (ticket) =>
+            ticket.sprintId === sprintId ||
+            (team?.id ? ticket.teamId === team.id : false),
+        );
+
+        all.push(...attachedTickets.map(mapLoadedTicketToEditable));
 
         const currentPage = Number(envelope.page ?? nestedData?.page ?? page);
         const pageCount = Number(envelope.totalPages ?? nestedData?.totalPages ?? currentPage);
@@ -196,6 +215,23 @@ export function useSprintCapacityPlanning(sprintId: string) {
       return all;
     },
   });
+
+  useEffect(() => {
+    if (!sprintId) {
+      return;
+    }
+
+    void sprintQuery.refetch();
+    void teamsQuery.refetch();
+  }, [sprintId, sprintQuery, teamsQuery]);
+
+  useEffect(() => {
+    if (!sprint?.projectId) {
+      return;
+    }
+
+    void attachedTicketsQuery.refetch();
+  }, [attachedTicketsQuery, sprint?.projectId, team?.id]);
 
   const tickets = useMemo(() => {
     const removedSet = new Set(removedTicketIds);
@@ -319,7 +355,6 @@ export function useSprintCapacityPlanning(sprintId: string) {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      if (!team) throw new Error("Team not found for sprint.");
       const payload: {
         tickets: Array<{
           id: string;
@@ -336,7 +371,7 @@ export function useSprintCapacityPlanning(sprintId: string) {
           id: ticket.ticketId,
           sprintId,
           projectId: sprint?.projectId,
-          teamId: team.id,
+          teamId: team?.id ?? null,
           assignedDevId: ticket.assignedDevId,
           assignedQaId: ticket.assignedQaId,
           developmentEstimation: Number(ticket.developmentEstimation || 0),
@@ -363,7 +398,13 @@ export function useSprintCapacityPlanning(sprintId: string) {
 
       await api.patch("/tickets", payload);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ticketKeys.all }),
+        queryClient.invalidateQueries({
+          queryKey: ["attached-sprint-tickets", sprintId],
+        }),
+      ]);
       toast.success("Sprint capacity plan saved.");
       const params = new URLSearchParams();
       if (sprint?.projectId) {
