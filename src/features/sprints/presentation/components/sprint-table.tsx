@@ -28,11 +28,17 @@ interface SprintTableProps {
   onEdit: (sprint: Sprint) => void;
   onCreateTeams: (sprint: Sprint) => void;
   onCapacityPlanning: (sprint: Sprint) => void;
+  onStartSprint: (sprint: Sprint) => void;
+  onPauseSprint: (sprint: Sprint) => void;
+  onCompleteSprint: (sprint: Sprint) => void;
+  controlsPending?: boolean;
   onDelete: (id: string) => void;
   selectedSprintIds: string[];
   onSelectionChange: (ids: string[]) => void;
   hidePagination?: boolean;
   teamSprintMap?: Map<string, string>;
+  ticketCountBySprintId?: Map<string, number>;
+  ticketCountsLoading?: boolean;
 }
 
 export function SprintTable({
@@ -42,11 +48,17 @@ export function SprintTable({
   onEdit,
   onCreateTeams,
   onCapacityPlanning,
+  onStartSprint,
+  onPauseSprint,
+  onCompleteSprint,
+  controlsPending = false,
   onDelete,
   selectedSprintIds,
   onSelectionChange,
   hidePagination = false,
   teamSprintMap,
+  ticketCountBySprintId,
+  ticketCountsLoading = false,
 }: SprintTableProps) {
   const pageSizeOptions = [5, 10, 20, 50];
   const searchParams = useSearchParams();
@@ -88,9 +100,33 @@ export function SprintTable({
           mobileVisible: true,
         },
       },
-      ...getSprintColumns({ onEdit, onDelete, onCreateTeams, onCapacityPlanning, teamSprintMap }),
+      ...getSprintColumns({
+        onEdit,
+        onDelete,
+        onCreateTeams,
+        onCapacityPlanning,
+        onStartSprint,
+        onPauseSprint,
+        onCompleteSprint,
+        controlsPending,
+        teamSprintMap,
+        ticketCountBySprintId,
+        ticketCountsLoading,
+      }),
     ],
-    [onCapacityPlanning, onCreateTeams, onDelete, onEdit, teamSprintMap],
+    [
+      onCapacityPlanning,
+      onCompleteSprint,
+      onCreateTeams,
+      onDelete,
+      onEdit,
+      onPauseSprint,
+      onStartSprint,
+      controlsPending,
+      teamSprintMap,
+      ticketCountBySprintId,
+      ticketCountsLoading,
+    ],
   );
 
   const handlePageChange = (newPage: number) => {

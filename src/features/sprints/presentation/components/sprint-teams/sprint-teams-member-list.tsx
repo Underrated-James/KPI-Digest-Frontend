@@ -22,6 +22,7 @@ interface SprintTeamsMemberListProps {
   onRemoveMember: (userId: string) => void;
   onAllocationChange: (userId: string, allocationPercentage: number) => void;
   isUsersLoading: boolean;
+  readOnly?: boolean;
 }
 
 export function SprintTeamsMemberList({
@@ -37,6 +38,7 @@ export function SprintTeamsMemberList({
   onRemoveMember,
   onAllocationChange,
   isUsersLoading,
+  readOnly = false,
 }: SprintTeamsMemberListProps) {
   const [memberToRemove, setMemberToRemove] = useState<SprintTeamMember | null>(
     null,
@@ -118,12 +120,15 @@ export function SprintTeamsMemberList({
                     {member.allocationPercentage}%
                   </p>
                 </div>
-                <button
-                  onClick={() => handleRemoveClick(member.userId)}
-                  className="rounded p-1 text-destructive/70 transition-colors hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
+                {!readOnly ? (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveClick(member.userId)}
+                    className="rounded p-1 text-destructive/70 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                ) : null}
               </div>
             ))}
           </div>
@@ -161,17 +166,20 @@ export function SprintTeamsMemberList({
                 workingHoursDay={workingHoursDay}
                 onRemove={handleRemoveClick}
                 onAllocationChange={onAllocationChange}
+                readOnly={readOnly}
               />
             ))}
 
-          <SprintTeamsAddMember
-            availableUsers={availableUsers}
-            userSearchQuery={userSearchQuery}
-            onUserSearchChange={onUserSearchChange}
-            onAddMember={onAddMember}
-            isLoading={isUsersLoading}
-            roleFilter={roleFilter}
-          />
+          {!readOnly ? (
+            <SprintTeamsAddMember
+              availableUsers={availableUsers}
+              userSearchQuery={userSearchQuery}
+              onUserSearchChange={onUserSearchChange}
+              onAddMember={onAddMember}
+              isLoading={isUsersLoading}
+              roleFilter={roleFilter}
+            />
+          ) : null}
         </div>
       </div>
 

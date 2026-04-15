@@ -26,6 +26,7 @@ interface SprintTeamsTimelineRowProps {
   ) => LeaveType | undefined;
   onSetLeave: (userId: string, date: string, type: LeaveType) => void;
   onRemoveLeave: (userId: string, date: string) => void;
+  readOnly?: boolean;
 }
 
 const leaveColors: Record<
@@ -70,6 +71,7 @@ export function SprintTeamsTimelineRow({
   getEffectiveLeave,
   onSetLeave,
   onRemoveLeave,
+  readOnly = false,
 }: SprintTeamsTimelineRowProps) {
   const isHovered = hoveredUserId === member.userId;
   const [tooltip, setTooltip] = useState<{ x: number; text: string } | null>(
@@ -88,7 +90,12 @@ export function SprintTeamsTimelineRow({
     ]),
   );
 
-  const handleCellClick = (e: React.MouseEvent, dateStr: string) => {
+  const handleCellClick = (
+    e: React.MouseEvent,
+    dateStr: string,
+    weekend: boolean,
+  ) => {
+    if (readOnly || weekend) return;
     const originalLeave = originalLeaveMap.get(dateStr);
     const effectiveLeave = getEffectiveLeave(
       member.userId,
@@ -148,17 +155,19 @@ export function SprintTeamsTimelineRow({
         //   days.map((d) => d.toISOString()),
         // );
 
-        // Allow click on ANY day (user can add/remove leave on weekends/holidays too)
         return (
           <div
             key={dateStr}
             className={cn(
-              "relative shrink-0 border-r border-border/60 transition-colors cursor-pointer hover:bg-muted/30",
+              "relative shrink-0 border-r border-border/60 transition-colors",
+              readOnly || weekend
+                ? "cursor-default"
+                : "cursor-pointer hover:bg-muted/30",
               isToday && "bg-primary/5",
               weekend && !leaveType && "bg-muted/40",
             )}
             style={{ width: colWidth, minWidth: colWidth }}
-            onClick={(e) => handleCellClick(e, dateStr)}
+            onClick={(e) => handleCellClick(e, dateStr, weekend)}
             onMouseEnter={() => {
               if (leaveType && lc) {
                 setTooltip({
@@ -173,7 +182,7 @@ export function SprintTeamsTimelineRow({
               } else if (weekend) {
                 setTooltip({
                   x: di * colWidth + colWidth / 2,
-                  text: `Weekend · ${dateStr}`,
+                  text: `Weekend · ${dateStr} · leave unavailable`,
                 });
               } else {
                 setTooltip(null);
@@ -230,7 +239,7 @@ export function SprintTeamsTimelineRow({
       )}
 
       {/* Leave Popover */}
-      {popover && (
+      {popover && !readOnly && (
         <SprintTeamsLeavePopover
           userId={member.userId}
           date={popover.date}

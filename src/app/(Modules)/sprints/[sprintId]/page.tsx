@@ -1,25 +1,13 @@
-import { Metadata } from "next";
+"use client";
 
-type Props = {
-    params: { sprintId: string };
+import { use } from "react";
+import { SprintCanvasPage } from "@/features/sprints/presentation/components/sprint-canvas-page";
+
+interface Props {
+  params: Promise<{ sprintId: string }>;
 }
 
-export const generateMetadata = async ({
-  params,
-}: Props): Promise<Metadata> => {
-  const id = (await params).sprintId;
-
-  return { 
-    title: `Sprint Detail ${id}`,
-  }
+export default function SprintCanvasRoute({ params }: Props) {
+  const { sprintId } = use(params);
+  return <SprintCanvasPage sprintId={sprintId} />;
 }
-
-export default async function sprintDetails({ params }: Props) {
-  const sprintId =  (await params).sprintId;
-  return (
-    <div>
-      <h1>Sprint Detail {sprintId}</h1>
-    </div>
-  );
-}
- 

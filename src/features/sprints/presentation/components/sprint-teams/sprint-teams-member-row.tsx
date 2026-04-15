@@ -11,6 +11,7 @@ interface SprintTeamsMemberRowProps {
   workingHoursDay: number;
   onRemove: (userId: string) => void;
   onAllocationChange: (userId: string, allocationPercentage: number) => void;
+  readOnly?: boolean;
 }
 
 function getInitials(name: string) {
@@ -51,6 +52,7 @@ export function SprintTeamsMemberRow({
   workingHoursDay,
   onRemove,
   onAllocationChange,
+  readOnly = false,
 }: SprintTeamsMemberRowProps) {
   const effectiveHours =
     Math.round(((workingHoursDay * member.allocationPercentage) / 100) * 10) /
@@ -119,6 +121,8 @@ export function SprintTeamsMemberRow({
             inputMode="numeric"
             pattern="[0-9]*"
             value={allocationDraft}
+            readOnly={readOnly}
+            disabled={readOnly}
             onChange={(e) => {
               const nextValue = e.target.value.replace(/[^\d]/g, "");
               setAllocationDraft(nextValue);
@@ -131,7 +135,7 @@ export function SprintTeamsMemberRow({
               }
               commitAllocation(allocationDraft);
             }}
-            className="h-7 w-12 bg-transparent text-center text-sm font-semibold text-foreground outline-none"
+            className="h-7 w-12 bg-transparent text-center text-sm font-semibold text-foreground outline-none disabled:cursor-not-allowed disabled:opacity-70"
             aria-label={`Allocation percentage for ${member.name}`}
           />
           <span className="text-[10px] font-medium text-muted-foreground">
@@ -146,13 +150,18 @@ export function SprintTeamsMemberRow({
         </span>
       </div>
 
-      <button
-        onClick={() => onRemove(member.userId)}
-        className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-        title={`Remove ${member.name}`}
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
+      {!readOnly ? (
+        <button
+          type="button"
+          onClick={() => onRemove(member.userId)}
+          className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+          title={`Remove ${member.name}`}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      ) : (
+        <div className="w-8 shrink-0" />
+      )}
     </div>
   );
 }

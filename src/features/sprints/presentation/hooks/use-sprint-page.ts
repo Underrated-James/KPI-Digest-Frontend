@@ -10,6 +10,7 @@ import {
   CreateSprintDTO,
   Sprint,
   SprintStatus,
+  UpdateSprintDTO,
 } from "../../domain/types/sprint-types";
 import { useSprints } from "./use-sprints";
 import { useCreateSprint } from "./use-create-sprint";
@@ -33,6 +34,7 @@ import { useProjects } from "@/features/projects/presentation/hooks/use-projects
 import { Project, ProjectStatus } from "@/features/projects/domain/types/project-types";
 import { useProjectById } from "@/features/projects/presentation/hooks/use-project-by-id";
 import { useTeams } from "@/features/teams/presentation/hooks/use-teams";
+import { useSprintTicketCounts } from "./use-sprint-ticket-counts";
 
 export function useSprintPage() {
   const pathname = usePathname();
@@ -109,6 +111,13 @@ export function useSprintPage() {
     }
     return map;
   }, [teamsForProject.data?.content]);
+
+  const sprintIds = useMemo(
+    () => (sprintQuery.data?.content ?? []).map((s) => s.id),
+    [sprintQuery.data?.content],
+  );
+  const { ticketCountBySprintId, isLoading: ticketCountsLoading } =
+    useSprintTicketCounts(isSprintView ? sprintIds : []);
 
   useEffect(() => {
     setProjectSearchTerm(projectSearch);
@@ -315,6 +324,38 @@ export function useSprintPage() {
     router.push(`/sprints/${sprint.id}/capacity-planning?${params.toString()}`);
   };
 
+  const patchSprintControl = (id: string, data: UpdateSprintDTO) => {
+    updateSprint.mutate({ id, data });
+  };
+
+  const handleStartSprint = (sprint: Sprint) => {
+    const hasTeam = teamSprintMap.has(sprint.id);
+    const ticketCount = ticketCountBySprintId.get(sprint.id) ?? 0;
+    if (!hasTeam) {
+      toast.error("Add a team before starting this sprint.");
+      return;
+    }
+    if (ticketCount === 0) {
+      toast.error("Assign at least one ticket to this sprint before starting.");
+      return;
+    }
+    patchSprintControl(sprint.id, {
+      status: "active",
+      officialStartDate: new Date().toISOString(),
+    });
+  };
+
+  const handlePauseSprint = (sprint: Sprint) => {
+    patchSprintControl(sprint.id, { status: "inactive" });
+  };
+
+  const handleCompleteSprint = (sprint: Sprint) => {
+    patchSprintControl(sprint.id, {
+      status: "completed",
+      officialEndDate: new Date().toISOString(),
+    });
+  };
+
   const handleDeleteClick = (sprint: Sprint) => {
     dispatch(
       openDeleteSprintModal({
@@ -403,6 +444,10 @@ export function useSprintPage() {
     handleBackToProjects,
     handleCreateTeamsClick,
     handleCapacityPlanningClick,
+    handleStartSprint,
+    handlePauseSprint,
+    handleCompleteSprint,
+    controlsPending: updateSprint.isPending,
     handleSubmit: editingSprint ? handleUpdate : handleCreate,
     handleDeleteConfirm,
     handleEditClick,
@@ -415,5 +460,7 @@ export function useSprintPage() {
     updateProjectFilters,
     updateSprintFilters,
     teamSprintMap,
+    ticketCountBySprintId,
+    ticketCountsLoading,
   };
 }

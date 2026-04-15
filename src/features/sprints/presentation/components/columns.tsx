@@ -1,7 +1,21 @@
 "use client";
 
+import Link from "next/link";
 import { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, Pencil, Trash, Calendar, UserPlus, MoreHorizontal, Layers } from "lucide-react";
+import {
+  ChevronDown,
+  Pencil,
+  Eye,
+  Trash,
+  Calendar,
+  UserPlus,
+  MoreHorizontal,
+  Layers,
+  Play,
+  Pause,
+  CheckCircle2,
+  LayoutGrid,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Sprint } from "../../domain/types/sprint-types";
@@ -20,13 +34,38 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  canCompleteSprint,
+  canEditSprintDetails,
+  canPauseSprint,
+  canStartSprint,
+  getSprintDisplayStatus,
+  getSprintStatusLabel,
+  isSprintStartReady,
+  isSprintViewOnly,
+} from "../utils/sprint-control-utils";
+
+function buildSprintCanvasHref(sprint: Sprint) {
+  const params = new URLSearchParams();
+  params.set("projectId", sprint.projectId);
+  if (sprint.projectName) {
+    params.set("projectName", sprint.projectName);
+  }
+  return `/sprints/${sprint.id}?${params.toString()}`;
+}
 
 interface ColumnsProps {
   onEdit: (sprint: Sprint) => void;
   onDelete: (id: string) => void;
   onCreateTeams: (sprint: Sprint) => void;
   onCapacityPlanning: (sprint: Sprint) => void;
+  onStartSprint: (sprint: Sprint) => void;
+  onPauseSprint: (sprint: Sprint) => void;
+  onCompleteSprint: (sprint: Sprint) => void;
+  controlsPending?: boolean;
   teamSprintMap?: Map<string, string>;
+  ticketCountBySprintId?: Map<string, number>;
+  ticketCountsLoading?: boolean;
 }
 
 export const getSprintColumns = ({
@@ -34,7 +73,13 @@ export const getSprintColumns = ({
   onDelete,
   onCreateTeams,
   onCapacityPlanning,
+  onStartSprint,
+  onPauseSprint,
+  onCompleteSprint,
+  controlsPending = false,
   teamSprintMap,
+  ticketCountBySprintId,
+  ticketCountsLoading = false,
 }: ColumnsProps): ColumnDef<Sprint>[] => [
   {
     accessorKey: "name",
@@ -43,15 +88,22 @@ export const getSprintColumns = ({
       mobileLabel: "Sprint Name",
       mobileVisible: true,
     },
-    cell: ({ row }) => (
-      <div className="flex min-w-0 items-center">
-        <div className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-foreground">
-            {row.original.name}
-          </span>
+    cell: ({ row }) => {
+      const sprint = row.original;
+      return (
+        <div className="flex min-w-0 items-center">
+          <div className="min-w-0 flex-1">
+            <Link
+              href={buildSprintCanvasHref(sprint)}
+              className="block truncate font-medium text-primary underline-offset-4 hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {sprint.name}
+            </Link>
+          </div>
         </div>
-      </div>
-    ),
+      );
+    },
   },
   {
     accessorKey: "projectName",
@@ -73,13 +125,15 @@ export const getSprintColumns = ({
       mobileVisible: true,
     },
     cell: ({ row }) => {
-      const status = row.original.status;
+      const display = getSprintDisplayStatus(row.original);
       const getStatusStyles = () => {
-        switch (status) {
+        switch (display) {
           case "active":
             return "border-emerald-300 bg-emerald-100 text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300";
           case "inactive":
             return "border-rose-300 bg-rose-100 text-rose-950 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300";
+          case "paused":
+            return "border-violet-300 bg-violet-100 text-violet-950 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-300";
           case "draft":
             return "border-amber-400/60 bg-amber-100 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300";
           case "completed":
@@ -89,11 +143,13 @@ export const getSprintColumns = ({
         }
       };
       const getDotStyles = () => {
-        switch (status) {
+        switch (display) {
           case "active":
             return "bg-emerald-500 dark:bg-emerald-400";
           case "inactive":
             return "bg-rose-500 dark:bg-rose-400";
+          case "paused":
+            return "bg-violet-500 dark:bg-violet-400";
           case "draft":
             return "bg-amber-500 dark:bg-amber-400";
           case "completed":
@@ -102,13 +158,7 @@ export const getSprintColumns = ({
             return "bg-amber-500 dark:bg-amber-400";
         }
       };
-      const labels: Record<string, string> = {
-        active: "Active",
-        inactive: "Inactive",
-        draft: "Draft",
-        completed: "Completed",
-      };
-      const label = labels[status] || status;
+      const label = getSprintStatusLabel(row.original);
 
       return (
         <>
@@ -138,11 +188,13 @@ export const getSprintColumns = ({
             <span
               className={cn(
                 "inline-flex min-w-[84px] items-center gap-2 whitespace-nowrap text-left font-medium",
-                status === "active"
+                display === "active"
                   ? "text-emerald-950 dark:text-emerald-300"
-                  : status === "inactive"
+                  : display === "inactive"
                     ? "text-rose-950 dark:text-rose-300"
-                : status === "completed"
+                  : display === "paused"
+                    ? "text-violet-950 dark:text-violet-300"
+                : display === "completed"
                       ? "text-blue-950 dark:text-blue-300"
                       : "text-amber-900 dark:text-amber-300",
               )}
@@ -152,6 +204,101 @@ export const getSprintColumns = ({
             </span>
           </div>
         </>
+      );
+    },
+  },
+  {
+    id: "controls",
+    header: "Controls",
+    meta: {
+      mobileLabel: "Controls",
+      mobileSection: "controls",
+    },
+    cell: ({ row }) => {
+      const sprint = row.original;
+      const startOk = canStartSprint(sprint);
+      const pauseOk = canPauseSprint(sprint);
+      const completeOk = canCompleteSprint(sprint);
+      const hasTeam = teamSprintMap?.has(sprint.id) ?? false;
+      const ticketCount = ticketCountBySprintId?.get(sprint.id) ?? 0;
+      const startReady = isSprintStartReady(hasTeam, ticketCount);
+      const startDisabled =
+        controlsPending ||
+        ticketCountsLoading ||
+        !startOk ||
+        !startReady;
+
+      return (
+        <div className="md:min-w-[9.5rem]">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 w-full justify-between gap-1 px-2 text-xs data-[state=open]:border-primary data-[state=open]:bg-muted/80"
+                disabled={controlsPending}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">Sprint run</span>
+                </span>
+                <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-70" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-48"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {startOk && !startReady && !ticketCountsLoading ? (
+                <p className="px-2 py-1.5 text-[11px] leading-snug text-muted-foreground">
+                  Start needs a team and at least one ticket assigned to this
+                  sprint.
+                </p>
+              ) : null}
+              {ticketCountsLoading ? (
+                <p className="px-2 py-1.5 text-[11px] text-muted-foreground">
+                  Loading ticket counts…
+                </p>
+              ) : null}
+              <DropdownMenuItem
+                disabled={startDisabled}
+                className="gap-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!startDisabled) onStartSprint(sprint);
+                }}
+              >
+                <Play className="h-3.5 w-3.5 shrink-0" />
+                Start
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={controlsPending || !pauseOk}
+                className="gap-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!controlsPending && pauseOk) onPauseSprint(sprint);
+                }}
+              >
+                <Pause className="h-3.5 w-3.5 shrink-0" />
+                Pause
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={controlsPending || !completeOk}
+                className="gap-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!controlsPending && completeOk) onCompleteSprint(sprint);
+                }}
+              >
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                Complete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       );
     },
   },
@@ -269,9 +416,18 @@ export const getSprintColumns = ({
     },
     cell: ({ row }) => {
       const sprint = row.original;
+      const viewOnlyPlanning = isSprintViewOnly(sprint);
       const hasTeam = teamSprintMap?.has(sprint.id) ?? false;
       const TeamIcon = hasTeam ? Pencil : UserPlus;
-      const teamLabel = hasTeam ? "Edit Team" : "Create Team";
+      const teamLabel = viewOnlyPlanning
+        ? "View Team"
+        : hasTeam
+          ? "Edit Team"
+          : "Create Team";
+      const capacityLabel = viewOnlyPlanning ? "View Capacity" : "Plan Capacity";
+      const editable = canEditSprintDetails(sprint);
+      const primaryLabel = editable ? "Edit Sprint" : "View Sprint";
+      const PrimaryIcon = editable ? Pencil : Eye;
       return (
         <div className="flex flex-col items-stretch gap-2 md:flex-row md:flex-wrap md:items-center md:justify-center">
           <DropdownMenu>
@@ -288,13 +444,13 @@ export const getSprintColumns = ({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => onEdit(sprint)}>
-                <Pencil className="mr-2 h-4 w-4" /> Edit Sprint
+                <PrimaryIcon className="mr-2 h-4 w-4" /> {primaryLabel}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onCreateTeams(sprint)}>
                 <TeamIcon className="mr-2 h-4 w-4" /> {teamLabel}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onCapacityPlanning(sprint)}>
-                <Layers className="mr-2 h-4 w-4" /> Plan Capacity
+                <Layers className="mr-2 h-4 w-4" /> {capacityLabel}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -313,10 +469,10 @@ export const getSprintColumns = ({
               event.stopPropagation();
               onEdit(sprint);
             }}
-            title="Edit Sprint"
+            title={primaryLabel}
           >
-            <Pencil className="h-4 w-4" />
-            Edit
+            <PrimaryIcon className="h-4 w-4" />
+            {editable ? "Edit" : "View"}
           </Button>
           <Button
             variant="outline"
@@ -333,7 +489,7 @@ export const getSprintColumns = ({
             }}
           >
             <TeamIcon className="h-4 w-4" />
-            {hasTeam ? "Edit" : "Create"}
+            {viewOnlyPlanning ? "View Team" : hasTeam ? "Edit" : "Create"}
           </Button>
           <Button
             variant="outline"
@@ -345,7 +501,7 @@ export const getSprintColumns = ({
             }}
           >
             <Layers className="h-4 w-4" />
-            Plan Capacity
+            {capacityLabel}
           </Button>
           <Button
             variant="destructive"

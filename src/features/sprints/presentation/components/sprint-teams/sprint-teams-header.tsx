@@ -2,6 +2,7 @@
 
 import { ChevronLeft, Search, Eye, EyeOff, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface SprintTeamsHeaderProps {
@@ -24,6 +25,7 @@ interface SprintTeamsHeaderProps {
   isSaving: boolean;
   isDeleting?: boolean;
   isMobile: boolean;
+  isViewOnly?: boolean;
 }
 
 const roles: ("ALL" | "DEVS" | "QA")[] = ["ALL", "DEVS", "QA"];
@@ -64,6 +66,7 @@ export function SprintTeamsHeader({
   isSaving,
   isDeleting = false,
   isMobile,
+  isViewOnly = false,
 }: SprintTeamsHeaderProps) {
   const dateRange =
     sprintStartDate && sprintEndDate
@@ -85,7 +88,11 @@ export function SprintTeamsHeader({
           </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              {isEditMode ? "Edit Team" : "Create Team"}
+              {isViewOnly
+                ? "View Team"
+                : isEditMode
+                  ? "Edit Team"
+                  : "Create Team"}
             </h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
               {sprintName}
@@ -97,36 +104,44 @@ export function SprintTeamsHeader({
         </div>
 
         <div className="flex items-center gap-2">
-          {isEditMode && onDelete && (
-            <Button
-              variant="ghost"
-              onClick={onDelete}
-              disabled={isSaving || isDeleting}
-              className="h-9 gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-              {!isMobile && (isDeleting ? "Deleting..." : "Delete Team")}
-            </Button>
+          {isViewOnly ? (
+            <Badge variant="secondary" className="h-9 px-3 font-medium">
+              View only
+            </Badge>
+          ) : (
+            <>
+              {isEditMode && onDelete && (
+                <Button
+                  variant="ghost"
+                  onClick={onDelete}
+                  disabled={isSaving || isDeleting}
+                  className="h-9 gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {!isMobile && (isDeleting ? "Deleting..." : "Delete Team")}
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={onCancel}
+                disabled={isSaving || isDeleting}
+                className="hover:border-foreground/35 hover:bg-foreground/10 hover:text-foreground dark:hover:border-foreground/35 dark:hover:bg-foreground/15 dark:hover:text-foreground"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={onSave}
+                disabled={isSaving || isDeleting || (isEditMode && !isDirty)}
+                title={isEditMode && !isDirty ? "No changes to update" : undefined}
+              >
+                {isSaving
+                  ? "Saving..."
+                  : isEditMode
+                    ? "Update Team"
+                    : "Save Team"}
+              </Button>
+            </>
           )}
-          <Button
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSaving || isDeleting}
-            className="hover:border-foreground/35 hover:bg-foreground/10 hover:text-foreground dark:hover:border-foreground/35 dark:hover:bg-foreground/15 dark:hover:text-foreground"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={onSave}
-            disabled={isSaving || isDeleting || (isEditMode && !isDirty)}
-            title={isEditMode && !isDirty ? "No changes to update" : undefined}
-          >
-            {isSaving
-              ? "Saving..."
-              : isEditMode
-                ? "Update Team"
-                : "Save Team"}
-          </Button>
         </div>
       </div>
 

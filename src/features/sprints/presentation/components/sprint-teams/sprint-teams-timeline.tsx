@@ -20,6 +20,7 @@ interface SprintTeamsTimelineProps {
   ) => LeaveType | undefined;
   onSetLeave: (userId: string, date: string, type: LeaveType) => void;
   onRemoveLeave: (userId: string, date: string) => void;
+  readOnly?: boolean;
 }
 
 export function SprintTeamsTimeline({
@@ -32,6 +33,7 @@ export function SprintTeamsTimeline({
   getEffectiveLeave,
   onSetLeave,
   onRemoveLeave,
+  readOnly = false,
 }: SprintTeamsTimelineProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const COL_WIDTH = isMobile ? 36 : 48;
@@ -71,6 +73,7 @@ export function SprintTeamsTimeline({
             getEffectiveLeave={getEffectiveLeave}
             onSetLeave={onSetLeave}
             onRemoveLeave={onRemoveLeave}
+            readOnly={readOnly}
           />
         ))}
       </div>

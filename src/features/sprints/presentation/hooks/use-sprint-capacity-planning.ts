@@ -10,6 +10,7 @@ import { useSprintById } from "./use-sprint-by-id";
 import { useTeams } from "@/features/teams/presentation/hooks/use-teams";
 import { LeaveType } from "@/features/teams/domain/types/team-types";
 import { ticketKeys } from "@/features/tickets/presentation/queries/ticket-keys";
+import { isSprintViewOnly } from "../utils/sprint-control-utils";
 
 type TeamMember = {
   userId: string;
@@ -43,15 +44,11 @@ type TicketSearchResponse = {
   totalPages: number;
 };
 
-type TicketListEnvelope = {
-  content?: unknown[];
-  page?: number;
-  totalPages?: number;
+type AvailableSprintTicketsResponse = {
   data?: {
-    content?: unknown[];
-    page?: number;
-    totalPages?: number;
+    available?: unknown[];
   };
+  available?: unknown[];
 };
 
 type LoadedTicket = {
@@ -66,39 +63,6 @@ type LoadedTicket = {
   developmentEstimation?: number | null;
   estimationTesting?: number | null;
 };
-
-function parseTicketSearchEnvelope(
-  envelope: TicketListEnvelope,
-  fallbackPage: number,
-): TicketSearchResponse {
-  const nestedData = envelope.data;
-  const itemsSource: unknown[] = Array.isArray(envelope.content)
-    ? envelope.content
-    : Array.isArray(nestedData?.content)
-      ? nestedData.content
-      : [];
-
-  const items = itemsSource
-    .map((item) => {
-      const row = item as Record<string, unknown>;
-      return {
-        id: String(row.id ?? row._id ?? ""),
-        ticketNumber: String(row.ticketNumber ?? row.key ?? "N/A"),
-        ticketTitle: String(row.ticketTitle ?? row.title ?? "Untitled"),
-        status: typeof row.status === "string" ? row.status : undefined,
-      };
-    })
-    .filter((item) => Boolean(item.id));
-
-  const currentPage = Number(envelope.page ?? nestedData?.page ?? fallbackPage);
-  const totalPages = Number(envelope.totalPages ?? nestedData?.totalPages ?? currentPage);
-
-  return {
-    items,
-    page: Number.isFinite(currentPage) ? currentPage : fallbackPage,
-    totalPages: Number.isFinite(totalPages) ? totalPages : fallbackPage,
-  };
-}
 
 function mapLoadedTicketToEditable(ticket: LoadedTicket): EditableTicket {
   return {
@@ -422,31 +386,55 @@ export function useSprintCapacityPlanning(sprintId: string) {
   });
 
   const ticketSearchQuery = useQuery({
-    queryKey: ["ticket-search-external", debouncedTicketSearch, ticketSearchPage],
-    enabled: isAddModalOpen,
+    queryKey: [
+      "sprint-available-ticket-search",
+      sprintId,
+      sprint?.projectId ?? null,
+      debouncedTicketSearch,
+      ticketSearchPage,
+    ],
+    enabled: isAddModalOpen && Boolean(sprintId && sprint?.projectId),
     queryFn: async (): Promise<TicketSearchResponse> => {
-      const url = new URL("http://localhost:3001/tickets");
-      url.searchParams.set("page", String(ticketSearchPage));
-      url.searchParams.set("size", "10");
-      if (debouncedTicketSearch) {
-        url.searchParams.set("search", debouncedTicketSearch);
-        url.searchParams.set("q", debouncedTicketSearch);
-      }
-      try {
-        const response = await fetch(url.toString());
-        if (!response.ok) throw new Error("Ticket search failed.");
-        const json: unknown = await response.json();
-        return parseTicketSearchEnvelope(json as TicketListEnvelope, ticketSearchPage);
-      } catch {
-        const fallback = await api.get("/tickets", {
-          params: {
-            page: ticketSearchPage,
-            size: 10,
-            ...(debouncedTicketSearch ? { search: debouncedTicketSearch } : {}),
-          },
-        });
-        return parseTicketSearchEnvelope(fallback.data as TicketListEnvelope, ticketSearchPage);
-      }
+      const pageSize = 10;
+      const response = await api.get(`/sprints/${sprintId}/tickets/available`);
+      const data = response.data as AvailableSprintTicketsResponse;
+      const availableSource = Array.isArray(data.data?.available)
+        ? data.data.available
+        : Array.isArray(data.available)
+          ? data.available
+          : [];
+
+      const allItems = availableSource
+        .map((item) => {
+          const row = item as Record<string, unknown>;
+          return {
+            id: String(row.id ?? row._id ?? ""),
+            ticketNumber: String(row.ticketNumber ?? row.key ?? "N/A"),
+            ticketTitle: String(row.ticketTitle ?? row.title ?? "Untitled"),
+            status: typeof row.status === "string" ? row.status : undefined,
+          };
+        })
+        .filter((item) => Boolean(item.id));
+
+      const normalizedSearch = debouncedTicketSearch.toLowerCase();
+      const filteredItems = normalizedSearch
+        ? allItems.filter(
+            (item) =>
+              item.ticketNumber.toLowerCase().includes(normalizedSearch) ||
+              item.ticketTitle.toLowerCase().includes(normalizedSearch),
+          )
+        : allItems;
+
+      const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+      const safePage = Math.min(ticketSearchPage, totalPages);
+      const start = (safePage - 1) * pageSize;
+      const items = filteredItems.slice(start, start + pageSize);
+
+      return {
+        items,
+        page: safePage,
+        totalPages,
+      };
     },
   });
 
@@ -485,9 +473,12 @@ export function useSprintCapacityPlanning(sprintId: string) {
     setRemovedTicketIds((prev) => (prev.includes(ticketId) ? prev : [...prev, ticketId]));
   };
 
+  const viewOnly = Boolean(sprint && isSprintViewOnly(sprint));
+
   return {
     sprint,
     team,
+    viewOnly,
     members: metrics.byMember,
     devMembers,
     qaMembers,

@@ -11,6 +11,7 @@ interface SprintDayOffSectionProps {
   form: UseFormReturn<SprintFormValues>;
   fields: FieldArrayWithId<SprintFormValues, "dayOff", "id">[];
   isLoading: boolean;
+  viewOnly?: boolean;
   canManageDayOff: boolean;
   dayOffDateMin: string;
   dayOffDateMax: string;
@@ -22,6 +23,7 @@ export function SprintDayOffSection({
   form,
   fields,
   isLoading,
+  viewOnly = false,
   canManageDayOff,
   dayOffDateMin,
   dayOffDateMax,
@@ -44,7 +46,7 @@ export function SprintDayOffSection({
           size="sm"
           className="h-8 gap-1.5 transition-all duration-200 hover:border-foreground/30 hover:bg-foreground/5 hover:text-foreground"
           onClick={onAppend}
-          disabled={isLoading || !canManageDayOff}
+          disabled={isLoading || viewOnly || !canManageDayOff}
           title={
             canManageDayOff
               ? "Add another day off"
@@ -93,7 +95,7 @@ export function SprintDayOffSection({
                       placeholder="Holiday label"
                       className="text-xs"
                       {...form.register(`dayOff.${index}.label` as const)}
-                      disabled={isLoading}
+                      disabled={isLoading || viewOnly}
                     />
                     {Array.isArray(dayOffErrors) &&
                     dayOffErrors[index]?.label ? (
@@ -107,7 +109,7 @@ export function SprintDayOffSection({
                       min={dayOffDateMin}
                       max={dayOffDateMax}
                       {...form.register(`dayOff.${index}.date` as const)}
-                      disabled={isLoading || !canManageDayOff}
+                      disabled={isLoading || viewOnly || !canManageDayOff}
                       title={
                         canManageDayOff
                           ? `Select a holiday between ${dayOffDateMin} and ${dayOffDateMax}`
@@ -125,7 +127,7 @@ export function SprintDayOffSection({
                     size="icon"
                     className="h-9 w-9 text-destructive hover:bg-destructive/10"
                     onClick={() => onRemove(index)}
-                    disabled={isLoading}
+                    disabled={isLoading || viewOnly}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

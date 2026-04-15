@@ -25,6 +25,7 @@ import type { User } from "@/features/users/domain/types/user-types";
 import type { DayOff } from "../../domain/types/sprint-types";
 
 import { useDeleteTeam } from "@/features/teams/presentation/hooks/use-delete-team";
+import { isSprintViewOnly } from "../utils/sprint-control-utils";
 
 export interface SprintTeamMember {
   userId: string;
@@ -241,17 +242,24 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
     return sprint.dayOff.map((d: DayOff) => normalizeDate(d.date));
   }, [sprint]);
 
+  const isViewOnly = Boolean(sprint && isSprintViewOnly(sprint));
+
   // Leave management
   const setLeave = useCallback(
     (userId: string, date: string, type: LeaveType) => {
+      if (isViewOnly) return;
       setLeaveOverrides((prev) => ({ ...prev, [`${userId}:${date}`]: type }));
     },
-    [],
+    [isViewOnly],
   );
 
-  const removeLeave = useCallback((userId: string, date: string) => {
-    setLeaveOverrides((prev) => ({ ...prev, [`${userId}:${date}`]: null }));
-  }, []);
+  const removeLeave = useCallback(
+    (userId: string, date: string) => {
+      if (isViewOnly) return;
+      setLeaveOverrides((prev) => ({ ...prev, [`${userId}:${date}`]: null }));
+    },
+    [isViewOnly],
+  );
 
   const getEffectiveLeave = useCallback(
     (
@@ -322,6 +330,7 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
   // Available users (not already in team)
   // Member CRUD
   const addMember = useCallback((user: User) => {
+    if (isViewOnly) return;
     setMembers((prev) => [
       ...prev,
       {
@@ -332,25 +341,30 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
         leave: [],
       },
     ]);
-  }, []);
+  }, [isViewOnly]);
 
   const removeMember = useCallback((userId: string) => {
+    if (isViewOnly) return;
     setMembers((prev) => prev.filter((m) => m.userId !== userId));
-  }, []);
+  }, [isViewOnly]);
 
   const updateMemberAllocation = useCallback(
     (userId: string, allocationPercentage: number) => {
+      if (isViewOnly) return;
       setMembers((prev) =>
         prev.map((m) =>
           m.userId === userId ? { ...m, allocationPercentage } : m,
         ),
       );
     },
-    [],
+    [isViewOnly],
   );
 
   // Save / Submit
   const handleSave = useCallback(() => {
+    if (isViewOnly) {
+      return;
+    }
     if (isEditMode && !isDirty) {
       toast.error("No changes to update");
       return;
@@ -421,6 +435,7 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
     updateTeam,
     createTeam,
     router,
+    isViewOnly,
   ]);
 
   const handleCancel = useCallback(() => {
@@ -428,9 +443,10 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
   }, [router]);
 
   const handleDelete = useCallback(() => {
+    if (isViewOnly) return;
     if (!teamId) return;
     setIsDeleteModalOpen(true);
-  }, [teamId]);
+  }, [teamId, isViewOnly]);
 
   const handleDeleteConfirm = useCallback(() => {
     if (!teamId) return;
@@ -463,6 +479,7 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
     projectId,
     projectName,
     isEditMode,
+    isViewOnly,
     isMobile,
 
     // Sprint dates

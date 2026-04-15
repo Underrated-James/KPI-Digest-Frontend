@@ -16,6 +16,7 @@ export function SprintTeamsPage({ sprintId }: SprintTeamsPageProps) {
     sprintName,
     projectName,
     isEditMode,
+    isViewOnly,
     isMobile,
 
     sprint,
@@ -71,6 +72,7 @@ export function SprintTeamsPage({ sprintId }: SprintTeamsPageProps) {
         sprintName={sprintName}
         projectName={projectName}
         isEditMode={isEditMode}
+        isViewOnly={isViewOnly}
         memberCount={memberCount}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -106,6 +108,7 @@ export function SprintTeamsPage({ sprintId }: SprintTeamsPageProps) {
             onRemoveMember={removeMember}
             onAllocationChange={updateMemberAllocation}
             isUsersLoading={isUsersLoading}
+            readOnly={isViewOnly}
           />
         </div>
 
@@ -121,6 +124,7 @@ export function SprintTeamsPage({ sprintId }: SprintTeamsPageProps) {
             getEffectiveLeave={getEffectiveLeave}
             onSetLeave={setLeave}
             onRemoveLeave={removeLeave}
+            readOnly={isViewOnly}
           />
         )}
       </div>

@@ -21,12 +21,15 @@ interface SprintCoreFieldsProps {
   form: UseFormReturn<SprintFormValues>
   isLoading: boolean
   computedDuration: number
+  isUpdateMode: boolean
+  viewOnly?: boolean
 }
 
 function SprintHoursPerDayField({
   form,
   isLoading,
-}: Pick<SprintCoreFieldsProps, "form" | "isLoading">) {
+  viewOnly = false,
+}: Pick<SprintCoreFieldsProps, "form" | "isLoading" | "viewOnly">) {
   const { field, fieldState } = useController({
     control: form.control,
     name: "workingHoursDay",
@@ -62,7 +65,7 @@ function SprintHoursPerDayField({
           size="icon"
           className="h-8 w-8 shrink-0"
           onClick={() => stepValue(-0.5)}
-          disabled={isLoading}
+          disabled={isLoading || viewOnly}
           aria-label="Decrease hours per day"
         >
           -
@@ -96,7 +99,7 @@ function SprintHoursPerDayField({
 
             commitValue(String(Math.min(24, Math.max(1, next))))
           }}
-          disabled={isLoading}
+          disabled={isLoading || viewOnly}
           className="text-left"
         />
         <Button
@@ -105,7 +108,7 @@ function SprintHoursPerDayField({
           size="icon"
           className="h-8 w-8 shrink-0"
           onClick={() => stepValue(0.5)}
-          disabled={isLoading}
+          disabled={isLoading || viewOnly}
           aria-label="Increase hours per day"
         >
           +
@@ -120,6 +123,8 @@ export function SprintCoreFields({
   form,
   isLoading,
   computedDuration,
+  isUpdateMode,
+  viewOnly = false,
 }: SprintCoreFieldsProps) {
   const startDate = form.watch("startDate")
   const endDate = form.watch("endDate")
@@ -145,7 +150,7 @@ export function SprintCoreFields({
             <Input
               {...field}
               placeholder="e.g. Sprint 1.0"
-              disabled={isLoading}
+              disabled={isLoading || viewOnly}
             />
             {fieldState.invalid ? <FieldError errors={[fieldState.error]} /> : null}
           </Field>
@@ -155,22 +160,44 @@ export function SprintCoreFields({
       <Controller
         name="status"
         control={form.control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel>Status</FieldLabel>
-            <select
-              {...field}
-              disabled={isLoading}
-              className="flex h-8 w-full rounded-lg border border-border bg-background px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-ring/50"
-            >
-              <option value="draft">Draft</option>
-              <option value="active">Active</option>
-              <option value="completed">Completed</option>
-              <option value="inactive">Inactive</option>
-            </select>
-            {fieldState.invalid ? <FieldError errors={[fieldState.error]} /> : null}
-          </Field>
-        )}
+        render={({ field, fieldState }) =>
+          isUpdateMode ? (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Status</FieldLabel>
+              {viewOnly ? (
+                <div className="flex min-h-10 items-center rounded-md border border-border bg-muted/40 px-3 py-2 text-sm capitalize">
+                  {String(field.value ?? "")}
+                </div>
+              ) : (
+                <select
+                  {...field}
+                  disabled={isLoading}
+                  className="flex h-8 w-full rounded-lg border border-border bg-background px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+                >
+                  <option value="draft">Draft</option>
+                  <option value="active">Active</option>
+                  <option value="completed">Completed</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              )}
+              {fieldState.invalid ? <FieldError errors={[fieldState.error]} /> : null}
+            </Field>
+          ) : (
+            // ✅ CREATE MODE → BADGE (READ-ONLY)
+            <Field>
+              <FieldLabel>Status</FieldLabel>
+              <div className="flex min-h-10 flex-col gap-2 rounded-md border border-border bg-muted/40 px-3 py-2.5">
+                <span className="w-fit rounded-md border border-yellow-500/30 bg-yellow-500/10 px-2 py-0.5 text-xs font-medium text-yellow-600">
+                  Draft
+                </span>
+
+                <FieldDescription className="!mt-0 text-xs leading-snug">
+                  New sprints are always created as Draft. You can change the status after creation.
+                </FieldDescription>
+              </div>
+            </Field>
+          )
+        }
       />
 
       <Controller
@@ -181,7 +208,7 @@ export function SprintCoreFields({
             <FieldLabel>Duration</FieldLabel>
             <select
               {...field}
-              disabled={isLoading}
+              disabled={isLoading || viewOnly}
               className="flex h-8 w-full rounded-lg border border-border bg-background px-2.5 py-1 text-sm outline-none focus:ring-2 focus:ring-ring/50"
             >
               {sprintDurationPresetValues.map((option) => (
@@ -215,7 +242,7 @@ export function SprintCoreFields({
                 field.onChange(parseDateInputValue(event.target.value))
               }
               ref={field.ref}
-              disabled={isLoading}
+              disabled={isLoading || viewOnly}
             />
             {fieldState.invalid ? <FieldError errors={[fieldState.error]} /> : null}
           </Field>
@@ -238,7 +265,7 @@ export function SprintCoreFields({
                 field.onChange(parseDateInputValue(event.target.value))
               }
               ref={field.ref}
-              disabled={isLoading || durationPreset !== "custom"}
+              disabled={isLoading || viewOnly || durationPreset !== "custom"}
               aria-readonly={durationPreset !== "custom"}
               title={
                 durationPreset === "custom"
@@ -261,7 +288,7 @@ export function SprintCoreFields({
         )}
       />
 
-      <SprintHoursPerDayField form={form} isLoading={isLoading} />
+      <SprintHoursPerDayField form={form} isLoading={isLoading} viewOnly={viewOnly} />
 
       <Controller
         name="sprintDuration"
@@ -275,7 +302,7 @@ export function SprintCoreFields({
               value={computedDuration}
               readOnly
               aria-readonly="true"
-              disabled={isLoading}
+              disabled={isLoading || viewOnly}
               className="bg-muted/40 text-muted-foreground"
             />
             <FieldDescription className="text-xs">

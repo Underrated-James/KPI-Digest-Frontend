@@ -46,6 +46,10 @@ export function SprintPage() {
     handleEditClick,
     handleCreateTeamsClick,
     handleCapacityPlanningClick,
+    handleStartSprint,
+    handlePauseSprint,
+    handleCompleteSprint,
+    controlsPending,
     handleDeleteById,
     handleBulkDeleteClick,
     handleAddClick,
@@ -57,6 +61,8 @@ export function SprintPage() {
     handleOpenProject,
     handleBackToProjects,
     teamSprintMap,
+    ticketCountBySprintId,
+    ticketCountsLoading,
   } = useSprintPage();
 
   const projectTitle = selectedProjectName || selectedProjectId || "Selected Project";
@@ -90,7 +96,6 @@ export function SprintPage() {
           </div>
 
           {!isFormOpen &&
-            !isLoading &&
             (isProjectView ? (
               <SprintProjectPageToolbar
                 searchTerm={projectSearchTerm}
@@ -149,6 +154,11 @@ export function SprintPage() {
                 <SprintForm
                   initialData={editingSprint}
                   defaultProjectId={selectedProjectId ?? undefined}
+                  viewOnly={
+                    Boolean(editingSprint) &&
+                    (editingSprint!.status === "active" ||
+                      editingSprint!.status === "completed")
+                  }
                   onSubmit={handleSubmit}
                   isLoading={isSubmitting}
                   onCancel={handleCancel}
@@ -193,11 +203,17 @@ export function SprintPage() {
                 onEdit={handleEditClick}
                 onCreateTeams={handleCreateTeamsClick}
                 onCapacityPlanning={handleCapacityPlanningClick}
+                onStartSprint={handleStartSprint}
+                onPauseSprint={handlePauseSprint}
+                onCompleteSprint={handleCompleteSprint}
+                controlsPending={controlsPending}
                 onDelete={handleDeleteById}
                 selectedSprintIds={selectedSprintIds}
                 onSelectionChange={handleSelectionChange}
                 hidePagination={false}
                 teamSprintMap={teamSprintMap}
+                ticketCountBySprintId={ticketCountBySprintId}
+                ticketCountsLoading={ticketCountsLoading}
               />
             </motion.div>
           )}
