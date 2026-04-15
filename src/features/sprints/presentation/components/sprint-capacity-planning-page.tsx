@@ -37,6 +37,7 @@ export function SprintCapacityPlanningPage({
   const {
     sprint,
     team,
+    viewOnly,
     members,
     devMembers,
     qaMembers,
@@ -83,7 +84,7 @@ export function SprintCapacityPlanningPage({
           </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
-              Sprint Capacity Planner
+              {viewOnly ? "Sprint Capacity (view only)" : "Sprint Capacity Planner"}
             </h1>
             <p className="text-sm text-muted-foreground">
               {sprint?.name ?? "Sprint"}{" "}
@@ -91,20 +92,29 @@ export function SprintCapacityPlanningPage({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setIsAddModalOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Ticket
-          </Button>
-          <Button
-            onClick={save}
-            disabled={isSaving || hasOverCapacity}
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {isSaving ? "Saving..." : "Save Bulk Update"}
-          </Button>
-        </div>
+        {!viewOnly ? (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setIsAddModalOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Ticket
+            </Button>
+            <Button
+              onClick={save}
+              disabled={isSaving || hasOverCapacity}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {isSaving ? "Saving..." : "Save Bulk Update"}
+            </Button>
+          </div>
+        ) : null}
       </div>
+
+      {viewOnly ? (
+        <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          This sprint is active or completed. Capacity planning is view-only; you
+          can review assignments and estimates but not change them.
+        </div>
+      ) : null}
 
       {!team ? (
         <div className="rounded-lg border border-border bg-muted/40 px-4 py-2 text-sm text-muted-foreground">
@@ -244,14 +254,16 @@ export function SprintCapacityPlanningPage({
                   <th className="px-2 py-2 text-left">Assigned QA</th>
                   <th className="px-2 py-2 text-left">Dev Estimation</th>
                   <th className="px-2 py-2 text-left">QA Estimation</th>
-                  <th className="px-2 py-2 text-left"></th>
+                  {!viewOnly ? (
+                    <th className="px-2 py-2 text-left"></th>
+                  ) : null}
                 </tr>
               </thead>
               <tbody>
                 {tickets.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={8}
+                      colSpan={viewOnly ? 7 : 8}
                       className="px-2 py-8 text-center text-muted-foreground"
                     >
                       No tickets yet. Use Add Ticket to start planning.
@@ -267,7 +279,8 @@ export function SprintCapacityPlanningPage({
                     <td className="px-2 py-2">{statusLabel(ticket.status)}</td>
                     <td className="px-2 py-2">
                       <select
-                        className="h-9 w-full rounded border border-border bg-background px-2"
+                        className="h-9 w-full rounded border border-border bg-background px-2 disabled:cursor-not-allowed disabled:opacity-70"
+                        disabled={viewOnly}
                         value={ticket.assignedDevId ?? ""}
                         onChange={(event) =>
                           updateTicket(ticket.ticketId, {
@@ -285,7 +298,8 @@ export function SprintCapacityPlanningPage({
                     </td>
                     <td className="px-2 py-2">
                       <select
-                        className="h-9 w-full rounded border border-border bg-background px-2"
+                        className="h-9 w-full rounded border border-border bg-background px-2 disabled:cursor-not-allowed disabled:opacity-70"
+                        disabled={viewOnly}
                         value={ticket.assignedQaId ?? ""}
                         onChange={(event) =>
                           updateTicket(ticket.ticketId, {
@@ -305,6 +319,7 @@ export function SprintCapacityPlanningPage({
                       <Input
                         min={0}
                         type="number"
+                        disabled={viewOnly}
                         value={ticket.developmentEstimation}
                         onChange={(event) =>
                           updateTicket(ticket.ticketId, {
@@ -319,6 +334,7 @@ export function SprintCapacityPlanningPage({
                       <Input
                         min={0}
                         type="number"
+                        disabled={viewOnly}
                         value={ticket.estimationTesting}
                         onChange={(event) =>
                           updateTicket(ticket.ticketId, {
@@ -327,15 +343,17 @@ export function SprintCapacityPlanningPage({
                         }
                       />
                     </td>
-                    <td className="px-2 py-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeTicket(ticket.ticketId)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </td>
+                    {!viewOnly ? (
+                      <td className="px-2 py-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeTicket(ticket.ticketId)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </td>
+                    ) : null}
                   </tr>
                 ))}
               </tbody>

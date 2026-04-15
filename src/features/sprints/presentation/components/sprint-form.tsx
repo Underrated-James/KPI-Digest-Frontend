@@ -32,6 +32,7 @@ import {
 interface SprintFormProps {
   initialData?: Sprint;
   defaultProjectId?: string;
+  viewOnly?: boolean;
   onSubmit: (data: CreateSprintDTO) => void;
   isLoading: boolean;
   onCancel: () => void;
@@ -40,6 +41,7 @@ interface SprintFormProps {
 export function SprintForm({
   initialData,
   defaultProjectId,
+  viewOnly = false,
   onSubmit,
   isLoading,
   onCancel,
@@ -110,6 +112,9 @@ export function SprintForm({
   }, [durationPreset, endDate, form, form.formState.isSubmitted, startDate]);
 
   const handleSubmit = (data: SprintFormValues) => {
+    if (viewOnly) {
+      return;
+    }
     if (isUnchangedUpdate) {
       return;
     }
@@ -121,6 +126,8 @@ export function SprintForm({
 
   if (isLoading) {
     buttonLabel = "Saving...";
+  } else if (viewOnly) {
+    buttonLabel = "View only";
   } else if (initialData) {
     buttonLabel = "Update Sprint";
   } else {
@@ -130,10 +137,18 @@ export function SprintForm({
     <Card className="mx-auto flex h-full w-full max-w-7xl max-h-[calc(100vh-2rem)] border border-border bg-card shadow-xl ring-1 ring-border/70">
       <CardHeader className="border-b border-border/80 pb-4 text-center">
         <CardTitle>
-          {initialData ? "Edit Sprint" : "Create New Sprint"}
+          {viewOnly
+            ? "View Sprint"
+            : initialData
+              ? "Edit Sprint"
+              : "Create New Sprint"}
         </CardTitle>
         <CardDescription>
-          Configure your sprint details, schedule, and team working hours.
+          {viewOnly
+            ? initialData?.status === "completed"
+              ? "This sprint is completed and can no longer be edited."
+              : "This sprint is running. Pause it from the sprint list Controls column to edit details."
+            : "Configure your sprint details, schedule, and team working hours."}
         </CardDescription>
       </CardHeader>
 
@@ -146,11 +161,17 @@ export function SprintForm({
           <div className="grid flex-1 min-h-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(420px,1fr)] xl:grid-cols-[minmax(0,1fr)_minmax(460px,1.05fr)] xl:gap-6">
             <div className="space-y-5">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <SprintProjectField form={form} isLoading={isLoading} />
+                <SprintProjectField
+                  form={form}
+                  isLoading={isLoading}
+                  viewOnly={viewOnly}
+                />
                 <SprintCoreFields
                   form={form}
                   isLoading={isLoading}
                   computedDuration={computedDuration}
+                  isUpdateMode={isUpdateMode}
+                  viewOnly={viewOnly}
                 />
               </div>
             </div>
@@ -160,6 +181,7 @@ export function SprintForm({
                 form={form}
                 fields={fields}
                 isLoading={isLoading}
+                viewOnly={viewOnly}
                 canManageDayOff={hasValidSprintRange}
                 dayOffDateMin={toDateInputValue(startDate)}
                 dayOffDateMax={toDateInputValue(endDate)}
@@ -180,16 +202,18 @@ export function SprintForm({
             onClick={onCancel}
             disabled={isLoading}
           >
-            Cancel
+            {viewOnly ? "Close" : "Cancel"}
           </Button>
-          <Button
-            type="submit"
-            form="sprint-form"
-            className="px-8"
-            disabled={isLoading || isUnchangedUpdate}
-          >
-            {buttonLabel}
-          </Button>
+          {viewOnly ? null : (
+            <Button
+              type="submit"
+              form="sprint-form"
+              className="px-8"
+              disabled={isLoading || isUnchangedUpdate}
+            >
+              {buttonLabel}
+            </Button>
+          )}
         </div>
       </CardFooter>
     </Card>

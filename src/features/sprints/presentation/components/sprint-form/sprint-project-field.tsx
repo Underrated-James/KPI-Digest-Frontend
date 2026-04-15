@@ -25,11 +25,13 @@ import type { SprintFormValues } from "./sprint-form-schema"
 interface SprintProjectFieldProps {
   form: UseFormReturn<SprintFormValues>
   isLoading: boolean
+  viewOnly?: boolean
 }
 
 export function SprintProjectField({
   form,
   isLoading,
+  viewOnly = false,
 }: SprintProjectFieldProps) {
   const [open, setOpen] = useState(false)
   const { data: projectsData } = useProjects({ size: 100 })
@@ -42,54 +44,63 @@ export function SprintProjectField({
       render={({ field, fieldState }) => (
         <Field data-invalid={fieldState.invalid} className="col-span-full">
           <FieldLabel>Select Project</FieldLabel>
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                className="w-full justify-between font-normal"
-                disabled={isLoading}
-              >
-                {field.value
-                  ? projects.find((project) => project.id === field.value)?.name
-                  : "Search projects..."}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Search project name..." />
-                <CommandList>
-                  <CommandEmpty>No project found.</CommandEmpty>
-                  <CommandGroup>
-                    {projects.map((project) => (
-                      <CommandItem
-                        key={project.id}
-                        value={project.name}
-                        onSelect={() => {
-                          form.setValue("projectId", project.id, {
-                            shouldDirty: true,
-                          })
-                          setOpen(false)
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            field.value === project.id
-                              ? "opacity-100"
-                              : "opacity-0",
-                          )}
-                        />
-                        {project.name}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          {viewOnly ? (
+            <div className="flex min-h-10 items-center rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+              {field.value
+                ? projects.find((project) => project.id === field.value)?.name ??
+                  field.value
+                : "—"}
+            </div>
+          ) : (
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-full justify-between font-normal"
+                  disabled={isLoading}
+                >
+                  {field.value
+                    ? projects.find((project) => project.id === field.value)?.name
+                    : "Search projects..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Search project name..." />
+                  <CommandList>
+                    <CommandEmpty>No project found.</CommandEmpty>
+                    <CommandGroup>
+                      {projects.map((project) => (
+                        <CommandItem
+                          key={project.id}
+                          value={project.name}
+                          onSelect={() => {
+                            form.setValue("projectId", project.id, {
+                              shouldDirty: true,
+                            })
+                            setOpen(false)
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              field.value === project.id
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                          {project.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          )}
           {fieldState.invalid ? <FieldError errors={[fieldState.error]} /> : null}
         </Field>
       )}
