@@ -4,7 +4,7 @@ import { CreateTicketDTO } from "../../domain/types/ticket-types";
 export class CreateTicketUseCase {
   constructor(private readonly repository: TicketRepository) {}
 
-  async execute(data: CreateTicketDTO[]) {
+  async execute(data: CreateTicketDTO | CreateTicketDTO[]) {
     return this.repository.createTicket(data);
   }
 }

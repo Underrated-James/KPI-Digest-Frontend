@@ -1,5 +1,6 @@
 "use client"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
 import * as z from "zod"
 
@@ -20,10 +21,16 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Project, CreateProjectDTO } from "../../domain/types/project-types"
+import { useProjectById } from "../hooks/use-project-by-id"
 import { useUsers } from "@/features/users/presentation/hooks/use-users"
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
+  projectCode: z
+    .string()
+    .trim()
+    .min(2, "Project code must be at least 2 characters.")
+    .max(10, "Project code must not exceed 10 characters."),
   status: z.enum(["active", "inactive", "inProgress"]),
   finishDate: z.date({
     message: "Target finish date is required.",
@@ -32,6 +39,16 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>
+
+function buildDefaultValues(project?: Project): FormValues {
+  return {
+    name: project?.name ?? "",
+    projectCode: project?.projectCode ?? "",
+    status: project?.status ?? "active",
+    finishDate: project?.finishDate ? new Date(project.finishDate) : new Date(),
+    memberIds: project?.members?.map((member) => member.id) ?? [],
+  }
+}
 
 interface ProjectFormProps {
   initialData?: Project
@@ -46,16 +63,18 @@ export function ProjectForm({
   isLoading,
   onCancel,
 }: ProjectFormProps) {
+  const { data: projectDetail } = useProjectById(initialData?.id ?? null)
+  const projectForForm = projectDetail ?? initialData
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: initialData?.name ?? "",
-      status: initialData?.status ?? "active",
-      finishDate: initialData?.finishDate ? new Date(initialData.finishDate) : new Date(),
-      memberIds: initialData?.members?.map((member) => member.id) ?? [],
-    },
+    defaultValues: buildDefaultValues(projectForForm),
   })
+
+  useEffect(() => {
+    form.reset(buildDefaultValues(projectForForm))
+  }, [form, projectForForm])
+
   const { data: usersData, isLoading: isLoadingUsers } = useUsers({ size: 100 })
   const availableMembers = (usersData?.users ?? []).filter(
     (user) => user.role !== "ADMIN"
@@ -71,6 +90,7 @@ export function ProjectForm({
 
     const payload: CreateProjectDTO = {
       ...data,
+      projectCode: data.projectCode.trim(),
       finishDate: data.finishDate.toISOString(),
       memberIds: data.memberIds,
     };
@@ -102,6 +122,27 @@ export function ProjectForm({
                     id="project-name"
                     aria-invalid={fieldState.invalid}
                     placeholder="Enter project name"
+                    autoComplete="off"
+                    disabled={isLoading}
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="projectCode"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="project-code">Project Code</FieldLabel>
+                  <Input
+                    {...field}
+                    id="project-code"
+                    aria-invalid={fieldState.invalid}
+                    placeholder="Enter project code"
                     autoComplete="off"
                     disabled={isLoading}
                   />

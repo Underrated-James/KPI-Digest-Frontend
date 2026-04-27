@@ -1,5 +1,5 @@
-export type ProjectStatus = 'active' | 'inactive' | 'inProgress';
-export type ProjectMemberRole = 'ADMIN' | 'DEVS' | 'QA';
+export type ProjectStatus = "active" | "inactive" | "inProgress";
+export type ProjectMemberRole = "ADMIN" | "DEVS" | "QA";
 
 export interface ProjectMember {
   id: string;
@@ -15,6 +15,7 @@ export interface Project {
   id: string;
   name: string;
   status: ProjectStatus;
+  projectCode: string;
   finishDate: string; // Changed from Date to string based on backend response
   sprintCount: number;
   members: ProjectMember[];
@@ -27,6 +28,7 @@ export interface Project {
 export interface CreateProjectDTO {
   name: string;
   status: ProjectStatus;
+  projectCode: string;
   finishDate: string;
   memberIds?: string[];
 }

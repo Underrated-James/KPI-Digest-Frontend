@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useAppDispatch, useAppSelector } from "@/lib/redux-hooks";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useProjects } from "@/features/projects/presentation/hooks/use-projects";
 import { Ticket, TicketStatus } from "../../domain/types/ticket-types";
 import { useTickets } from "./use-tickets";
 import { useDeleteTicket } from "./use-delete-ticket";
@@ -40,6 +41,7 @@ export function useTicketPage() {
   const size = Number(searchParams.get("size")) || 10;
   const selectedStatus: TicketStatus | "ALL" =
     (searchParams.get("status") as TicketStatus | null) || "ALL";
+  const selectedProjectId = searchParams.get("projectId");
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   const isFormOpen = useAppSelector(selectIsTicketFormOpen);
@@ -47,6 +49,7 @@ export function useTicketPage() {
   const deleteTarget = useAppSelector(selectDeleteTarget);
   const selectedTicketIds = useAppSelector(selectSelectedTicketIds);
   const deleteTicket = useDeleteTicket();
+  const { data: projectsData } = useProjects({ size: 100 });
 
   useEffect(() => {
     const normalizedSearchTerm = debouncedSearchTerm.trim();
@@ -66,11 +69,13 @@ export function useTicketPage() {
     page,
     size,
     status: selectedStatus === "ALL" ? undefined : selectedStatus,
+    projectId: selectedProjectId || undefined,
     search: debouncedSearchTerm,
   });
 
   const tickets = data?.content ?? [];
   const total = data?.totalElements ?? 0;
+  const projectOptions = projectsData?.content ?? [];
 
   const updateStatusFilter = (status: TicketStatus | "ALL") => {
     const params = new URLSearchParams(searchParams.toString());
@@ -79,6 +84,17 @@ export function useTicketPage() {
       params.delete("status");
     } else {
       params.set("status", status);
+    }
+    pushTicketsUrl(pathname, params);
+  };
+
+  const updateProjectFilter = (projectId: string | "ALL") => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", "1");
+    if (projectId === "ALL") {
+      params.delete("projectId");
+    } else {
+      params.set("projectId", projectId);
     }
     pushTicketsUrl(pathname, params);
   };
@@ -139,7 +155,10 @@ export function useTicketPage() {
     searchTerm,
     setSearchTerm,
     selectedStatus,
+    selectedProjectId,
+    projectOptions,
     updateStatusFilter,
+    updateProjectFilter,
     isFormOpen,
     editingTicket,
     deleteTarget,

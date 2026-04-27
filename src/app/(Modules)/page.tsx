@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTheme } from "@/lib/theme-context";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type TicketStatus = "Done" | "In Progress" | "Open";
 type SprintStatus = "Completed" | "Active" | "Draft";
@@ -61,9 +63,24 @@ const projectDashboardMap: Record<string, ProjectDashboardData> = {
       { name: "Noah", points: 3 },
     ],
     recentTickets: [
-      { title: "RPNOTS - 101", assignee: "Frank", date: "2026-04-11", status: "Done" },
-      { title: "RPNOTS - 112", assignee: "Grace", date: "2026-04-12", status: "Done" },
-      { title: "RPNOTS - 129", assignee: "Hana", date: "2026-04-13", status: "In Progress" }
+      {
+        title: "RPNOTS - 101",
+        assignee: "Frank",
+        date: "2026-04-11",
+        status: "Done",
+      },
+      {
+        title: "RPNOTS - 112",
+        assignee: "Grace",
+        date: "2026-04-12",
+        status: "Done",
+      },
+      {
+        title: "RPNOTS - 129",
+        assignee: "Hana",
+        date: "2026-04-13",
+        status: "In Progress",
+      },
     ],
     sprintRows: [
       {
@@ -111,8 +128,16 @@ const projectDashboardMap: Record<string, ProjectDashboardData> = {
         by: "Grace",
         at: "4/14/2026, 10:15:00 AM",
       },
-      { text: "RPNOTS - 133 added to backlog", by: "Isha", at: "4/14/2026, 2:30:00 PM" },
-      { text: "Sprint 3 plan drafted", by: "Noah", at: "4/15/2026, 9:40:00 AM" },
+      {
+        text: "RPNOTS - 133 added to backlog",
+        by: "Isha",
+        at: "4/14/2026, 2:30:00 PM",
+      },
+      {
+        text: "Sprint 3 plan drafted",
+        by: "Noah",
+        at: "4/15/2026, 9:40:00 AM",
+      },
     ],
   },
   AltInvest: {
@@ -134,11 +159,36 @@ const projectDashboardMap: Record<string, ProjectDashboardData> = {
       { name: "Tom", points: 4 },
     ],
     recentTickets: [
-      { title: "ALTNVST - 101", assignee: "Mina", date: "2026-04-10", status: "In Progress" },
-      { title: "ALTNVST - 106", assignee: "Kai", date: "2026-04-11", status: "Done" },
-      { title: "ALTNVST - 111", assignee: "Luis", date: "2026-04-12", status: "Open" },
-      { title: "ALTNVST - 119", assignee: "Rhea", date: "2026-04-13", status: "Open" },
-      { title: "ALTNVST - 123", assignee: "Tom", date: "2026-04-15", status: "In Progress" },
+      {
+        title: "ALTNVST - 101",
+        assignee: "Mina",
+        date: "2026-04-10",
+        status: "In Progress",
+      },
+      {
+        title: "ALTNVST - 106",
+        assignee: "Kai",
+        date: "2026-04-11",
+        status: "Done",
+      },
+      {
+        title: "ALTNVST - 111",
+        assignee: "Luis",
+        date: "2026-04-12",
+        status: "Open",
+      },
+      {
+        title: "ALTNVST - 119",
+        assignee: "Rhea",
+        date: "2026-04-13",
+        status: "Open",
+      },
+      {
+        title: "ALTNVST - 123",
+        assignee: "Tom",
+        date: "2026-04-15",
+        status: "In Progress",
+      },
     ],
     sprintRows: [
       {
@@ -176,10 +226,26 @@ const projectDashboardMap: Record<string, ProjectDashboardData> = {
     ],
     teamMembers: 6,
     activity: [
-      { text: "Portfolio feed bug triaged", by: "Mina", at: "4/13/2026, 7:35:00 PM" },
-      { text: "ALTNVST - 111 moved to Open", by: "Luis", at: "4/14/2026, 9:42:00 AM" },
-      { text: "ALTNVST - 119 blocked by dependency", by: "Rhea", at: "4/14/2026, 12:05:00 PM" },
-      { text: "Sprint 3 moved to Draft", by: "Tom", at: "4/15/2026, 8:48:00 AM" },
+      {
+        text: "Portfolio feed bug triaged",
+        by: "Mina",
+        at: "4/13/2026, 7:35:00 PM",
+      },
+      {
+        text: "ALTNVST - 111 moved to Open",
+        by: "Luis",
+        at: "4/14/2026, 9:42:00 AM",
+      },
+      {
+        text: "ALTNVST - 119 blocked by dependency",
+        by: "Rhea",
+        at: "4/14/2026, 12:05:00 PM",
+      },
+      {
+        text: "Sprint 3 moved to Draft",
+        by: "Tom",
+        at: "4/15/2026, 8:48:00 AM",
+      },
     ],
   },
   Nimbus: {
@@ -201,11 +267,36 @@ const projectDashboardMap: Record<string, ProjectDashboardData> = {
       { name: "Ava", points: 6 },
     ],
     recentTickets: [
-      { title: "NMBS - 101", assignee: "Nia", date: "2026-04-12", status: "Done" },
-      { title: "NMBS - 118", assignee: "Rafi", date: "2026-04-14", status: "In Progress" },
-      { title: "NMBS - 120", assignee: "Tara", date: "2026-04-15", status: "Open" },
-      { title: "NMBS - 133", assignee: "Moe", date: "2026-04-15", status: "In Progress" },
-      { title: "NMBS - 141", assignee: "Ava", date: "2026-04-15", status: "Open" },
+      {
+        title: "NMBS - 101",
+        assignee: "Nia",
+        date: "2026-04-12",
+        status: "Done",
+      },
+      {
+        title: "NMBS - 118",
+        assignee: "Rafi",
+        date: "2026-04-14",
+        status: "In Progress",
+      },
+      {
+        title: "NMBS - 120",
+        assignee: "Tara",
+        date: "2026-04-15",
+        status: "Open",
+      },
+      {
+        title: "NMBS - 133",
+        assignee: "Moe",
+        date: "2026-04-15",
+        status: "In Progress",
+      },
+      {
+        title: "NMBS - 141",
+        assignee: "Ava",
+        date: "2026-04-15",
+        status: "Open",
+      },
     ],
     sprintRows: [
       {
@@ -251,9 +342,21 @@ const projectDashboardMap: Record<string, ProjectDashboardData> = {
     ],
     teamMembers: 10,
     activity: [
-      { text: "Sprint 3 kickoff complete", by: "Nia", at: "4/12/2026, 9:10:00 AM" },
-      { text: "Reporting test suite updated", by: "Rafi", at: "4/13/2026, 4:20:00 PM" },
-      { text: "NMBS - 133 moved to In Progress", by: "Moe", at: "4/15/2026, 1:01:00 PM" },
+      {
+        text: "Sprint 3 kickoff complete",
+        by: "Nia",
+        at: "4/12/2026, 9:10:00 AM",
+      },
+      {
+        text: "Reporting test suite updated",
+        by: "Rafi",
+        at: "4/13/2026, 4:20:00 PM",
+      },
+      {
+        text: "NMBS - 133 moved to In Progress",
+        by: "Moe",
+        at: "4/15/2026, 1:01:00 PM",
+      },
       { text: "Ops board refreshed", by: "Ava", at: "4/15/2026, 2:28:00 PM" },
     ],
   },
@@ -276,11 +379,36 @@ const projectDashboardMap: Record<string, ProjectDashboardData> = {
       { name: "Elle", points: 7 },
     ],
     recentTickets: [
-      { title: "STRTS - 101", assignee: "Ari", date: "2026-04-09", status: "In Progress" },
-      { title: "STRTS - 109", assignee: "Noel", date: "2026-04-13", status: "Open" },
-      { title: "STRTS - 121", assignee: "Jin", date: "2026-04-15", status: "Open" },
-      { title: "STRTS - 126", assignee: "Kris", date: "2026-04-15", status: "Open" },
-      { title: "STRTS - 131", assignee: "Elle", date: "2026-04-15", status: "In Progress" },
+      {
+        title: "STRTS - 101",
+        assignee: "Ari",
+        date: "2026-04-09",
+        status: "In Progress",
+      },
+      {
+        title: "STRTS - 109",
+        assignee: "Noel",
+        date: "2026-04-13",
+        status: "Open",
+      },
+      {
+        title: "STRTS - 121",
+        assignee: "Jin",
+        date: "2026-04-15",
+        status: "Open",
+      },
+      {
+        title: "STRTS - 126",
+        assignee: "Kris",
+        date: "2026-04-15",
+        status: "Open",
+      },
+      {
+        title: "STRTS - 131",
+        assignee: "Elle",
+        date: "2026-04-15",
+        status: "In Progress",
+      },
     ],
     sprintRows: [
       {
@@ -318,10 +446,26 @@ const projectDashboardMap: Record<string, ProjectDashboardData> = {
     ],
     teamMembers: 7,
     activity: [
-      { text: "Incident war-room started", by: "Ari", at: "4/15/2026, 11:05:00 AM" },
-      { text: "Critical blockers added to sprint board", by: "Noel", at: "4/15/2026, 1:15:00 PM" },
-      { text: "STRTS - 131 assigned to response team", by: "Kris", at: "4/15/2026, 2:02:00 PM" },
-      { text: "Escalation notes shared", by: "Elle", at: "4/15/2026, 3:22:00 PM" },
+      {
+        text: "Incident war-room started",
+        by: "Ari",
+        at: "4/15/2026, 11:05:00 AM",
+      },
+      {
+        text: "Critical blockers added to sprint board",
+        by: "Noel",
+        at: "4/15/2026, 1:15:00 PM",
+      },
+      {
+        text: "STRTS - 131 assigned to response team",
+        by: "Kris",
+        at: "4/15/2026, 2:02:00 PM",
+      },
+      {
+        text: "Escalation notes shared",
+        by: "Elle",
+        at: "4/15/2026, 3:22:00 PM",
+      },
     ],
   },
   "Kondo Ko": {
@@ -343,9 +487,24 @@ const projectDashboardMap: Record<string, ProjectDashboardData> = {
       { name: "Joel", points: 4 },
     ],
     recentTickets: [
-      { title: "KNDOKO - 101", assignee: "Miko", date: "2026-04-11", status: "Done" },
-      { title: "KNDOKO - 108", assignee: "Sia", date: "2026-04-14", status: "In Progress" },
-      { title: "KNDOKO - 110", assignee: "Dev", date: "2026-04-15", status: "Open" }
+      {
+        title: "KNDOKO - 101",
+        assignee: "Miko",
+        date: "2026-04-11",
+        status: "Done",
+      },
+      {
+        title: "KNDOKO - 108",
+        assignee: "Sia",
+        date: "2026-04-14",
+        status: "In Progress",
+      },
+      {
+        title: "KNDOKO - 110",
+        assignee: "Dev",
+        date: "2026-04-15",
+        status: "Open",
+      },
     ],
     sprintRows: [
       {
@@ -383,40 +542,123 @@ const projectDashboardMap: Record<string, ProjectDashboardData> = {
     ],
     teamMembers: 5,
     activity: [
-      { text: "Enablement workshop done", by: "Miko", at: "4/14/2026, 3:30:00 PM" },
+      {
+        text: "Enablement workshop done",
+        by: "Miko",
+        at: "4/14/2026, 3:30:00 PM",
+      },
       { text: "KNDOKO - 110 created", by: "Dev", at: "4/15/2026, 9:12:00 AM" },
-      { text: "KNDOKO - 114 moved to In Progress", by: "Lyn", at: "4/15/2026, 11:44:00 AM" },
+      {
+        text: "KNDOKO - 114 moved to In Progress",
+        by: "Lyn",
+        at: "4/15/2026, 11:44:00 AM",
+      },
       { text: "Sprint 3 drafted", by: "Joel", at: "4/15/2026, 2:19:00 PM" },
     ],
   },
 };
 
-const statusPillStyles: Record<string, string> = {
-  Active: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
-  "At Risk": "border-amber-500/40 bg-amber-500/10 text-amber-300",
-  Critical: "border-rose-500/40 bg-rose-500/10 text-rose-300",
-  Completed: "border-blue-500/40 bg-blue-500/10 text-blue-300",
-  Draft: "border-zinc-500/40 bg-zinc-500/10 text-zinc-300",
-  Done: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
-  "In Progress": "border-cyan-500/40 bg-cyan-500/10 text-cyan-300",
-  Open: "border-amber-500/40 bg-amber-500/10 text-amber-300",
+// Theme-aware style configuration
+const getStatusPillStyles = (
+  theme: "light" | "dark",
+): Record<string, string> => {
+  if (theme === "light") {
+    return {
+      Active: "border-emerald-500/50 bg-emerald-100 text-emerald-700",
+      "At Risk": "border-amber-500/50 bg-amber-100 text-amber-700",
+      Critical: "border-rose-500/50 bg-rose-100 text-rose-700",
+      Completed: "border-blue-500/50 bg-blue-100 text-blue-700",
+      Draft: "border-gray-400/50 bg-gray-100 text-gray-700",
+      Done: "border-emerald-500/50 bg-emerald-100 text-emerald-700",
+      "In Progress": "border-cyan-500/50 bg-cyan-100 text-cyan-700",
+      Open: "border-amber-500/50 bg-amber-100 text-amber-700",
+    };
+  }
+  return {
+    Active: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
+    "At Risk": "border-amber-500/40 bg-amber-500/10 text-amber-300",
+    Critical: "border-rose-500/40 bg-rose-500/10 text-rose-300",
+    Completed: "border-blue-500/40 bg-blue-500/10 text-blue-300",
+    Draft: "border-zinc-500/40 bg-zinc-500/10 text-zinc-300",
+    Done: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
+    "In Progress": "border-cyan-500/40 bg-cyan-500/10 text-cyan-300",
+    Open: "border-amber-500/40 bg-amber-500/10 text-amber-300",
+  };
+};
+
+// Theme-aware card styles
+const getCardStyles = (theme: "light" | "dark") => {
+  if (theme === "light") {
+    return {
+      container:
+        "bg-white border border-gray-200 shadow-sm dark:bg-zinc-900 dark:border-white/15",
+      header: "bg-gray-50 border-gray-200",
+      text: "text-gray-900",
+      mutedText: "text-gray-600",
+      background: "bg-gray-100",
+      border: "border-gray-300",
+    };
+  }
+  return {
+    container:
+      "bg-card dark:bg-zinc-900 border border-border/70 dark:border-white/15",
+    header: "bg-card dark:bg-zinc-900",
+    text: "text-foreground dark:text-zinc-100",
+    mutedText: "text-muted-foreground dark:text-zinc-400",
+    background: "bg-background dark:bg-zinc-950",
+    border: "border-border/50 dark:border-white/10",
+  };
 };
 
 export default function Home() {
   const [selectedProject, setSelectedProject] = useState<string>("");
+  const { resolvedTheme } = useTheme();
+
+  const statusPillStyles = getStatusPillStyles(resolvedTheme);
+  const cardStyles = getCardStyles(resolvedTheme);
 
   const selectedDashboard = useMemo(
     () => (selectedProject ? projectDashboardMap[selectedProject] : undefined),
     [selectedProject],
   );
 
+  const themeClasses = {
+    section: `mx-auto flex w-full max-w-7xl flex-col gap-5 rounded-2xl ${resolvedTheme === "light" ? "bg-white text-gray-900" : "bg-background text-foreground dark:bg-zinc-950 dark:text-zinc-100"}`,
+    header: `rounded-2xl border p-5 shadow-xl ${resolvedTheme === "light" ? "border-gray-200 bg-gray-50 text-gray-900" : "border-border/70 bg-card dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-100"}`,
+    card: `rounded-2xl border p-4 ${resolvedTheme === "light" ? "border-gray-200 bg-white text-gray-900" : "border-border/70 bg-card dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-100"}`,
+    mutedText:
+      resolvedTheme === "light"
+        ? "text-gray-600"
+        : "text-muted-foreground dark:text-zinc-400",
+    selectInput: `h-10 min-w-52 rounded-lg border px-3 text-sm outline-none ${resolvedTheme === "light" ? "border-gray-300 bg-white text-gray-900" : "border-border/70 bg-background dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-100"}`,
+    primaryButton:
+      "h-10 rounded-lg bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700",
+    secondaryButton: `h-10 rounded-lg border px-3 text-sm ${resolvedTheme === "light" ? "border-gray-300 bg-white text-gray-900" : "border-border/70 bg-background dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-200"}`,
+    emptyCard: `rounded-2xl border p-4 ${resolvedTheme === "light" ? "border-gray-200 bg-white text-gray-900" : "border-border/70 bg-card dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-100"}`,
+    table: `${resolvedTheme === "light" ? "text-gray-900" : "text-foreground dark:text-zinc-100"}`,
+    tableHeader:
+      resolvedTheme === "light"
+        ? "text-gray-600 dark:text-zinc-500"
+        : "text-muted-foreground dark:text-zinc-500",
+    tableBorder:
+      resolvedTheme === "light"
+        ? "border-gray-200"
+        : "border-border/50 dark:border-white/10",
+    activityText:
+      resolvedTheme === "light"
+        ? "text-gray-900"
+        : "text-foreground dark:text-zinc-100",
+  };
+
   return (
-    <section className="mx-auto flex w-full max-w-7xl flex-col gap-5 rounded-2xl bg-background text-foreground dark:bg-zinc-950">
-      <header className="rounded-2xl border border-border/70 bg-card p-5 text-foreground shadow-xl dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-100">
+    <section className={themeClasses.section}>
+      <header className={themeClasses.header}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-semibold">{selectedProject || "Select a Project"}</h1>
+              <h1 className="text-2xl font-semibold">
+                {selectedProject || "Select a Project"}
+              </h1>
               {selectedDashboard ? (
                 <span
                   className={`rounded-full border px-2 py-1 text-xs ${statusPillStyles[selectedDashboard.health]}`}
@@ -425,7 +667,7 @@ export default function Home() {
                 </span>
               ) : null}
             </div>
-            <p className="text-xs text-muted-foreground dark:text-zinc-400">
+            <p className={`text-xs ${themeClasses.mutedText}`}>
               {selectedDashboard
                 ? `${selectedDashboard.members} members • Created ${selectedDashboard.createdAt}`
                 : "Choose a project to render static dashboard data"}
@@ -436,7 +678,7 @@ export default function Home() {
             <select
               value={selectedProject}
               onChange={(event) => setSelectedProject(event.target.value)}
-              className="h-10 min-w-52 rounded-lg border border-border/70 bg-background px-3 text-sm text-foreground outline-none dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-100"
+              className={themeClasses.selectInput}
             >
               <option value="">Select project</option>
               {projectNames.map((project) => (
@@ -445,12 +687,9 @@ export default function Home() {
                 </option>
               ))}
             </select>
-            <button className="h-10 rounded-lg border border-border/70 bg-background px-3 text-sm text-foreground dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-200">
-              + Sprint
-            </button>
-            <button className="h-10 rounded-lg bg-blue-600 px-3 text-sm font-medium text-white">
-              Ticket
-            </button>
+            <button className={themeClasses.secondaryButton}>+ Sprint</button>
+            <ThemeToggle size="default" variant="outline" />
+            <button className={themeClasses.primaryButton}>Ticket</button>
           </div>
         </div>
       </header>
@@ -465,18 +704,23 @@ export default function Home() {
             "Recent Tickets Card",
             "Sprint Overview Card",
           ].map((label) => (
-            <article
-              key={label}
-              className="rounded-2xl border border-border/70 bg-card p-4 text-foreground dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-100"
-            >
+            <article key={label} className={themeClasses.emptyCard}>
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-sm font-semibold">{label}</h2>
-                <span className="text-[11px] text-muted-foreground dark:text-zinc-400">No project selected</span>
+                <span className={`text-[11px] ${themeClasses.mutedText}`}>
+                  No project selected
+                </span>
               </div>
               <div className="space-y-2">
-                <div className="h-3 w-3/4 animate-pulse rounded bg-muted dark:bg-zinc-700/70" />
-                <div className="h-3 w-1/2 animate-pulse rounded bg-muted dark:bg-zinc-700/70" />
-                <div className="h-16 w-full animate-pulse rounded-xl bg-muted/80 dark:bg-zinc-800/80" />
+                <div
+                  className={`h-3 w-3/4 animate-pulse rounded ${resolvedTheme === "light" ? "bg-gray-300" : "bg-muted dark:bg-zinc-700/70"}`}
+                />
+                <div
+                  className={`h-3 w-1/2 animate-pulse rounded ${resolvedTheme === "light" ? "bg-gray-300" : "bg-muted dark:bg-zinc-700/70"}`}
+                />
+                <div
+                  className={`h-16 w-full animate-pulse rounded-xl ${resolvedTheme === "light" ? "bg-gray-300" : "bg-muted/80 dark:bg-zinc-800/80"}`}
+                />
               </div>
             </article>
           ))}
@@ -485,55 +729,104 @@ export default function Home() {
         <>
           <section className="grid gap-4 lg:grid-cols-2">
             <SummaryPanel
+              theme={resolvedTheme}
               title="Sprint Summary"
               rows={[
-                { label: "Total Sprints", value: selectedDashboard.totalSprints },
+                {
+                  label: "Total Sprints",
+                  value: selectedDashboard.totalSprints,
+                },
                 {
                   label: "Active Sprints",
-                  value: selectedDashboard.totalSprints - selectedDashboard.completedSprints,
+                  value:
+                    selectedDashboard.totalSprints -
+                    selectedDashboard.completedSprints,
                 },
-                { label: "Completed Sprints", value: selectedDashboard.completedSprints },
+                {
+                  label: "Completed Sprints",
+                  value: selectedDashboard.completedSprints,
+                },
               ]}
             />
             <SummaryPanel
+              theme={resolvedTheme}
               title="Ticket Summary"
               rows={[
-                { label: "Total Tickets", value: selectedDashboard.totalTickets },
-                { label: "Completed Tickets", value: selectedDashboard.completedTickets },
+                {
+                  label: "Total Tickets",
+                  value: selectedDashboard.totalTickets,
+                },
+                {
+                  label: "Completed Tickets",
+                  value: selectedDashboard.completedTickets,
+                },
                 { label: "Open Tickets", value: selectedDashboard.openTickets },
               ]}
             />
           </section>
 
           <section className="grid gap-4 lg:grid-cols-3">
-            <article className="rounded-2xl border border-border/70 bg-card p-4 text-foreground dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-100">
-              <h3 className="mb-4 text-sm font-semibold">Ticket Completion Trend</h3>
-              <div className="flex h-40 items-end gap-4 rounded-lg border border-border/50 bg-background p-4 dark:border-white/10 dark:bg-zinc-950">
+            <article className={themeClasses.card}>
+              <h3 className="mb-4 text-sm font-semibold">
+                Ticket Completion Trend
+              </h3>
+              <div
+                className={`flex h-40 items-end gap-4 rounded-lg border p-4 ${resolvedTheme === "light" ? "border-gray-300 bg-gray-100" : "border-border/50 bg-background dark:border-white/10 dark:bg-zinc-950"}`}
+              >
                 {selectedDashboard.completionTrend.map((value, index) => (
-                  <div key={`${value}-${index}`} className="flex flex-1 flex-col items-center gap-2">
+                  <div
+                    key={`${value}-${index}`}
+                    className="flex flex-1 flex-col items-center gap-2"
+                  >
                     <div
-                      className="w-full rounded bg-emerald-400/80"
-                      style={{ height: `${Math.max(20, value * 10)}px` }}
+                      className={
+                        resolvedTheme === "light"
+                          ? "bg-emerald-600"
+                          : "bg-emerald-400/80"
+                      }
+                      style={{
+                        height: `${Math.max(20, value * 10)}px`,
+                        width: "100%",
+                        borderRadius: "4px",
+                      }}
                     />
-                    <span className="text-[10px] text-muted-foreground dark:text-zinc-400">{`Week ${index + 1}`}</span>
+                    <span
+                      className={`text-[10px] ${themeClasses.mutedText}`}
+                    >{`Week ${index + 1}`}</span>
                   </div>
                 ))}
               </div>
             </article>
 
-            <article className="rounded-2xl border border-border/70 bg-card p-4 text-foreground dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-100">
-              <h3 className="mb-4 text-sm font-semibold">Workload Distribution</h3>
-              <div className="space-y-3 rounded-lg border border-border/50 bg-background p-4 dark:border-white/10 dark:bg-zinc-950">
+            <article className={themeClasses.card}>
+              <h3 className="mb-4 text-sm font-semibold">
+                Workload Distribution
+              </h3>
+              <div
+                className={`space-y-3 rounded-lg border p-4 ${resolvedTheme === "light" ? "border-gray-300 bg-gray-100" : "border-border/50 bg-background dark:border-white/10 dark:bg-zinc-950"}`}
+              >
                 {selectedDashboard.workload.map((person) => (
                   <div key={person.name} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground dark:text-zinc-400">
+                    <div
+                      className={`flex items-center justify-between text-xs ${themeClasses.mutedText}`}
+                    >
                       <span>{person.name}</span>
                       <span>{person.points} pts</span>
                     </div>
-                    <div className="h-2 rounded bg-muted dark:bg-zinc-800">
+                    <div
+                      className={`h-2 rounded ${resolvedTheme === "light" ? "bg-gray-300" : "bg-muted dark:bg-zinc-800"}`}
+                    >
                       <div
-                        className="h-2 rounded bg-violet-500"
-                        style={{ width: `${(person.points / 10) * 100}%` }}
+                        className={
+                          resolvedTheme === "light"
+                            ? "bg-violet-600"
+                            : "bg-violet-500"
+                        }
+                        style={{
+                          width: `${(person.points / 10) * 100}%`,
+                          height: "100%",
+                          borderRadius: "4px",
+                        }}
                       />
                     </div>
                   </div>
@@ -541,13 +834,13 @@ export default function Home() {
               </div>
             </article>
 
-            <article className="rounded-2xl border border-border/70 bg-card p-4 text-foreground dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-100">
+            <article className={themeClasses.card}>
               <h3 className="mb-4 text-sm font-semibold">Recent Tickets</h3>
               <div className="space-y-2">
                 {selectedDashboard.recentTickets.map((ticket) => (
                   <div
                     key={ticket.title}
-                    className="rounded-lg border border-border/50 bg-background p-3 dark:border-white/10 dark:bg-zinc-950"
+                    className={`rounded-lg border p-3 ${resolvedTheme === "light" ? "border-gray-300 bg-gray-100" : "border-border/50 bg-background dark:border-white/10 dark:bg-zinc-950"}`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-medium">{ticket.title}</p>
@@ -557,7 +850,7 @@ export default function Home() {
                         {ticket.status}
                       </span>
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground dark:text-zinc-400">
+                    <p className={`mt-1 text-xs ${themeClasses.mutedText}`}>
                       {ticket.assignee} • {ticket.date}
                     </p>
                   </div>
@@ -566,11 +859,15 @@ export default function Home() {
             </article>
           </section>
 
-          <section className="rounded-2xl border border-border/70 bg-card p-4 text-foreground dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-100">
+          <section className={themeClasses.card}>
             <h3 className="mb-4 text-sm font-semibold">Sprint Overview</h3>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[680px] text-left text-sm">
-                <thead className="text-[11px] uppercase tracking-wide text-muted-foreground dark:text-zinc-500">
+              <table
+                className={`w-full min-w-[680px] text-left text-sm ${themeClasses.table}`}
+              >
+                <thead
+                  className={`text-[11px] uppercase tracking-wide ${themeClasses.tableHeader}`}
+                >
                   <tr>
                     <th className="px-2 py-2">Sprint</th>
                     <th className="px-2 py-2">Status</th>
@@ -582,7 +879,10 @@ export default function Home() {
                 </thead>
                 <tbody>
                   {selectedDashboard.sprintRows.map((sprint) => (
-                    <tr key={sprint.name} className="border-t border-border/50 dark:border-white/10">
+                    <tr
+                      key={sprint.name}
+                      className={`border-t ${themeClasses.tableBorder}`}
+                    >
                       <td className="px-2 py-3">{sprint.name}</td>
                       <td className="px-2 py-3">
                         <span
@@ -591,18 +891,32 @@ export default function Home() {
                           {sprint.status}
                         </span>
                       </td>
-                      <td className="px-2 py-3 text-muted-foreground dark:text-zinc-400">{sprint.start}</td>
-                      <td className="px-2 py-3 text-muted-foreground dark:text-zinc-400">{sprint.end}</td>
+                      <td className={`px-2 py-3 ${themeClasses.mutedText}`}>
+                        {sprint.start}
+                      </td>
+                      <td className={`px-2 py-3 ${themeClasses.mutedText}`}>
+                        {sprint.end}
+                      </td>
                       <td className="px-2 py-3">{sprint.tickets}</td>
                       <td className="px-2 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="h-2 w-28 rounded bg-muted dark:bg-zinc-800">
+                          <div
+                            className={`h-2 w-28 rounded ${resolvedTheme === "light" ? "bg-gray-300" : "bg-muted dark:bg-zinc-800"}`}
+                          >
                             <div
-                              className="h-2 rounded bg-blue-500"
-                              style={{ width: `${sprint.progress}%` }}
+                              className={
+                                resolvedTheme === "light"
+                                  ? "bg-blue-600"
+                                  : "bg-blue-500"
+                              }
+                              style={{
+                                width: `${sprint.progress}%`,
+                                height: "100%",
+                                borderRadius: "4px",
+                              }}
                             />
                           </div>
-                          <span className="text-xs text-muted-foreground dark:text-zinc-400">
+                          <span className={`text-xs ${themeClasses.mutedText}`}>
                             {sprint.progress}%
                           </span>
                         </div>
@@ -615,16 +929,18 @@ export default function Home() {
           </section>
 
           <section className="grid gap-4 lg:grid-cols-3">
-            <article className="rounded-2xl border border-border/70 bg-card p-4 text-foreground dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-100 lg:col-span-2">
+            <article className={`${themeClasses.card} lg:col-span-2`}>
               <h3 className="mb-4 text-sm font-semibold">Activity Feed</h3>
               <div className="space-y-2">
                 {selectedDashboard.activity.map((item) => (
                   <div
                     key={item.text}
-                    className="rounded-lg border border-border/50 bg-background p-3 dark:border-white/10 dark:bg-zinc-950"
+                    className={`rounded-lg border p-3 ${resolvedTheme === "light" ? "border-gray-300 bg-gray-100" : "border-border/50 bg-background dark:border-white/10 dark:bg-zinc-950"}`}
                   >
-                    <p className="text-sm">{item.text}</p>
-                    <p className="mt-1 text-xs text-muted-foreground dark:text-zinc-400">
+                    <p className={`text-sm ${themeClasses.activityText}`}>
+                      {item.text}
+                    </p>
+                    <p className={`mt-1 text-xs ${themeClasses.mutedText}`}>
                       {item.by} • {item.at}
                     </p>
                   </div>
@@ -632,19 +948,40 @@ export default function Home() {
               </div>
             </article>
 
-            <article className="rounded-2xl border border-border/70 bg-card p-4 text-foreground dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-100">
+            <article className={themeClasses.card}>
               <h3 className="mb-4 text-sm font-semibold">Sprint Status</h3>
               <div className="flex items-center justify-center p-4">
-                <div className="relative h-36 w-36 rounded-full bg-gradient-to-b from-emerald-500 to-blue-500 p-4">
-                  <div className="flex h-full w-full items-center justify-center rounded-full bg-card dark:bg-zinc-900">
-                    <span className="text-sm text-muted-foreground dark:text-zinc-300">
-                      {Math.round((selectedDashboard.completedSprints / selectedDashboard.totalSprints) * 100)}%
+                <div
+                  className={`relative h-36 w-36 rounded-full p-4 ${resolvedTheme === "light" ? "bg-gradient-to-b from-emerald-500 to-blue-500" : "bg-gradient-to-b from-emerald-400 to-blue-400"}`}
+                >
+                  <div
+                    className={`flex h-full w-full items-center justify-center rounded-full ${resolvedTheme === "light" ? "bg-white" : "bg-card dark:bg-zinc-900"}`}
+                  >
+                    <span
+                      className={
+                        resolvedTheme === "light"
+                          ? "text-sm text-gray-700"
+                          : "text-sm text-muted-foreground dark:text-zinc-300"
+                      }
+                    >
+                      {Math.round(
+                        (selectedDashboard.completedSprints /
+                          selectedDashboard.totalSprints) *
+                          100,
+                      )}
+                      %
                     </span>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground dark:text-zinc-400">
-                <span>Active: {selectedDashboard.totalSprints - selectedDashboard.completedSprints}</span>
+              <div
+                className={`flex items-center justify-center gap-4 text-xs ${themeClasses.mutedText}`}
+              >
+                <span>
+                  Active:{" "}
+                  {selectedDashboard.totalSprints -
+                    selectedDashboard.completedSprints}
+                </span>
                 <span>Completed: {selectedDashboard.completedSprints}</span>
               </div>
             </article>
@@ -658,21 +995,40 @@ export default function Home() {
 function SummaryPanel({
   title,
   rows,
+  theme = "dark",
 }: {
   title: string;
   rows: { label: string; value: number }[];
+  theme?: "light" | "dark";
 }) {
+  const cardBg =
+    theme === "light"
+      ? "border-gray-200 bg-white"
+      : "border-border/70 bg-card dark:border-white/15 dark:bg-zinc-900";
+  const rowBg =
+    theme === "light"
+      ? "border-gray-300 bg-gray-100"
+      : "border-border/50 bg-background dark:border-white/10 dark:bg-zinc-950";
+  const labelText =
+    theme === "light"
+      ? "text-gray-700"
+      : "text-muted-foreground dark:text-zinc-300";
+  const valueText =
+    theme === "light" ? "text-gray-900" : "text-foreground dark:text-zinc-100";
+
   return (
-    <article className="rounded-2xl border border-border/70 bg-card p-4 text-foreground dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-100">
+    <article
+      className={`rounded-2xl border p-4 ${cardBg} text-foreground dark:text-zinc-100`}
+    >
       <h3 className="mb-3 text-sm font-semibold">{title}</h3>
       <div className="space-y-2">
         {rows.map((row) => (
           <div
             key={row.label}
-            className="flex items-center justify-between rounded-lg border border-border/50 bg-background px-3 py-2 dark:border-white/10 dark:bg-zinc-950"
+            className={`flex items-center justify-between rounded-lg border px-3 py-2 ${rowBg}`}
           >
-            <p className="text-sm text-muted-foreground dark:text-zinc-300">{row.label}</p>
-            <p className="text-lg font-semibold">{row.value}</p>
+            <p className={`text-sm ${labelText}`}>{row.label}</p>
+            <p className={`text-lg font-semibold ${valueText}`}>{row.value}</p>
           </div>
         ))}
       </div>

@@ -19,7 +19,10 @@ export default function TicketsPage() {
     searchTerm,
     setSearchTerm,
     selectedStatus,
+    selectedProjectId,
+    projectOptions,
     updateStatusFilter,
+    updateProjectFilter,
     selectedTicketIds,
     onAddTicket,
     onEditTicket,
@@ -75,10 +78,13 @@ export default function TicketsPage() {
                 <TicketPageToolbar
                   searchTerm={searchTerm}
                   selectedStatus={selectedStatus}
+                  selectedProjectId={selectedProjectId}
+                  projectOptions={projectOptions}
                   selectedTicketCount={selectedTicketIds.length}
                   isMobile={isMobile}
                   onSearchTermChange={setSearchTerm}
                   onStatusChange={updateStatusFilter}
+                  onProjectChange={updateProjectFilter}
                   onAddTicket={onAddTicket}
                   onBulkDelete={onBulkDelete}
                 />

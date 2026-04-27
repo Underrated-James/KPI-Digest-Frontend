@@ -23,8 +23,8 @@ export const ticketApi = {
     return data.data;
   },
 
-  async createTicket(ticketData: CreateTicketDTO[]): Promise<Ticket[]> {
-    const { data } = await api.post<BackendResponse<Ticket[]>>(
+  async createTicket(ticketData: CreateTicketDTO | CreateTicketDTO[]): Promise<Ticket | Ticket[]> {
+    const { data } = await api.post<BackendResponse<Ticket | Ticket[]>>(
       "/tickets",
       ticketData
     );

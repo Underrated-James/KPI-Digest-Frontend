@@ -2,8 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
-import { useWatch } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppDispatch, useAppSelector } from "@/lib/redux-hooks";
 import {
@@ -126,10 +125,7 @@ export function TicketForm() {
       estimationTesting: null,
     },
   });
-  const {
-    isDirty,
-    isValid,
-  } = form.formState;
+  const { isDirty, isValid } = form.formState;
 
   const selectedProjectId = useWatch({
     control: form.control,
@@ -180,6 +176,8 @@ export function TicketForm() {
 
   const projectNameForSprintsLink =
     selectedProject?.name ?? projectDetail?.name ?? "";
+  const projectCodeForTicketNumber =
+    selectedProject?.projectCode ?? projectDetail?.projectCode ?? "";
 
   const showNoSprintsForProject =
     Boolean(selectedProjectId) &&
@@ -199,14 +197,11 @@ export function TicketForm() {
     return `/sprints?${params.toString()}`;
   }, [selectedProjectId, projectNameForSprintsLink]);
 
-  const {
-    data: projectDevelopers = [],
-    isLoading: isLoadingDevelopers,
-  } = useProjectDevelopers(selectedProjectId || null);
-  const {
-    data: projectQa = [],
-    isLoading: isLoadingQa,
-  } = useProjectQa(selectedProjectId || null);
+  const { data: projectDevelopers = [], isLoading: isLoadingDevelopers } =
+    useProjectDevelopers(selectedProjectId || null);
+  const { data: projectQa = [], isLoading: isLoadingQa } = useProjectQa(
+    selectedProjectId || null,
+  );
 
   const selectedDeveloper = React.useMemo(
     () =>
@@ -343,19 +338,16 @@ export function TicketForm() {
       );
     } else {
       createTicket(
-        [
-          {
-            projectId: values.projectId,
-            ticketNumber: values.ticketNumber.trim(),
-            ticketTitle: values.ticketTitle.trim(),
-            descriptionLink: values.descriptionLink.trim(),
-            developmentEstimation: values.developmentEstimation,
-            estimationTesting: values.estimationTesting,
-            ...(values.sprintId ? { sprintId: values.sprintId } : {}),
-            assignedDevId: values.assignedDevId ?? undefined,
-            assignedQaId: values.assignedQaId ?? undefined,
-          },
-        ],
+        {
+          projectId: values.projectId,
+          ticketTitle: values.ticketTitle.trim(),
+          descriptionLink: values.descriptionLink.trim(),
+          developmentEstimation: values.developmentEstimation,
+          estimationTesting: values.estimationTesting,
+          ...(values.sprintId ? { sprintId: values.sprintId } : {}),
+          assignedDevId: values.assignedDevId ?? undefined,
+          assignedQaId: values.assignedQaId ?? undefined,
+        },
         {
           onSuccess: () => dispatch(closeTicketForm()),
         },
@@ -371,16 +363,21 @@ export function TicketForm() {
     Boolean(editingTicket) && (isLoadingTicketDetail || isTicketDetailError);
   const hasRequiredVisibleFields =
     Boolean(selectedProjectId) &&
-    Boolean(ticketNumberValue?.trim()) &&
     Boolean(ticketTitleValue?.trim()) &&
     Boolean(descriptionLinkValue?.trim());
+  const hasTicketNumberForUpdate =
+    !editingTicket || Boolean(ticketNumberValue?.trim());
   const isSubmitDisabled =
     isCreating ||
     isUpdating ||
     isEditBlocked ||
     !hasRequiredVisibleFields ||
+    !hasTicketNumberForUpdate ||
     !isValid ||
     (Boolean(editingTicket) && !isDirty);
+  const ticketNumberDisplay = editingTicket
+    ? ticketNumberValue?.trim() || ""
+    : projectCodeForTicketNumber;
 
   return (
     <Card className="mx-auto flex h-full min-h-0 w-full max-w-4xl max-h-[calc(100dvh-0.75rem)] flex-col border border-border bg-card shadow-xl ring-1 ring-border/70 sm:max-h-[calc(100vh-2rem)]">
@@ -459,7 +456,10 @@ export function TicketForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select status" />
@@ -514,19 +514,27 @@ export function TicketForm() {
                 </p>
               ) : null}
 
-              <FormField
-                control={form.control}
-                name="ticketNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ticket Number</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. KPI-101" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormItem>
+                <FormLabel>Ticket Number</FormLabel>
+                <FormControl>
+                  <Input
+                    value={ticketNumberDisplay}
+                    readOnly
+                    placeholder={
+                      editingTicket
+                        ? "Loading ticket number..."
+                        : "Select a project to preview its code"
+                    }
+                    className="cursor-default bg-muted/40 text-muted-foreground"
+                  />
+                </FormControl>
+
+                <FormDescription>
+                  {editingTicket
+                    ? "Ticket number is assigned automatically and kept on update."
+                    : "The selected project's code is shown here. The full ticket number is generated automatically after saving."}
+                </FormDescription>
+              </FormItem>
 
               <FormField
                 control={form.control}
@@ -579,7 +587,9 @@ export function TicketForm() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="__none__">No sprint</SelectItem>
-                        {selectedSprintId && !selectedSprint && selectedSprintId !== "__none__" ? (
+                        {selectedSprintId &&
+                        !selectedSprint &&
+                        selectedSprintId !== "__none__" ? (
                           <SelectItem value={selectedSprintId}>
                             {orphanSprintLabel}
                           </SelectItem>
