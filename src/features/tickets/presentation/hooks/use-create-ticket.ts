@@ -10,7 +10,8 @@ export function useCreateTicket() {
 
   return useMutation({
     meta: { showErrorToast: false },
-    mutationFn: (data: CreateTicketDTO[]) => ticketService.createTicket.execute(data),
+    mutationFn: (data: CreateTicketDTO | CreateTicketDTO[]) =>
+      ticketService.createTicket.execute(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
       toast.success("Ticket created successfully");

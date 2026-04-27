@@ -32,7 +32,24 @@ export const getProjectColumns = ({
       </div>
     ),
   },
-  
+
+  {
+    accessorKey: "projectCode",
+    header: "Project Code",
+    meta: {
+      mobileLabel: "ProjCode",
+      mobileVisible: true,
+    },
+    cell: ({ row }) => (
+      <div className="flex min-w-0 items-center">
+        <div className="min-w-0 flex-1">
+          <span className="block truncate font-medium text-foreground">
+            {row.original.projectCode}
+          </span>
+        </div>
+      </div>
+    ),
+  },
   {
     accessorKey: "finishDate",
     header: "Target Finish Date",
@@ -55,8 +72,8 @@ export const getProjectColumns = ({
     },
     cell: ({ row }) => {
       const status = row.original.status;
-      const isActive = status === 'active';
-      const isInProgress = status === 'inProgress';
+      const isActive = status === "active";
+      const isInProgress = status === "inProgress";
       const getStatusStyles = () => {
         if (isActive) {
           return "border-emerald-300 bg-emerald-100 text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300";
@@ -99,7 +116,7 @@ export const getProjectColumns = ({
                 <ChevronDown
                   className={cn(
                     "h-4 w-4 text-muted-foreground transition-transform duration-200",
-                    row.getIsExpanded() && "rotate-180 text-foreground"
+                    row.getIsExpanded() && "rotate-180 text-foreground",
                   )}
                   aria-hidden="true"
                 />
@@ -117,10 +134,7 @@ export const getProjectColumns = ({
               )}
             >
               <span
-                className={cn(
-                  "h-2.5 w-2.5 rounded-full",
-                  getDotStyles()
-                )}
+                className={cn("h-2.5 w-2.5 rounded-full", getDotStyles())}
                 aria-hidden="true"
               />
               {getStatusLabel()}

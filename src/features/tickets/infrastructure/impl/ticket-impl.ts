@@ -16,7 +16,7 @@ export class TicketRepositoryImpl implements TicketRepository {
     return ticketApi.getTicketById(id);
   }
 
-  async createTicket(data: CreateTicketDTO[]) {
+  async createTicket(data: CreateTicketDTO | CreateTicketDTO[]) {
     return ticketApi.createTicket(data);
   }
 

@@ -30,7 +30,7 @@ export interface CreateTicketDTO {
   sprintId?: string;
   assignedDevId?: string | null;
   assignedQaId?: string | null;
-  ticketNumber: string;
+  ticketNumber?: string;
   ticketTitle: string;
   descriptionLink: string;
   estimationTesting?: number | null;
@@ -41,7 +41,8 @@ export interface UpdateTicketDTO extends Partial<CreateTicketDTO> {
   status?: TicketStatus;
 }
 
-export interface PutTicketDTO extends CreateTicketDTO {
+export interface PutTicketDTO extends Omit<CreateTicketDTO, "ticketNumber"> {
+  ticketNumber: string;
   status: TicketStatus;
 }
 

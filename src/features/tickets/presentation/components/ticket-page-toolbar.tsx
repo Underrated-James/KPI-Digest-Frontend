@@ -24,10 +24,17 @@ const statusOptions: Array<{ label: string; value: TicketStatus | "ALL" }> = [
 interface TicketPageToolbarProps {
   searchTerm: string;
   selectedStatus: TicketStatus | "ALL";
+  selectedProjectId: string | null;
+  projectOptions: Array<{
+    id: string;
+    name: string;
+    projectCode: string;
+  }>;
   selectedTicketCount: number;
   isMobile: boolean;
   onSearchTermChange: (value: string) => void;
   onStatusChange: (status: TicketStatus | "ALL") => void;
+  onProjectChange: (projectId: string | "ALL") => void;
   onAddTicket: () => void;
   onBulkDelete: () => void;
 }
@@ -35,10 +42,13 @@ interface TicketPageToolbarProps {
 export function TicketPageToolbar({
   searchTerm,
   selectedStatus,
+  selectedProjectId,
+  projectOptions,
   selectedTicketCount,
   isMobile,
   onSearchTermChange,
   onStatusChange,
+  onProjectChange,
   onAddTicket,
   onBulkDelete,
 }: TicketPageToolbarProps) {
@@ -46,7 +56,7 @@ export function TicketPageToolbar({
     <div className="rounded-2xl border border-border bg-card/80 p-4 shadow-sm backdrop-blur sm:p-5">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div className="grid gap-4 md:grid-cols-[minmax(0,1.6fr)_minmax(220px,0.8fr)] xl:flex-1">
+          <div className="grid gap-4 md:grid-cols-[minmax(0,1.5fr)_minmax(220px,0.8fr)_minmax(220px,0.9fr)] xl:flex-1">
             <div className="space-y-3">
               <label
                 htmlFor="ticket-search"
@@ -91,6 +101,36 @@ export function TicketPageToolbar({
                   {statusOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-3">
+              <label
+                htmlFor="ticket-project-filter"
+                className="mb-2 block text-sm font-medium text-foreground"
+              >
+                Filter By Project
+              </label>
+              <Select
+                value={selectedProjectId ?? "ALL"}
+                onValueChange={(value) => onProjectChange(value as string | "ALL")}
+              >
+                <SelectTrigger
+                  id="ticket-project-filter"
+                  className="h-11 w-full border-border bg-background text-foreground"
+                >
+                  <SelectValue placeholder="Filter by project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Projects</SelectItem>
+                  {projectOptions.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.projectCode
+                        ? `${project.projectCode} - ${project.name}`
+                        : project.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
