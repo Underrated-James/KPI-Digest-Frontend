@@ -13,6 +13,8 @@ export interface Ticket {
   descriptionLink: string;
   estimationTesting?: number | null;
   developmentEstimation?: number | null;
+  devTimeSpent?: number | null;
+  testingTimeSpent?: number | null;
   projectName?: string;
   projectStatus?: string;
   sprintName?: string;
@@ -35,6 +37,8 @@ export interface CreateTicketDTO {
   descriptionLink: string;
   estimationTesting?: number | null;
   developmentEstimation?: number | null;
+  devTimeSpent?: number | null;
+  testingTimeSpent?: number | null;
 }
 
 export interface UpdateTicketDTO extends Partial<CreateTicketDTO> {

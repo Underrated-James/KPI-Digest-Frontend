@@ -86,6 +86,15 @@ function ticketToFormValues(ticket: Ticket): TicketFormValues {
       ticket.estimationTesting !== null
         ? Number(ticket.estimationTesting)
         : null,
+    devTimeSpent:
+      ticket.devTimeSpent !== undefined && ticket.devTimeSpent !== null
+        ? Number(ticket.devTimeSpent)
+        : null,
+    testingTimeSpent:
+      ticket.testingTimeSpent !== undefined &&
+      ticket.testingTimeSpent !== null
+        ? Number(ticket.testingTimeSpent)
+        : null,
   };
 }
 
@@ -123,6 +132,8 @@ export function TicketForm() {
       assignedQaId: null,
       developmentEstimation: null,
       estimationTesting: null,
+      devTimeSpent: null,
+      testingTimeSpent: null,
     },
   });
   const { isDirty, isValid } = form.formState;
@@ -227,6 +238,8 @@ export function TicketForm() {
       assignedQaId: null,
       developmentEstimation: null,
       estimationTesting: null,
+      devTimeSpent: null,
+      testingTimeSpent: null,
     }),
     [],
   );
@@ -324,6 +337,8 @@ export function TicketForm() {
         status: values.status,
         developmentEstimation: values.developmentEstimation,
         estimationTesting: values.estimationTesting,
+        devTimeSpent: values.devTimeSpent,
+        testingTimeSpent: values.testingTimeSpent,
         ...(values.sprintId ? { sprintId: values.sprintId } : {}),
         ...(values.assignedDevId
           ? { assignedDevId: values.assignedDevId }
@@ -344,6 +359,8 @@ export function TicketForm() {
           descriptionLink: values.descriptionLink.trim(),
           developmentEstimation: values.developmentEstimation,
           estimationTesting: values.estimationTesting,
+          devTimeSpent: values.devTimeSpent,
+          testingTimeSpent: values.testingTimeSpent,
           ...(values.sprintId ? { sprintId: values.sprintId } : {}),
           assignedDevId: values.assignedDevId ?? undefined,
           assignedQaId: values.assignedQaId ?? undefined,
@@ -765,6 +782,66 @@ export function TicketForm() {
                     </FormControl>
                     <FormDescription>
                       Optional hours estimate for testing work.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="devTimeSpent"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Dev Time Spent</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.5"
+                        placeholder="e.g. 6"
+                        value={field.value ?? ""}
+                        onChange={(event) =>
+                          field.onChange(
+                            event.target.value === ""
+                              ? null
+                              : Number(event.target.value),
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Optional actual hours already spent by development.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="testingTimeSpent"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>QA Time Spent</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.5"
+                        placeholder="e.g. 2"
+                        value={field.value ?? ""}
+                        onChange={(event) =>
+                          field.onChange(
+                            event.target.value === ""
+                              ? null
+                              : Number(event.target.value),
+                          )
+                        }
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Optional actual hours already spent by QA/testing.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

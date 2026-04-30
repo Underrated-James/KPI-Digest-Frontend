@@ -21,6 +21,12 @@ export const ticketFormSchema = z.object({
     .min(0, "Must be at least 0")
     .optional()
     .nullable(),
+  devTimeSpent: z.number().min(0, "Must be at least 0").optional().nullable(),
+  testingTimeSpent: z
+    .number()
+    .min(0, "Must be at least 0")
+    .optional()
+    .nullable(),
 });
 
 export type TicketFormValues = z.infer<typeof ticketFormSchema>;

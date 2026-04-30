@@ -128,12 +128,14 @@ export function useSprintCapacityPlanning(sprintId: string) {
           role: "DEVS" | "QA";
           sprintCapacity: number;
           committed: number;
+          timeSpent: number;
           available: number;
           utilization: number;
           isZeroCapacity: boolean;
         }>,
         totalSprintCapacity: 0,
         totalCommitted: 0,
+        totalTimeSpent: 0,
         totalAvailable: 0,
         hasOverCapacity: false,
       };
@@ -144,6 +146,8 @@ export function useSprintCapacityPlanning(sprintId: string) {
       assignedQaId: ticket.assignedQaId,
       developmentEstimation: ticket.developmentEstimation,
       estimationTesting: ticket.estimationTesting,
+      devTimeSpent: ticket.devTimeSpent,
+      testingTimeSpent: ticket.testingTimeSpent,
     }));
 
     return computeMemberAllocationMetrics(sprint, members, ticketCommitInputs);
@@ -170,6 +174,8 @@ export function useSprintCapacityPlanning(sprintId: string) {
           assignedQaId: string | null;
           developmentEstimation: number;
           estimationTesting: number;
+          devTimeSpent: number;
+          testingTimeSpent: number;
         }>;
       } = {
         tickets: tickets.map((ticket) => ({
@@ -181,6 +187,8 @@ export function useSprintCapacityPlanning(sprintId: string) {
           assignedQaId: ticket.assignedQaId,
           developmentEstimation: Number(ticket.developmentEstimation || 0),
           estimationTesting: Number(ticket.estimationTesting || 0),
+          devTimeSpent: Number(ticket.devTimeSpent || 0),
+          testingTimeSpent: Number(ticket.testingTimeSpent || 0),
         })),
       };
 
@@ -200,6 +208,8 @@ export function useSprintCapacityPlanning(sprintId: string) {
           assignedQaId: null,
           developmentEstimation: 0,
           estimationTesting: 0,
+          devTimeSpent: 0,
+          testingTimeSpent: 0,
         });
       }
 
@@ -310,6 +320,8 @@ export function useSprintCapacityPlanning(sprintId: string) {
         assignedQaId: null,
         developmentEstimation: 0,
         estimationTesting: 0,
+        devTimeSpent: 0,
+        testingTimeSpent: 0,
       },
     ]);
   };
@@ -351,6 +363,7 @@ export function useSprintCapacityPlanning(sprintId: string) {
     isSaving: saveMutation.isPending,
     totalSprintCapacity: metrics.totalSprintCapacity,
     totalCommitted: metrics.totalCommitted,
+    totalTimeSpent: metrics.totalTimeSpent,
     totalAvailable: metrics.totalAvailable,
     hasOverCapacity: metrics.hasOverCapacity,
     isAddModalOpen,
@@ -380,6 +393,19 @@ export function useSprintCapacityPlanning(sprintId: string) {
       tickets.some((ticket) => ticket.ticketId === ticketId),
     updateTicket,
     removeTicket,
+    goBackToSprintOverview: () => {
+      const params = new URLSearchParams();
+      if (sprint?.projectId) {
+        params.set("projectId", sprint.projectId);
+      }
+      if (sprint?.projectName) {
+        params.set("projectName", sprint.projectName);
+      }
+      const target = params.toString()
+        ? `/sprints/${sprintId}?${params.toString()}`
+        : `/sprints/${sprintId}`;
+      router.push(target);
+    },
     goBackToSprintList: () => {
       const params = new URLSearchParams();
       if (sprint?.projectId) {
