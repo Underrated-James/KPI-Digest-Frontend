@@ -1,10 +1,12 @@
+import type { TicketStatus } from "@/features/tickets/domain/types/ticket-types";
+
 export type LoadedSprintTicket = {
   id: string;
   sprintId?: string | null;
   teamId?: string | null;
   ticketNumber: string;
   ticketTitle: string;
-  status?: string;
+  status?: TicketStatus | string;
   assignedDevId?: string | null;
   assignedQaId?: string | null;
   developmentEstimation?: number | null;
@@ -17,7 +19,7 @@ export type EditableSprintTicket = {
   ticketId: string;
   ticketNumber: string;
   title: string;
-  status: string;
+  status: TicketStatus;
   assignedDevId: string | null;
   assignedQaId: string | null;
   developmentEstimation: number;
@@ -25,6 +27,19 @@ export type EditableSprintTicket = {
   devTimeSpent: number;
   testingTimeSpent: number;
 };
+
+const VALID_TICKET_STATUSES: TicketStatus[] = [
+  "open",
+  "inProgress",
+  "done",
+  "cancelled",
+];
+
+function normalizeTicketStatus(status?: string): TicketStatus {
+  return VALID_TICKET_STATUSES.includes(status as TicketStatus)
+    ? (status as TicketStatus)
+    : "open";
+}
 
 type TicketListEnvelope = {
   content?: LoadedSprintTicket[];
@@ -44,7 +59,7 @@ export function mapLoadedTicketToEditable(
     ticketId: ticket.id,
     ticketNumber: ticket.ticketNumber,
     title: ticket.ticketTitle,
-    status: ticket.status ?? "open",
+    status: normalizeTicketStatus(ticket.status),
     assignedDevId: ticket.assignedDevId ?? null,
     assignedQaId: ticket.assignedQaId ?? null,
     developmentEstimation: Number(ticket.developmentEstimation ?? 0),

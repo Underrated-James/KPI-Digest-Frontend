@@ -169,6 +169,9 @@ export function useSprintCanvas(sprintId: string) {
     const params = new URLSearchParams();
     if (sprint?.projectId) params.set("projectId", sprint.projectId);
     if (sprint?.projectName) params.set("projectName", sprint.projectName);
+    if (path === "capacity-planning") {
+      params.set("backTo", "overview");
+    }
     if (path === "create-teams" && team?.id) {
       params.set("teamId", team.id);
     }
