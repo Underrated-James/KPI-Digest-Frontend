@@ -1,7 +1,12 @@
 "use client"
 
 import * as z from "zod"
-import { LeaveType, Team, CreateTeamDTO } from "../../../domain/types/team-types"
+import {
+  LeaveType,
+  Team,
+  CreateTeamDTO,
+  ListOfUsers,
+} from "../../../domain/types/team-types"
 
 const leaveDaySchema = z.object({
   leaveType: z.array(z.nativeEnum(LeaveType)),
@@ -24,8 +29,17 @@ export const teamFormSchema = z.object({
 
 export type TeamFormValues = z.infer<typeof teamFormSchema>
 
+type TeamFormMemberInput = Partial<ListOfUsers> & {
+  id?: string
+}
+
+type TeamFormInitialData = Partial<Omit<Team, "users">> & {
+  users?: TeamFormMemberInput[]
+  userIds?: TeamFormMemberInput[]
+}
+
 export function createTeamFormDefaultValues(
-  initialData?: Team | any
+  initialData?: TeamFormInitialData
 ): TeamFormValues {
   // The backend might return 'users' or 'userIds' depending on the endpoint or normalization
   const members = initialData?.users || initialData?.userIds || [];
@@ -34,8 +48,8 @@ export function createTeamFormDefaultValues(
     projectId: initialData?.projectId ?? "",
     sprintId: initialData?.sprintId ?? "",
     userIds: Array.isArray(members) 
-      ? members.map((user: any) => ({
-          userId: user.userId || user.id || "",
+      ? members.map((user) => ({
+          userId: user.userId ?? user.id ?? "",
           allocationPercentage: user.allocationPercentage ?? 100,
           hoursPerDay: user.hoursPerDay ?? 8,
           role: user.role ?? "DEVS",

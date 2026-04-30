@@ -1,30 +1,54 @@
-import api from "./axios-instance";
+import { getApiClient, API_ENDPOINTS } from "@/core/api";
 import {
   BackendResponse,
   CreateTeamDTO,
+  ListOfUsers,
   PaginatedData,
   UpdateTeamDTO,
   Team,
   TeamQueryParams,
 } from "../../domain/types/team-types";
 
-type TeamApiRecord = Team & {
-  _id?: string;
+type TeamApiUser = Partial<ListOfUsers> & {
+  id?: string;
+  userId?: string;
 };
 
-function normalizeTeam(team: any): Team {
-  const users = Array.isArray(team.users) ? team.users : (Array.isArray(team.userIds) ? team.userIds : []);
+type TeamApiRecord = Omit<Team, "id" | "users"> & {
+  id?: string;
+  _id?: string;
+  users?: TeamApiUser[];
+  userIds?: TeamApiUser[];
+};
+
+function normalizeTeamUser(user: TeamApiUser): ListOfUsers {
   return {
-    ...team,
-    id: team.id ?? team._id ?? "",
-    users: users.map((u: any) => ({
-      ...u,
-      userId: u.userId || u.id || ""
-    })),
+    userId: user.userId ?? user.id ?? "",
+    name: user.name,
+    allocationPercentage: user.allocationPercentage ?? 100,
+    hoursPerDay: user.hoursPerDay ?? 0,
+    role: user.role ?? "DEVS",
+    leave: user.leave ?? [],
   };
 }
 
-function normalizeTeamPage(page: PaginatedData<TeamApiRecord>): PaginatedData<Team> {
+function normalizeTeam(team: TeamApiRecord): Team {
+  const users = Array.isArray(team.users)
+    ? team.users
+    : Array.isArray(team.userIds)
+      ? team.userIds
+      : [];
+
+  return {
+    ...team,
+    id: team.id ?? team._id ?? "",
+    users: users.map(normalizeTeamUser),
+  };
+}
+
+function normalizeTeamPage(
+  page: PaginatedData<TeamApiRecord>,
+): PaginatedData<Team> {
   return {
     ...page,
     content: page.content.map(normalizeTeam),
@@ -33,36 +57,46 @@ function normalizeTeamPage(page: PaginatedData<TeamApiRecord>): PaginatedData<Te
 
 export const teamApi = {
   async getTeams(params?: TeamQueryParams): Promise<PaginatedData<Team>> {
+    const api = getApiClient();
     const { data } = await api.get<BackendResponse<PaginatedData<Team>>>(
-      "/teams",
-      { params }
+      API_ENDPOINTS.TEAMS.LIST,
+      { params },
     );
 
     return normalizeTeamPage(data.data as PaginatedData<TeamApiRecord>);
   },
 
   async getTeamById(id: string): Promise<Team> {
-    const { data } = await api.get<BackendResponse<TeamApiRecord>>(`/teams/${id}`);
+    const api = getApiClient();
+    const { data } = await api.get<BackendResponse<TeamApiRecord>>(
+      API_ENDPOINTS.TEAMS.GET(id),
+    );
 
     return normalizeTeam(data.data);
   },
 
   async createTeam(teamData: CreateTeamDTO): Promise<Team> {
-    const { data } = await api.post<BackendResponse<TeamApiRecord>>("/teams", teamData);
+    const api = getApiClient();
+    const { data } = await api.post<BackendResponse<TeamApiRecord>>(
+      API_ENDPOINTS.TEAMS.CREATE,
+      teamData,
+    );
 
     return normalizeTeam(data.data);
   },
 
   async updateTeam(id: string, teamData: UpdateTeamDTO): Promise<Team> {
+    const api = getApiClient();
     const { data } = await api.patch<BackendResponse<TeamApiRecord>>(
-      `/teams/${id}`,
-      teamData
+      API_ENDPOINTS.TEAMS.UPDATE(id),
+      teamData,
     );
 
     return normalizeTeam(data.data);
   },
 
   async deleteTeam(id: string): Promise<void> {
-    await api.delete(`/teams/${id}`);
+    const api = getApiClient();
+    await api.delete(API_ENDPOINTS.TEAMS.DELETE(id));
   },
 };

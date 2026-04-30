@@ -1,35 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import api from "@/features/tickets/infrastructure/api/axios-instance";
+import { getApi } from "@/features/tickets/infrastructure/api/axios-instance";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useSprintById } from "./use-sprint-by-id";
+import { useSprintAttachedTickets } from "./use-sprint-attached-tickets";
 import { useTeams } from "@/features/teams/presentation/hooks/use-teams";
-import { LeaveType } from "@/features/teams/domain/types/team-types";
 import { ticketKeys } from "@/features/tickets/presentation/queries/ticket-keys";
 import { isSprintViewOnly } from "../utils/sprint-control-utils";
+import {
+  computeMemberAllocationMetrics,
+  type AllocationMember,
+  type TicketCommitInput,
+} from "../utils/sprint-member-allocation-metrics";
+import type { EditableSprintTicket } from "../utils/sprint-ticket-planning";
 
-type TeamMember = {
-  userId: string;
-  name: string;
-  role: "DEVS" | "QA";
-  hoursPerDay: number;
-  leave?: Array<{ leaveDate: string; leaveType: LeaveType[] }>;
-};
-
-export type EditableTicket = {
-  ticketId: string;
-  ticketNumber: string;
-  title: string;
-  status: string;
-  assignedDevId: string | null;
-  assignedQaId: string | null;
-  developmentEstimation: number;
-  estimationTesting: number;
-};
+const api = getApi();
 
 type TicketSearchItem = {
   id: string;
@@ -51,61 +40,14 @@ type AvailableSprintTicketsResponse = {
   available?: unknown[];
 };
 
-type LoadedTicket = {
-  id: string;
-  sprintId?: string | null;
-  teamId?: string | null;
-  ticketNumber: string;
-  ticketTitle: string;
-  status?: string;
-  assignedDevId?: string | null;
-  assignedQaId?: string | null;
-  developmentEstimation?: number | null;
-  estimationTesting?: number | null;
-};
-
-function mapLoadedTicketToEditable(ticket: LoadedTicket): EditableTicket {
-  return {
-    ticketId: ticket.id,
-    ticketNumber: ticket.ticketNumber,
-    title: ticket.ticketTitle,
-    status: ticket.status ?? "open",
-    assignedDevId: ticket.assignedDevId ?? null,
-    assignedQaId: ticket.assignedQaId ?? null,
-    developmentEstimation: Number(ticket.developmentEstimation ?? 0),
-    estimationTesting: Number(ticket.estimationTesting ?? 0),
-  };
-}
-
-function normalizeDate(date: string) {
-  return date.split("T")[0];
-}
-
-function getWorkDays(start: string, end: string) {
-  const result: string[] = [];
-  const current = new Date(`${normalizeDate(start)}T00:00:00`);
-  const last = new Date(`${normalizeDate(end)}T00:00:00`);
-  while (current <= last) {
-    const day = current.getDay();
-    if (day !== 0 && day !== 6) {
-      result.push(current.toISOString().slice(0, 10));
-    }
-    current.setDate(current.getDate() + 1);
-  }
-  return result;
-}
-
-function getLeaveWeight(leaveTypes: LeaveType[] = []) {
-  if (leaveTypes.includes(LeaveType.HALF_DAY_LEAVE)) return 0.5;
-  return leaveTypes.length > 0 ? 1 : 0;
-}
-
 export function useSprintCapacityPlanning(sprintId: string) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [addedTickets, setAddedTickets] = useState<EditableTicket[]>([]);
+  const [addedTickets, setAddedTickets] = useState<EditableSprintTicket[]>([]);
   const [removedTicketIds, setRemovedTicketIds] = useState<string[]>([]);
-  const [ticketPatches, setTicketPatches] = useState<Record<string, Partial<EditableTicket>>>({});
+  const [ticketPatches, setTicketPatches] = useState<
+    Record<string, Partial<EditableSprintTicket>>
+  >({});
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [ticketSearch, setTicketSearch] = useState("");
   const [ticketSearchPage, setTicketSearchPage] = useState(1);
@@ -114,97 +56,48 @@ export function useSprintCapacityPlanning(sprintId: string) {
   const sprintQuery = useSprintById(sprintId);
   const sprint = sprintQuery.data;
 
+  // Invalidate and refetch ticket cache when sprint capacity page mounts
+  // This ensures fresh data is always shown when users enter the sprint capacity planning page
+  useEffect(() => {
+    // Clear the ticket cache to force a fresh fetch
+    queryClient.invalidateQueries({ queryKey: ticketKeys.all });
+    queryClient.invalidateQueries({
+      queryKey: ["sprint-available-ticket-search"],
+    });
+  }, [sprintId, queryClient]);
+
   const teamsQuery = useTeams({ sprintId, size: 50 }, Boolean(sprintId));
   const team = teamsQuery.data?.content?.[0] ?? null;
 
-  const members = useMemo<TeamMember[]>(() => {
+  const members = useMemo<AllocationMember[]>(() => {
     if (!team) return [];
+
     return (team.users ?? []).map((user) => ({
       userId: user.userId,
       name: user.name ?? "Unknown",
-      role: user.role,
+      role: user.role === "QA" ? "QA" : "DEVS",
       hoursPerDay: Number(user.hoursPerDay ?? 0),
       leave: user.leave ?? [],
     }));
   }, [team]);
 
-  const attachedTicketsQuery = useQuery({
-    queryKey: [
-      "attached-sprint-tickets",
-      sprintId,
-      sprint?.projectId ?? null,
-      team?.id ?? null,
-    ],
-    enabled: Boolean(sprintId && sprint?.projectId),
-    queryFn: async (): Promise<EditableTicket[]> => {
-      if (!sprint?.projectId) {
-        return [];
-      }
-
-      const all: EditableTicket[] = [];
-      let page = 1;
-      let totalPages = 1;
-
-      while (page <= totalPages) {
-        const response = await api.get("/tickets", {
-          params: {
-            page,
-            size: 100,
-            projectId: sprint.projectId,
-          },
-        });
-
-        const envelope = response.data as TicketListEnvelope;
-        const nestedData = envelope.data;
-        const content = (Array.isArray(envelope.content)
-          ? envelope.content
-          : Array.isArray(nestedData?.content)
-            ? nestedData.content
-            : []) as LoadedTicket[];
-
-        const attachedTickets = content.filter(
-          (ticket) =>
-            ticket.sprintId === sprintId ||
-            (team?.id ? ticket.teamId === team.id : false),
-        );
-
-        all.push(...attachedTickets.map(mapLoadedTicketToEditable));
-
-        const currentPage = Number(envelope.page ?? nestedData?.page ?? page);
-        const pageCount = Number(envelope.totalPages ?? nestedData?.totalPages ?? currentPage);
-        totalPages = Number.isFinite(pageCount) && pageCount > 0 ? pageCount : page;
-        page += 1;
-      }
-
-      return all;
-    },
+  const attachedTicketsQuery = useSprintAttachedTickets({
+    sprintId,
+    projectId: sprint?.projectId,
+    teamId: team?.id ?? null,
   });
-
-  useEffect(() => {
-    if (!sprintId) {
-      return;
-    }
-
-    void sprintQuery.refetch();
-    void teamsQuery.refetch();
-  }, [sprintId, sprintQuery, teamsQuery]);
-
-  useEffect(() => {
-    if (!sprint?.projectId) {
-      return;
-    }
-
-    void attachedTicketsQuery.refetch();
-  }, [attachedTicketsQuery, sprint?.projectId, team?.id]);
 
   const tickets = useMemo(() => {
     const removedSet = new Set(removedTicketIds);
-    const attached = (attachedTicketsQuery.data ?? []).filter((ticket) => !removedSet.has(ticket.ticketId));
-    const mergedById = new Map<string, EditableTicket>();
+    const attached = (attachedTicketsQuery.data ?? []).filter(
+      (ticket) => !removedSet.has(ticket.ticketId),
+    );
+    const mergedById = new Map<string, EditableSprintTicket>();
 
     for (const ticket of attached) {
       mergedById.set(ticket.ticketId, ticket);
     }
+
     for (const ticket of addedTickets) {
       if (!removedSet.has(ticket.ticketId)) {
         mergedById.set(ticket.ticketId, ticket);
@@ -215,10 +108,15 @@ export function useSprintCapacityPlanning(sprintId: string) {
       ...ticket,
       ...(ticketPatches[ticket.ticketId] ?? {}),
     }));
-  }, [addedTickets, attachedTicketsQuery.data, removedTicketIds, ticketPatches]);
+  }, [
+    addedTickets,
+    attachedTicketsQuery.data,
+    removedTicketIds,
+    ticketPatches,
+  ]);
 
   const memberLookup = useMemo(() => {
-    return new Map(members.map((member) => [member.userId, member]));
+    return new Map(members.map((member) => [member.userId, member] as const));
   }, [members]);
 
   const metrics = useMemo(() => {
@@ -241,71 +139,14 @@ export function useSprintCapacityPlanning(sprintId: string) {
       };
     }
 
-    const workDays = getWorkDays(sprint.startDate, sprint.endDate);
-    const holidaySet = new Set((sprint.dayOff ?? []).map((d) => normalizeDate(d.date)));
-    const committedMap = new Map<string, number>();
+    const ticketCommitInputs: TicketCommitInput[] = tickets.map((ticket) => ({
+      assignedDevId: ticket.assignedDevId,
+      assignedQaId: ticket.assignedQaId,
+      developmentEstimation: ticket.developmentEstimation,
+      estimationTesting: ticket.estimationTesting,
+    }));
 
-    for (const ticket of tickets) {
-      if (ticket.assignedDevId) {
-        committedMap.set(
-          ticket.assignedDevId,
-          (committedMap.get(ticket.assignedDevId) ?? 0) + Number(ticket.developmentEstimation || 0),
-        );
-      }
-      if (ticket.assignedQaId) {
-        committedMap.set(
-          ticket.assignedQaId,
-          (committedMap.get(ticket.assignedQaId) ?? 0) + Number(ticket.estimationTesting || 0),
-        );
-      }
-    }
-
-    const byMember = members.map((member) => {
-      let workingDays = 0;
-      let leaveDeduction = 0;
-
-      const leaveByDate = new Map(
-        (member.leave ?? []).map((leave) => [normalizeDate(leave.leaveDate), leave.leaveType]),
-      );
-
-      for (const day of workDays) {
-        if (holidaySet.has(day)) continue;
-        workingDays += 1;
-        const leaveTypes = leaveByDate.get(day);
-        leaveDeduction += getLeaveWeight(leaveTypes);
-      }
-
-      const actualWorkingDays = Math.max(workingDays - leaveDeduction, 0);
-      const sprintCapacity = Number((member.hoursPerDay * actualWorkingDays).toFixed(2));
-      const committed = Number((committedMap.get(member.userId) ?? 0).toFixed(2));
-      const available = Number((sprintCapacity - committed).toFixed(2));
-      const utilization =
-        sprintCapacity <= 0 ? (committed > 0 ? 100 : 0) : Number(((committed / sprintCapacity) * 100).toFixed(2));
-
-      return {
-        userId: member.userId,
-        name: member.name,
-        role: member.role,
-        sprintCapacity,
-        committed,
-        available,
-        utilization,
-        isZeroCapacity: sprintCapacity === 0,
-      };
-    });
-
-    const totalSprintCapacity = Number(byMember.reduce((sum, m) => sum + m.sprintCapacity, 0).toFixed(2));
-    const totalCommitted = Number(byMember.reduce((sum, m) => sum + m.committed, 0).toFixed(2));
-    const totalAvailable = Number((totalSprintCapacity - totalCommitted).toFixed(2));
-    const hasOverCapacity = byMember.some((m) => m.available < 0);
-
-    return {
-      byMember,
-      totalSprintCapacity,
-      totalCommitted,
-      totalAvailable,
-      hasOverCapacity,
-    };
+    return computeMemberAllocationMetrics(sprint, members, ticketCommitInputs);
   }, [members, sprint, tickets]);
 
   const devMembers = useMemo(
@@ -346,7 +187,9 @@ export function useSprintCapacityPlanning(sprintId: string) {
       const originallyAttachedIds = new Set(
         (attachedTicketsQuery.data ?? []).map((ticket) => ticket.ticketId),
       );
-      const removedAttached = removedTicketIds.filter((id) => originallyAttachedIds.has(id));
+      const removedAttached = removedTicketIds.filter((id) =>
+        originallyAttachedIds.has(id),
+      );
 
       for (const ticketId of removedAttached) {
         payload.tickets.push({
@@ -366,10 +209,12 @@ export function useSprintCapacityPlanning(sprintId: string) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ticketKeys.all }),
         queryClient.invalidateQueries({
-          queryKey: ["attached-sprint-tickets", sprintId],
+          queryKey: ["sprint-available-ticket-search"],
         }),
+        attachedTicketsQuery.refetch(),
       ]);
       toast.success("Sprint capacity plan saved.");
+
       const params = new URLSearchParams();
       if (sprint?.projectId) {
         params.set("projectId", sprint.projectId);
@@ -377,7 +222,10 @@ export function useSprintCapacityPlanning(sprintId: string) {
       if (sprint?.projectName) {
         params.set("projectName", sprint.projectName);
       }
-      const target = params.toString() ? `/sprints?${params.toString()}` : "/sprints";
+
+      const target = params.toString()
+        ? `/sprints?${params.toString()}`
+        : "/sprints";
       router.push(target);
     },
     onError: (error: Error) => {
@@ -385,14 +233,16 @@ export function useSprintCapacityPlanning(sprintId: string) {
     },
   });
 
+  const availableTicketsQueryKey = [
+    "sprint-available-ticket-search",
+    sprintId,
+    sprint?.projectId ?? null,
+    debouncedTicketSearch,
+    ticketSearchPage,
+  ] as const;
+
   const ticketSearchQuery = useQuery({
-    queryKey: [
-      "sprint-available-ticket-search",
-      sprintId,
-      sprint?.projectId ?? null,
-      debouncedTicketSearch,
-      ticketSearchPage,
-    ],
+    queryKey: availableTicketsQueryKey,
     enabled: isAddModalOpen && Boolean(sprintId && sprint?.projectId),
     queryFn: async (): Promise<TicketSearchResponse> => {
       const pageSize = 10;
@@ -404,17 +254,15 @@ export function useSprintCapacityPlanning(sprintId: string) {
           ? data.available
           : [];
 
-      const allItems = availableSource
-        .map((item) => {
-          const row = item as Record<string, unknown>;
-          return {
-            id: String(row.id ?? row._id ?? ""),
-            ticketNumber: String(row.ticketNumber ?? row.key ?? "N/A"),
-            ticketTitle: String(row.ticketTitle ?? row.title ?? "Untitled"),
-            status: typeof row.status === "string" ? row.status : undefined,
-          };
-        })
-        .filter((item) => Boolean(item.id));
+      const allItems = availableSource.map((item) => {
+        const row = item as Record<string, unknown>;
+        return {
+          id: String(row.id ?? row._id ?? ""),
+          ticketNumber: String(row.ticketNumber ?? row.key ?? "N/A"),
+          ticketTitle: String(row.ticketTitle ?? row.title ?? "Untitled"),
+          status: typeof row.status === "string" ? row.status : undefined,
+        };
+      });
 
       const normalizedSearch = debouncedTicketSearch.toLowerCase();
       const filteredItems = normalizedSearch
@@ -425,7 +273,10 @@ export function useSprintCapacityPlanning(sprintId: string) {
           )
         : allItems;
 
-      const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+      const totalPages = Math.max(
+        1,
+        Math.ceil(filteredItems.length / pageSize),
+      );
       const safePage = Math.min(ticketSearchPage, totalPages);
       const start = (safePage - 1) * pageSize;
       const items = filteredItems.slice(start, start + pageSize);
@@ -440,11 +291,13 @@ export function useSprintCapacityPlanning(sprintId: string) {
 
   const addTicket = (ticket: TicketSearchItem) => {
     if (!ticket.id) return;
+
     const duplicate = tickets.some((row) => row.ticketId === ticket.id);
     if (duplicate) {
       toast.error("Ticket already exists in this planner.");
       return;
     }
+
     setRemovedTicketIds((prev) => prev.filter((id) => id !== ticket.id));
     setAddedTickets((prev) => [
       ...prev,
@@ -461,7 +314,10 @@ export function useSprintCapacityPlanning(sprintId: string) {
     ]);
   };
 
-  const updateTicket = (ticketId: string, patch: Partial<EditableTicket>) => {
+  const updateTicket = (
+    ticketId: string,
+    patch: Partial<EditableSprintTicket>,
+  ) => {
     setTicketPatches((prev) => ({
       ...prev,
       [ticketId]: { ...(prev[ticketId] ?? {}), ...patch },
@@ -469,8 +325,12 @@ export function useSprintCapacityPlanning(sprintId: string) {
   };
 
   const removeTicket = (ticketId: string) => {
-    setAddedTickets((prev) => prev.filter((ticket) => ticket.ticketId !== ticketId));
-    setRemovedTicketIds((prev) => (prev.includes(ticketId) ? prev : [...prev, ticketId]));
+    setAddedTickets((prev) =>
+      prev.filter((ticket) => ticket.ticketId !== ticketId),
+    );
+    setRemovedTicketIds((prev) =>
+      prev.includes(ticketId) ? prev : [...prev, ticketId],
+    );
   };
 
   const viewOnly = Boolean(sprint && isSprintViewOnly(sprint));
@@ -484,7 +344,10 @@ export function useSprintCapacityPlanning(sprintId: string) {
     qaMembers,
     tickets,
     memberLookup,
-    isLoading: sprintQuery.isLoading || teamsQuery.isLoading || attachedTicketsQuery.isLoading,
+    isLoading:
+      sprintQuery.isLoading ||
+      teamsQuery.isLoading ||
+      attachedTicketsQuery.isLoading,
     isSaving: saveMutation.isPending,
     totalSprintCapacity: metrics.totalSprintCapacity,
     totalCommitted: metrics.totalCommitted,
@@ -500,12 +363,14 @@ export function useSprintCapacityPlanning(sprintId: string) {
     ticketSearchResults: ticketSearchQuery.data?.items ?? [],
     ticketSearchPage,
     hasMoreSearchResults:
-      (ticketSearchQuery.data?.page ?? 1) < (ticketSearchQuery.data?.totalPages ?? 1),
+      (ticketSearchQuery.data?.page ?? 1) <
+      (ticketSearchQuery.data?.totalPages ?? 1),
     loadMoreSearchResults: () => {
       if (ticketSearchQuery.isFetching) return;
       setTicketSearchPage((prev) => prev + 1);
     },
-    ticketSearchLoading: ticketSearchQuery.isLoading || ticketSearchQuery.isFetching,
+    ticketSearchLoading:
+      ticketSearchQuery.isLoading || ticketSearchQuery.isFetching,
     ticketSearchError:
       ticketSearchQuery.isError && ticketSearchQuery.error instanceof Error
         ? ticketSearchQuery.error.message
@@ -523,7 +388,9 @@ export function useSprintCapacityPlanning(sprintId: string) {
       if (sprint?.projectName) {
         params.set("projectName", sprint.projectName);
       }
-      const target = params.toString() ? `/sprints?${params.toString()}` : "/sprints";
+      const target = params.toString()
+        ? `/sprints?${params.toString()}`
+        : "/sprints";
       router.push(target);
     },
     save: () => saveMutation.mutate(),

@@ -61,8 +61,7 @@ export function SprintPage() {
     handleOpenProject,
     handleBackToProjects,
     teamSprintMap,
-    ticketCountBySprintId,
-    ticketCountsLoading,
+    pendingStartSprintId,
   } = useSprintPage();
 
   const projectTitle = selectedProjectName || selectedProjectId || "Selected Project";
@@ -212,8 +211,7 @@ export function SprintPage() {
                 onSelectionChange={handleSelectionChange}
                 hidePagination={false}
                 teamSprintMap={teamSprintMap}
-                ticketCountBySprintId={ticketCountBySprintId}
-                ticketCountsLoading={ticketCountsLoading}
+                pendingStartSprintId={pendingStartSprintId}
               />
             </motion.div>
           )}

@@ -112,7 +112,8 @@ export function createSprintFormDefaultValues(
 export function toCreateSprintPayload(
   data: SprintFormValues,
 ): CreateSprintDTO {
-  const { durationPreset: _durationPreset, ...payload } = data
+  const { durationPreset, ...payload } = data
+  void durationPreset
 
   if (!(data.startDate instanceof Date) || !(data.endDate instanceof Date)) {
     throw new Error("Sprint start and end dates are required before submission.")

@@ -587,35 +587,12 @@ const getStatusPillStyles = (
 };
 
 // Theme-aware card styles
-const getCardStyles = (theme: "light" | "dark") => {
-  if (theme === "light") {
-    return {
-      container:
-        "bg-white border border-gray-200 shadow-sm dark:bg-zinc-900 dark:border-white/15",
-      header: "bg-gray-50 border-gray-200",
-      text: "text-gray-900",
-      mutedText: "text-gray-600",
-      background: "bg-gray-100",
-      border: "border-gray-300",
-    };
-  }
-  return {
-    container:
-      "bg-card dark:bg-zinc-900 border border-border/70 dark:border-white/15",
-    header: "bg-card dark:bg-zinc-900",
-    text: "text-foreground dark:text-zinc-100",
-    mutedText: "text-muted-foreground dark:text-zinc-400",
-    background: "bg-background dark:bg-zinc-950",
-    border: "border-border/50 dark:border-white/10",
-  };
-};
 
 export default function Home() {
   const [selectedProject, setSelectedProject] = useState<string>("");
   const { resolvedTheme } = useTheme();
 
   const statusPillStyles = getStatusPillStyles(resolvedTheme);
-  const cardStyles = getCardStyles(resolvedTheme);
 
   const selectedDashboard = useMemo(
     () => (selectedProject ? projectDashboardMap[selectedProject] : undefined),

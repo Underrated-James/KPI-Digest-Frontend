@@ -10,7 +10,6 @@ interface SprintTeamsTimelineHeaderProps {
 
 export function SprintTeamsTimelineHeader({
   days,
-  dayOffs,
   colWidth,
 }: SprintTeamsTimelineHeaderProps) {
   const today = formatDate(new Date());
@@ -51,7 +50,6 @@ export function SprintTeamsTimelineHeader({
         {days.map((d) => {
           const dateStr = formatDate(d);
           const weekend = isWeekend(d);
-          const isDayOff = dayOffs.includes(dateStr);
           const isToday = dateStr === today;
           const dayNum = d.getDate();
           const dayName = d.toLocaleDateString("en-US", { weekday: "narrow" });

@@ -1,4 +1,4 @@
-import api from "./axios-instance";
+import { getApiClient, API_ENDPOINTS } from "@/core/api";
 import {
   BackendResponse,
   CreateSprintDTO,
@@ -10,36 +10,46 @@ import {
 
 export const sprintApi = {
   async getSprints(params?: SprintQueryParams): Promise<PaginatedData<Sprint>> {
+    const api = getApiClient();
     const { data } = await api.get<BackendResponse<PaginatedData<Sprint>>>(
-      "/sprints",
-      { params }
+      API_ENDPOINTS.SPRINTS.LIST,
+      { params },
     );
 
     return data.data;
   },
 
   async getSprintById(id: string): Promise<Sprint> {
-    const { data } = await api.get<BackendResponse<Sprint>>(`/sprints/${id}`);
+    const api = getApiClient();
+    const { data } = await api.get<BackendResponse<Sprint>>(
+      API_ENDPOINTS.SPRINTS.GET(id),
+    );
 
     return data.data;
   },
 
   async createSprint(sprintData: CreateSprintDTO): Promise<Sprint> {
-    const { data } = await api.post<BackendResponse<Sprint>>("/sprints", sprintData);
+    const api = getApiClient();
+    const { data } = await api.post<BackendResponse<Sprint>>(
+      API_ENDPOINTS.SPRINTS.CREATE,
+      sprintData,
+    );
 
     return data.data;
   },
 
   async updateSprint(id: string, sprintData: UpdateSprintDTO): Promise<Sprint> {
+    const api = getApiClient();
     const { data } = await api.patch<BackendResponse<Sprint>>(
-      `/sprints/${id}`,
-      sprintData
+      API_ENDPOINTS.SPRINTS.UPDATE(id),
+      sprintData,
     );
 
     return data.data;
   },
 
   async deleteSprint(id: string): Promise<void> {
-    await api.delete(`/sprints/${id}`);
+    const api = getApiClient();
+    await api.delete(API_ENDPOINTS.SPRINTS.DELETE(id));
   },
 };

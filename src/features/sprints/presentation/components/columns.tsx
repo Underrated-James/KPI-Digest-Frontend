@@ -41,7 +41,6 @@ import {
   canStartSprint,
   getSprintDisplayStatus,
   getSprintStatusLabel,
-  isSprintStartReady,
   isSprintViewOnly,
 } from "../utils/sprint-control-utils";
 
@@ -64,8 +63,7 @@ interface ColumnsProps {
   onCompleteSprint: (sprint: Sprint) => void;
   controlsPending?: boolean;
   teamSprintMap?: Map<string, string>;
-  ticketCountBySprintId?: Map<string, number>;
-  ticketCountsLoading?: boolean;
+  pendingStartSprintId?: string | null;
 }
 
 export const getSprintColumns = ({
@@ -78,8 +76,7 @@ export const getSprintColumns = ({
   onCompleteSprint,
   controlsPending = false,
   teamSprintMap,
-  ticketCountBySprintId,
-  ticketCountsLoading = false,
+  pendingStartSprintId,
 }: ColumnsProps): ColumnDef<Sprint>[] => [
   {
     accessorKey: "name",
@@ -95,6 +92,7 @@ export const getSprintColumns = ({
           <div className="min-w-0 flex-1">
             <Link
               href={buildSprintCanvasHref(sprint)}
+              prefetch={false}
               className="block truncate font-medium text-primary underline-offset-4 hover:underline"
               onClick={(e) => e.stopPropagation()}
             >
@@ -192,11 +190,11 @@ export const getSprintColumns = ({
                   ? "text-emerald-950 dark:text-emerald-300"
                   : display === "inactive"
                     ? "text-rose-950 dark:text-rose-300"
-                  : display === "paused"
-                    ? "text-violet-950 dark:text-violet-300"
-                : display === "completed"
-                      ? "text-blue-950 dark:text-blue-300"
-                      : "text-amber-900 dark:text-amber-300",
+                    : display === "paused"
+                      ? "text-violet-950 dark:text-violet-300"
+                      : display === "completed"
+                        ? "text-blue-950 dark:text-blue-300"
+                        : "text-amber-900 dark:text-amber-300",
               )}
             >
               <span className={cn("h-2.5 w-2.5 rounded-full", getDotStyles())} />
@@ -220,13 +218,9 @@ export const getSprintColumns = ({
       const pauseOk = canPauseSprint(sprint);
       const completeOk = canCompleteSprint(sprint);
       const hasTeam = teamSprintMap?.has(sprint.id) ?? false;
-      const ticketCount = ticketCountBySprintId?.get(sprint.id) ?? 0;
-      const startReady = isSprintStartReady(hasTeam, ticketCount);
+      const startPending = pendingStartSprintId === sprint.id;
       const startDisabled =
-        controlsPending ||
-        ticketCountsLoading ||
-        !startOk ||
-        !startReady;
+        controlsPending || startPending || !startOk || !hasTeam;
 
       return (
         <div className="md:min-w-[9.5rem]">
@@ -252,15 +246,14 @@ export const getSprintColumns = ({
               className="w-48"
               onClick={(e) => e.stopPropagation()}
             >
-              {startOk && !startReady && !ticketCountsLoading ? (
+              {startOk && !hasTeam ? (
                 <p className="px-2 py-1.5 text-[11px] leading-snug text-muted-foreground">
-                  Start needs a team and at least one ticket assigned to this
-                  sprint.
+                  Start needs a team assigned to this sprint first.
                 </p>
               ) : null}
-              {ticketCountsLoading ? (
+              {startPending ? (
                 <p className="px-2 py-1.5 text-[11px] text-muted-foreground">
-                  Loading ticket counts…
+                  Checking sprint tickets...
                 </p>
               ) : null}
               <DropdownMenuItem
@@ -309,8 +302,10 @@ export const getSprintColumns = ({
       mobileLabel: "Dates",
     },
     cell: ({ row }) => {
-      const { startDate, endDate, officialStartDate, officialEndDate } = row.original;
-      const formatDate = (date: string | null | undefined) => date ? format(new Date(date), "MMM dd, yyyy") : "N/A";
+      const { startDate, endDate, officialStartDate, officialEndDate } =
+        row.original;
+      const formatDate = (date: string | null | undefined) =>
+        date ? format(new Date(date), "MMM dd, yyyy") : "N/A";
 
       return (
         <div className="flex flex-col gap-1 text-xs">
@@ -318,14 +313,24 @@ export const getSprintColumns = ({
             <span className="w-16 text-muted-foreground">Start:</span>
             <span className="font-medium">{formatDate(startDate)}</span>
             {officialStartDate && (
-              <Badge variant="secondary" className="h-4 px-1 text-[10px] leading-none">Official: {formatDate(officialStartDate)}</Badge>
+              <Badge
+                variant="secondary"
+                className="h-4 px-1 text-[10px] leading-none"
+              >
+                Official: {formatDate(officialStartDate)}
+              </Badge>
             )}
           </div>
           <div className="flex items-center gap-2">
             <span className="w-16 text-muted-foreground">End:</span>
             <span className="font-medium">{formatDate(endDate)}</span>
             {officialEndDate && (
-              <Badge variant="secondary" className="h-4 px-1 text-[10px] leading-none">Official: {formatDate(officialEndDate)}</Badge>
+              <Badge
+                variant="secondary"
+                className="h-4 px-1 text-[10px] leading-none"
+              >
+                Official: {formatDate(officialEndDate)}
+              </Badge>
             )}
           </div>
         </div>
@@ -338,7 +343,9 @@ export const getSprintColumns = ({
     meta: {
       mobileLabel: "Hrs/Day",
     },
-    cell: ({ row }) => <span className="font-mono">{row.original.workingHoursDay}h</span>,
+    cell: ({ row }) => (
+      <span className="font-mono">{row.original.workingHoursDay}h</span>
+    ),
   },
   {
     accessorKey: "sprintDuration",
@@ -346,7 +353,9 @@ export const getSprintColumns = ({
     meta: {
       mobileLabel: "Duration",
     },
-    cell: ({ row }) => <span className="font-mono">{row.original.sprintDuration}d</span>,
+    cell: ({ row }) => (
+      <span className="font-mono">{row.original.sprintDuration}d</span>
+    ),
   },
   {
     id: "dayOff",
@@ -358,11 +367,7 @@ export const getSprintColumns = ({
     cell: ({ row }) => {
       const dayOffs = row.original.dayOff || [];
       if (dayOffs.length === 0) {
-        return (
-          <span className="text-xs text-muted-foreground md:italic">
-            None
-          </span>
-        );
+        return <span className="text-xs text-muted-foreground md:italic">None</span>;
       }
 
       return (
@@ -391,12 +396,21 @@ export const getSprintColumns = ({
             </PopoverTrigger>
             <PopoverContent className="w-64 p-3" align="start">
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold leading-none">Specific Days Off</h4>
+                <h4 className="text-sm font-semibold leading-none">
+                  Specific Days Off
+                </h4>
                 <div className="max-h-[200px] overflow-y-auto pr-1">
                   {dayOffs.map((day, idx) => (
-                    <div key={idx} className="flex flex-col border-b border-border/50 py-1.5 last:border-0">
-                      <span className="text-xs font-medium text-foreground">{day.label}</span>
-                      <span className="text-[11px] text-muted-foreground">{format(new Date(day.date), "EEEE, MMM dd, yyyy")}</span>
+                    <div
+                      key={idx}
+                      className="flex flex-col border-b border-border/50 py-1.5 last:border-0"
+                    >
+                      <span className="text-xs font-medium text-foreground">
+                        {day.label}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        {format(new Date(day.date), "EEEE, MMM dd, yyyy")}
+                      </span>
                     </div>
                   ))}
                 </div>

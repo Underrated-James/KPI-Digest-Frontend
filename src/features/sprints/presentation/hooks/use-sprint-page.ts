@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -34,13 +35,15 @@ import { useProjects } from "@/features/projects/presentation/hooks/use-projects
 import { Project, ProjectStatus } from "@/features/projects/domain/types/project-types";
 import { useProjectById } from "@/features/projects/presentation/hooks/use-project-by-id";
 import { useTeams } from "@/features/teams/presentation/hooks/use-teams";
-import { useSprintTicketCounts } from "./use-sprint-ticket-counts";
+import { ticketService } from "@/features/tickets/infrastructure/ticket-service";
+import { ticketKeys } from "@/features/tickets/presentation/queries/ticket-keys";
 
 export function useSprintPage() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
 
   const selectedProjectId = searchParams.get("projectId");
@@ -71,6 +74,9 @@ export function useSprintPage() {
   const editingSprint = useAppSelector(selectEditingSprint) ?? undefined;
   const deleteTarget = useAppSelector(selectDeleteTarget);
   const selectedSprintIds = useAppSelector(selectSelectedSprintIds);
+  const [pendingStartSprintId, setPendingStartSprintId] = useState<string | null>(
+    null,
+  );
 
   const projectsQuery = useProjects(
     {
@@ -93,7 +99,10 @@ export function useSprintPage() {
     isSprintView,
   );
 
-  const projectDetailQuery = useProjectById(selectedProjectId);
+  const projectDetailQuery = useProjectById(
+    selectedProjectId,
+    !selectedProjectNameFromUrl,
+  );
   const createSprint = useCreateSprint();
   const updateSprint = useUpdateSprint();
   const deleteSprint = useDeleteSprint();
@@ -101,6 +110,7 @@ export function useSprintPage() {
   // Fetch teams for current project to build sprint→team lookup
   const teamsForProject = useTeams(
     selectedProjectId ? { projectId: selectedProjectId, size: 100 } : undefined,
+    Boolean(selectedProjectId),
   );
 
   const teamSprintMap = useMemo(() => {
@@ -111,13 +121,6 @@ export function useSprintPage() {
     }
     return map;
   }, [teamsForProject.data?.content]);
-
-  const sprintIds = useMemo(
-    () => (sprintQuery.data?.content ?? []).map((s) => s.id),
-    [sprintQuery.data?.content],
-  );
-  const { ticketCountBySprintId, isLoading: ticketCountsLoading } =
-    useSprintTicketCounts(isSprintView ? sprintIds : []);
 
   useEffect(() => {
     setProjectSearchTerm(projectSearch);
@@ -328,21 +331,45 @@ export function useSprintPage() {
     updateSprint.mutate({ id, data });
   };
 
-  const handleStartSprint = (sprint: Sprint) => {
+  const handleStartSprint = async (sprint: Sprint) => {
     const hasTeam = teamSprintMap.has(sprint.id);
-    const ticketCount = ticketCountBySprintId.get(sprint.id) ?? 0;
     if (!hasTeam) {
       toast.error("Add a team before starting this sprint.");
       return;
     }
-    if (ticketCount === 0) {
-      toast.error("Assign at least one ticket to this sprint before starting.");
+
+    setPendingStartSprintId(sprint.id);
+
+    try {
+      const ticketCount = await queryClient.fetchQuery({
+        queryKey: ticketKeys.countBySprint(sprint.id),
+        queryFn: async () => {
+          const response = await ticketService.getTickets.execute({
+            sprintId: sprint.id,
+            page: 1,
+            size: 1,
+          });
+          return response.totalElements;
+        },
+        staleTime: 30_000,
+      });
+
+      if (ticketCount === 0) {
+        toast.error("Assign at least one ticket to this sprint before starting.");
+        return;
+      }
+
+      patchSprintControl(sprint.id, {
+        status: "active",
+        officialStartDate: new Date().toISOString(),
+      });
+    } catch {
       return;
+    } finally {
+      setPendingStartSprintId((current) =>
+        current === sprint.id ? null : current,
+      );
     }
-    patchSprintControl(sprint.id, {
-      status: "active",
-      officialStartDate: new Date().toISOString(),
-    });
   };
 
   const handlePauseSprint = (sprint: Sprint) => {
@@ -460,7 +487,6 @@ export function useSprintPage() {
     updateProjectFilters,
     updateSprintFilters,
     teamSprintMap,
-    ticketCountBySprintId,
-    ticketCountsLoading,
+    pendingStartSprintId,
   };
 }

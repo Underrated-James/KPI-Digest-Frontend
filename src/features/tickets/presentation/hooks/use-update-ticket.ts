@@ -14,6 +14,13 @@ export function useUpdateTicket() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
       queryClient.invalidateQueries({ queryKey: ticketKeys.detail(data.id) });
+      queryClient.invalidateQueries({ queryKey: ticketKeys.all });
+      // Invalidate sprint available tickets queries when ticket status changes
+      queryClient.invalidateQueries({
+        queryKey: ["sprint-available-ticket-search"],
+      });
+      console.log("list:" + ticketKeys.lists());
+      console.log("ticket keys:" + ticketKeys.detail(data.id));
       toast.success("Ticket updated successfully");
     },
     onError: (error: ApiError) => {

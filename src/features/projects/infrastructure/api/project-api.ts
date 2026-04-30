@@ -1,4 +1,4 @@
-import api from "./axios-instance";
+import { getApiClient, API_ENDPOINTS } from "@/core/api";
 import {
   BackendResponse,
   CreateProjectDTO,
@@ -10,61 +10,79 @@ import {
 } from "../../domain/types/project-types";
 
 export const projectApi = {
-  async getProjects(params?: ProjectQueryParams): Promise<PaginatedData<Project>> {
+  async getProjects(
+    params?: ProjectQueryParams,
+  ): Promise<PaginatedData<Project>> {
+    const api = getApiClient();
     const { data } = await api.get<BackendResponse<PaginatedData<Project>>>(
-      "/projects",
-      { params }
+      API_ENDPOINTS.PROJECTS.LIST,
+      { params },
     );
 
     return data.data;
   },
 
   async getProjectById(id: string): Promise<Project> {
-    const { data } = await api.get<BackendResponse<Project>>(`/projects/${id}`);
+    const api = getApiClient();
+    const { data } = await api.get<BackendResponse<Project>>(
+      API_ENDPOINTS.PROJECTS.GET(id),
+    );
 
     return data.data;
   },
 
   async getProjectMembers(id: string): Promise<ProjectMember[]> {
+    const api = getApiClient();
     const { data } = await api.get<BackendResponse<ProjectMember[]>>(
-      `/projects/${id}/members`
+      `/projects/${id}/members`,
     );
 
     return data.data;
   },
 
   async getProjectDevelopers(id: string): Promise<ProjectMember[]> {
+    const api = getApiClient();
     const { data } = await api.get<BackendResponse<ProjectMember[]>>(
-      `/projects/${id}/members/developers`
+      `/projects/${id}/members/developers`,
     );
 
     return data.data;
   },
 
   async getProjectQa(id: string): Promise<ProjectMember[]> {
+    const api = getApiClient();
     const { data } = await api.get<BackendResponse<ProjectMember[]>>(
-      `/projects/${id}/members/qa`
+      `/projects/${id}/members/qa`,
     );
 
     return data.data;
   },
 
   async createProject(projectData: CreateProjectDTO): Promise<Project> {
-    const { data } = await api.post<BackendResponse<Project>>("/projects", projectData);
+    const api = getApiClient();
+    const { data } = await api.post<BackendResponse<Project>>(
+      API_ENDPOINTS.PROJECTS.CREATE,
+      projectData,
+    );
 
     return data.data;
   },
 
-  async updateProject(id: string, projectData: UpdateProjectDTO): Promise<Project> {
+  async updateProject(
+    id: string,
+    projectData: UpdateProjectDTO,
+  ): Promise<Project> {
+    const api = getApiClient();
     const { data } = await api.patch<BackendResponse<Project>>(
-      `/projects/${id}`,
-      projectData
+      API_ENDPOINTS.PROJECTS.UPDATE(id),
+      projectData,
     );
 
     return data.data;
   },
 
   async deleteProject(id: string): Promise<void> {
-    await api.delete(`/projects/${id}`);
+    const api = getApiClient();
+    await api.delete(API_ENDPOINTS.PROJECTS.DELETE(id));
   },
 };
