@@ -27,6 +27,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -53,15 +58,6 @@ function buildSprintCanvasHref(sprint: Sprint) {
     params.set("projectName", sprint.projectName);
   }
   return `/sprints/${sprint.id}?${params.toString()}`;
-}
-
-function buildSprintCapacityHref(sprint: Sprint) {
-  const params = new URLSearchParams();
-  params.set("projectId", sprint.projectId);
-  if (sprint.projectName) {
-    params.set("projectName", sprint.projectName);
-  }
-  return `/sprints/${sprint.id}/capacity-planning?${params.toString()}`;
 }
 
 function formatSprintDate(date: string | null | undefined) {
@@ -107,19 +103,22 @@ export const getSprintColumns = ({
       return (
         <div className="flex min-w-0 items-center">
           <div className="min-w-0 flex-1">
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href={buildSprintCanvasHref(sprint)}
+                  prefetch={false}
                   className="block truncate font-medium text-primary underline-offset-4 hover:underline"
                   onClick={(event) => event.stopPropagation()}
                 >
                   {sprint.name}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="w-80 space-y-4 p-4"
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent
+                className="flex w-80 max-w-[20rem] flex-col items-stretch gap-4 rounded-md border bg-popover p-4 text-popover-foreground shadow-md"
                 align="start"
+                side="bottom"
+                sideOffset={8}
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className="space-y-1">
@@ -131,9 +130,6 @@ export const getSprintColumns = ({
                       {displayStatus}
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Quick sprint overview
-                  </p>
                 </div>
 
                 <div className="grid gap-2 text-xs">
@@ -167,29 +163,8 @@ export const getSprintColumns = ({
                     </div>
                   </div>
                 </div>
-
-                <div className="flex flex-col gap-2">
-                  <Button size="sm" asChild>
-                    <Link
-                      href={buildSprintCanvasHref(sprint)}
-                      prefetch={false}
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      Open Overview
-                    </Link>
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link
-                      href={buildSprintCapacityHref(sprint)}
-                      prefetch={false}
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      Plan Capacity
-                    </Link>
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
       );

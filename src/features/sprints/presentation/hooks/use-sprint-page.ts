@@ -324,6 +324,7 @@ export function useSprintPage() {
     const params = new URLSearchParams();
     if (selectedProjectId) params.set("projectId", selectedProjectId);
     if (activeProjectName) params.set("projectName", activeProjectName);
+    params.set("backTo", "list");
     router.push(`/sprints/${sprint.id}/capacity-planning?${params.toString()}`);
   };
 

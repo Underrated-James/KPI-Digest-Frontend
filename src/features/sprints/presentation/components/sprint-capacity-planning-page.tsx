@@ -12,6 +12,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import type { TicketStatus } from "@/features/tickets/domain/types/ticket-types";
+import {
+  TICKET_STATUS_LABELS,
+  ticketStatusLabel,
+} from "@/features/tickets/presentation/utils/ticket-status-ui";
 import { useSprintCapacityPlanning } from "../hooks/use-sprint-capacity-planning";
 
 interface SprintCapacityPlanningPageProps {
@@ -26,10 +31,15 @@ function utilizationColor(utilization: number) {
 
 function statusLabel(status?: string) {
   if (!status) return "N/A";
-  return status
-    .replace(/([A-Z])/g, " $1")
-    .replace(/^./, (c) => c.toUpperCase());
+  return TICKET_STATUS_LABELS[status as TicketStatus] ?? status;
 }
+
+const TICKET_STATUS_OPTIONS: TicketStatus[] = [
+  "open",
+  "inProgress",
+  "done",
+  "cancelled",
+];
 
 export function SprintCapacityPlanningPage({
   sprintId,
@@ -315,12 +325,31 @@ export function SprintCapacityPlanningPage({
                       </div>
                     </td>
                     <td className="px-2 py-2">
-                      <div
-                        className="truncate whitespace-nowrap"
-                        title={statusLabel(ticket.status)}
-                      >
-                        {statusLabel(ticket.status)}
-                      </div>
+                      {viewOnly ? (
+                        <div
+                          className="truncate whitespace-nowrap"
+                          title={ticketStatusLabel(ticket.status)}
+                        >
+                          {ticketStatusLabel(ticket.status)}
+                        </div>
+                      ) : (
+                        <select
+                          className="h-9 w-full rounded border border-border bg-background px-2 disabled:cursor-not-allowed disabled:opacity-70"
+                          disabled={viewOnly}
+                          value={ticket.status}
+                          onChange={(event) =>
+                            updateTicket(ticket.ticketId, {
+                              status: event.target.value as TicketStatus,
+                            })
+                          }
+                        >
+                          {TICKET_STATUS_OPTIONS.map((status) => (
+                            <option key={status} value={status}>
+                              {TICKET_STATUS_LABELS[status]}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </td>
                     <td className="px-2 py-2">
                       <select

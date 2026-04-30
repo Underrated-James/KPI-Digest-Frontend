@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { getApi } from "@/features/tickets/infrastructure/api/axios-instance";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -10,6 +10,7 @@ import { useSprintById } from "./use-sprint-by-id";
 import { useSprintAttachedTickets } from "./use-sprint-attached-tickets";
 import { useTeams } from "@/features/teams/presentation/hooks/use-teams";
 import { ticketKeys } from "@/features/tickets/presentation/queries/ticket-keys";
+import type { TicketStatus } from "@/features/tickets/domain/types/ticket-types";
 import { isSprintViewOnly } from "../utils/sprint-control-utils";
 import {
   computeMemberAllocationMetrics,
@@ -24,7 +25,7 @@ type TicketSearchItem = {
   id: string;
   ticketNumber: string;
   ticketTitle: string;
-  status?: string;
+  status?: TicketStatus;
 };
 
 type TicketSearchResponse = {
@@ -42,6 +43,7 @@ type AvailableSprintTicketsResponse = {
 
 export function useSprintCapacityPlanning(sprintId: string) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [addedTickets, setAddedTickets] = useState<EditableSprintTicket[]>([]);
   const [removedTicketIds, setRemovedTicketIds] = useState<string[]>([]);
@@ -170,6 +172,7 @@ export function useSprintCapacityPlanning(sprintId: string) {
           sprintId: string | null;
           projectId?: string;
           teamId?: string | null;
+          status?: TicketStatus;
           assignedDevId: string | null;
           assignedQaId: string | null;
           developmentEstimation: number;
@@ -183,6 +186,7 @@ export function useSprintCapacityPlanning(sprintId: string) {
           sprintId,
           projectId: sprint?.projectId,
           teamId: team?.id ?? null,
+          status: ticket.status,
           assignedDevId: ticket.assignedDevId,
           assignedQaId: ticket.assignedQaId,
           developmentEstimation: Number(ticket.developmentEstimation || 0),
@@ -270,7 +274,9 @@ export function useSprintCapacityPlanning(sprintId: string) {
           id: String(row.id ?? row._id ?? ""),
           ticketNumber: String(row.ticketNumber ?? row.key ?? "N/A"),
           ticketTitle: String(row.ticketTitle ?? row.title ?? "Untitled"),
-          status: typeof row.status === "string" ? row.status : undefined,
+          status: typeof row.status === "string"
+            ? (row.status as TicketStatus)
+            : undefined,
         };
       });
 
@@ -346,6 +352,7 @@ export function useSprintCapacityPlanning(sprintId: string) {
   };
 
   const viewOnly = Boolean(sprint && isSprintViewOnly(sprint));
+  const backTo = searchParams.get("backTo");
 
   return {
     sprint,
@@ -401,9 +408,15 @@ export function useSprintCapacityPlanning(sprintId: string) {
       if (sprint?.projectName) {
         params.set("projectName", sprint.projectName);
       }
-      const target = params.toString()
-        ? `/sprints/${sprintId}?${params.toString()}`
-        : `/sprints/${sprintId}`;
+
+      const target =
+        backTo === "list"
+          ? params.toString()
+            ? `/sprints?${params.toString()}`
+            : "/sprints"
+          : params.toString()
+            ? `/sprints/${sprintId}?${params.toString()}`
+            : `/sprints/${sprintId}`;
       router.push(target);
     },
     goBackToSprintList: () => {
