@@ -1,88 +1,19 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import type { LeaveType } from "@/features/teams/domain/types/team-types";
-import api from "@/features/tickets/infrastructure/api/axios-instance";
 import { useSprintById } from "./use-sprint-by-id";
+import { useSprintAttachedTickets } from "./use-sprint-attached-tickets";
 import { useTeams } from "@/features/teams/presentation/hooks/use-teams";
-import {
-  getSprintDays,
-  normalizeDate,
-  type SprintTeamMember,
-} from "./use-sprint-teams-page";
+import { getSprintDays, normalizeDate } from "../utils/sprint-date-utils";
 import {
   computeMemberAllocationMetrics,
   type AllocationMember,
   type MemberAllocationRow,
   type TicketCommitInput,
 } from "../utils/sprint-member-allocation-metrics";
-
-type LoadedTicket = {
-  id: string;
-  sprintId?: string | null;
-  teamId?: string | null;
-  ticketNumber: string;
-  ticketTitle: string;
-  status?: string;
-  assignedDevId?: string | null;
-  assignedQaId?: string | null;
-  developmentEstimation?: number | null;
-  estimationTesting?: number | null;
-};
-
-type EditableTicket = {
-  ticketId: string;
-  ticketNumber: string;
-  title: string;
-  status: string;
-  assignedDevId: string | null;
-  assignedQaId: string | null;
-  developmentEstimation: number;
-  estimationTesting: number;
-};
-
-function mapLoadedTicketToEditable(ticket: LoadedTicket): EditableTicket {
-  return {
-    ticketId: ticket.id,
-    ticketNumber: ticket.ticketNumber,
-    title: ticket.ticketTitle,
-    status: ticket.status ?? "open",
-    assignedDevId: ticket.assignedDevId ?? null,
-    assignedQaId: ticket.assignedQaId ?? null,
-    developmentEstimation: Number(ticket.developmentEstimation ?? 0),
-    estimationTesting: Number(ticket.estimationTesting ?? 0),
-  };
-}
-
-function parseTicketListEnvelope(responseData: unknown): {
-  content: LoadedTicket[];
-  page: number;
-  totalPages: number;
-} {
-  const envelope = responseData as {
-    content?: LoadedTicket[];
-    data?: { content?: LoadedTicket[]; page?: number; totalPages?: number };
-    page?: number;
-    totalPages?: number;
-  };
-  const paginated = envelope.data;
-  const content = Array.isArray(envelope.content)
-    ? envelope.content
-    : Array.isArray(paginated?.content)
-      ? paginated.content
-      : [];
-  const currentPage = Number(
-    envelope.page ?? paginated?.page ?? 1,
-  );
-  const pageCount = Number(
-    envelope.totalPages ?? paginated?.totalPages ?? currentPage,
-  );
-  const totalPages =
-    Number.isFinite(pageCount) && pageCount > 0 ? pageCount : currentPage;
-  return { content, page: currentPage, totalPages };
-}
+import type { SprintTeamMember } from "../types/sprint-team-member";
 
 export type SprintCanvasTicketRow = {
   id: string;
@@ -103,97 +34,61 @@ export function useSprintCanvas(sprintId: string) {
   const teamsQuery = useTeams({ sprintId, size: 50 }, Boolean(sprintId));
   const team = teamsQuery.data?.content?.[0] ?? null;
 
-  const attachedTicketsQuery = useQuery({
-    queryKey: [
-      "sprint-canvas-attached-tickets",
-      sprintId,
-      sprint?.projectId ?? null,
-      team?.id ?? null,
-    ],
-    enabled: Boolean(sprintId && sprint?.projectId),
-    queryFn: async (): Promise<EditableTicket[]> => {
-      if (!sprint?.projectId) {
-        return [];
-      }
-
-      const all: EditableTicket[] = [];
-      let page = 1;
-      let totalPages = 1;
-
-      while (page <= totalPages) {
-        const response = await api.get("/tickets", {
-          params: {
-            page,
-            size: 100,
-            projectId: sprint.projectId,
-          },
-        });
-
-        const { content, totalPages: tp } = parseTicketListEnvelope(
-          response.data,
-        );
-
-        const attachedTickets = content.filter(
-          (ticket) =>
-            ticket.sprintId === sprintId ||
-            (team?.id ? ticket.teamId === team.id : false),
-        );
-
-        all.push(...attachedTickets.map(mapLoadedTicketToEditable));
-
-        totalPages = tp;
-        page += 1;
-      }
-
-      return all;
-    },
+  const attachedTicketsQuery = useSprintAttachedTickets({
+    sprintId,
+    projectId: sprint?.projectId,
+    teamId: team?.id ?? null,
   });
 
-  const editableTickets = attachedTicketsQuery.data ?? [];
+  const editableTickets = useMemo(
+    () => attachedTicketsQuery.data ?? [],
+    [attachedTicketsQuery.data],
+  );
 
   const userNameById = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const u of team?.users ?? []) {
-      m.set(u.userId, u.name ?? "");
+    const lookup = new Map<string, string>();
+    for (const user of team?.users ?? []) {
+      lookup.set(user.userId, user.name ?? "");
     }
-    return m;
+    return lookup;
   }, [team]);
 
   const ticketsForDisplay: SprintCanvasTicketRow[] = useMemo(() => {
-    return editableTickets.map((t) => ({
-      id: t.ticketId,
-      ticketNumber: t.ticketNumber,
-      ticketTitle: t.title,
-      status: t.status,
-      assignedDevName: t.assignedDevId
-        ? userNameById.get(t.assignedDevId) ?? "—"
+    return editableTickets.map((ticket) => ({
+      id: ticket.ticketId,
+      ticketNumber: ticket.ticketNumber,
+      ticketTitle: ticket.title,
+      status: ticket.status,
+      assignedDevName: ticket.assignedDevId
+        ? userNameById.get(ticket.assignedDevId) ?? "-"
         : undefined,
-      assignedQaName: t.assignedQaId
-        ? userNameById.get(t.assignedQaId) ?? "—"
+      assignedQaName: ticket.assignedQaId
+        ? userNameById.get(ticket.assignedQaId) ?? "-"
         : undefined,
-      developmentEstimation: t.developmentEstimation,
-      estimationTesting: t.estimationTesting,
+      developmentEstimation: ticket.developmentEstimation,
+      estimationTesting: ticket.estimationTesting,
     }));
   }, [editableTickets, userNameById]);
 
   const allocationMembers: AllocationMember[] = useMemo(() => {
     if (!team) return [];
-    return (team.users ?? []).map((u) => ({
-      userId: u.userId,
-      name: u.name ?? "Unknown",
-      role: u.role === "QA" ? "QA" : "DEVS",
-      hoursPerDay: Number(u.hoursPerDay ?? 0),
-      leave: u.leave ?? [],
+
+    return (team.users ?? []).map((user) => ({
+      userId: user.userId,
+      name: user.name ?? "Unknown",
+      role: user.role === "QA" ? "QA" : "DEVS",
+      hoursPerDay: Number(user.hoursPerDay ?? 0),
+      leave: user.leave ?? [],
     }));
   }, [team]);
 
   const ticketCommitInputs: TicketCommitInput[] = useMemo(
     () =>
-      editableTickets.map((t) => ({
-        assignedDevId: t.assignedDevId,
-        assignedQaId: t.assignedQaId,
-        developmentEstimation: t.developmentEstimation,
-        estimationTesting: t.estimationTesting,
+      editableTickets.map((ticket) => ({
+        assignedDevId: ticket.assignedDevId,
+        assignedQaId: ticket.assignedQaId,
+        developmentEstimation: ticket.developmentEstimation,
+        estimationTesting: ticket.estimationTesting,
       })),
     [editableTickets],
   );
@@ -208,6 +103,7 @@ export function useSprintCanvas(sprintId: string) {
         hasOverCapacity: false,
       };
     }
+
     return computeMemberAllocationMetrics(
       sprint,
       allocationMembers,
@@ -222,17 +118,18 @@ export function useSprintCanvas(sprintId: string) {
 
   const dayOffDates = useMemo(() => {
     if (!sprint?.dayOff) return [];
-    return sprint.dayOff.map((d) => normalizeDate(d.date));
+    return sprint.dayOff.map((dayOff) => normalizeDate(dayOff.date));
   }, [sprint]);
 
   const timelineMembers: SprintTeamMember[] = useMemo(() => {
     if (!team) return [];
-    return (team.users ?? []).map((u) => ({
-      userId: u.userId,
-      name: u.name ?? "Member",
-      role: u.role === "QA" ? "QA" : "DEVS",
-      allocationPercentage: u.allocationPercentage ?? 100,
-      leave: u.leave ?? [],
+
+    return (team.users ?? []).map((user) => ({
+      userId: user.userId,
+      name: user.name ?? "Member",
+      role: user.role === "QA" ? "QA" : "DEVS",
+      allocationPercentage: user.allocationPercentage ?? 100,
+      leave: user.leave ?? [],
     }));
   }, [team]);
 
@@ -263,8 +160,8 @@ export function useSprintCanvas(sprintId: string) {
     if (path === "create-teams" && sprint?.name) {
       params.set("sprintName", sprint.name);
     }
-    const q = params.toString();
-    return q ? `/sprints/${sprintId}/${path}?${q}` : `/sprints/${sprintId}/${path}`;
+    const query = params.toString();
+    return query ? `/sprints/${sprintId}/${path}?${query}` : `/sprints/${sprintId}/${path}`;
   };
 
   const isLoading =

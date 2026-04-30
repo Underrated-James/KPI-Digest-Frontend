@@ -6,10 +6,17 @@ export const ticketKeys = {
   list: (params: TicketQueryParams) => [...ticketKeys.lists(), params] as const,
   details: () => [...ticketKeys.all, "detail"] as const,
   detail: (id: string) => [...ticketKeys.details(), id] as const,
-  availableMembers: (ticketId: string) => [...ticketKeys.all, "availableMembers", ticketId] as const,
+  availableMembers: (ticketId: string) =>
+    [...ticketKeys.all, "availableMembers", ticketId] as const,
+  availableForSprint: (projectId: string) =>
+    [...ticketKeys.all, "availableForSprint", projectId] as const,
+  countBySprint: (sprintId: string) =>
+    [...ticketKeys.all, "countBySprint", sprintId] as const,
 };
 
-export const normalizeTicketQueryParams = (params?: TicketQueryParams): TicketQueryParams => {
+export const normalizeTicketQueryParams = (
+  params?: TicketQueryParams,
+): TicketQueryParams => {
   return {
     page: params?.page ?? 1,
     size: params?.size ?? 10,

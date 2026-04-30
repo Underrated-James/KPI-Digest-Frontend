@@ -37,8 +37,7 @@ interface SprintTableProps {
   onSelectionChange: (ids: string[]) => void;
   hidePagination?: boolean;
   teamSprintMap?: Map<string, string>;
-  ticketCountBySprintId?: Map<string, number>;
-  ticketCountsLoading?: boolean;
+  pendingStartSprintId?: string | null;
 }
 
 export function SprintTable({
@@ -57,8 +56,7 @@ export function SprintTable({
   onSelectionChange,
   hidePagination = false,
   teamSprintMap,
-  ticketCountBySprintId,
-  ticketCountsLoading = false,
+  pendingStartSprintId,
 }: SprintTableProps) {
   const pageSizeOptions = [5, 10, 20, 50];
   const searchParams = useSearchParams();
@@ -110,8 +108,7 @@ export function SprintTable({
         onCompleteSprint,
         controlsPending,
         teamSprintMap,
-        ticketCountBySprintId,
-        ticketCountsLoading,
+        pendingStartSprintId,
       }),
     ],
     [
@@ -124,8 +121,7 @@ export function SprintTable({
       onStartSprint,
       controlsPending,
       teamSprintMap,
-      ticketCountBySprintId,
-      ticketCountsLoading,
+      pendingStartSprintId,
     ],
   );
 

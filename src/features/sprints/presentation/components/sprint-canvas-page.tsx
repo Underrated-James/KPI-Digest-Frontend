@@ -60,11 +60,12 @@ export function SprintCanvasPage({ sprintId }: SprintCanvasPageProps) {
   const isMobile = useIsMobile();
   const [hoveredUserId, setHoveredUserId] = useState<string | null>(null);
 
-  const noopSetLeave = useCallback(
-    (_userId: string, _date: string, _type: LeaveType) => {},
-    [],
-  );
-  const noopRemoveLeave = useCallback((_userId: string, _date: string) => {}, []);
+  const noopSetLeave = useCallback<
+    (userId: string, date: string, type: LeaveType) => void
+  >(() => {}, []);
+  const noopRemoveLeave = useCallback<
+    (userId: string, date: string) => void
+  >(() => {}, []);
 
   const {
     sprint,
@@ -126,13 +127,17 @@ export function SprintCanvasPage({ sprintId }: SprintCanvasPageProps) {
             </Badge>
           ) : null}
           <Button variant="outline" size="sm" asChild>
-            <Link href={buildSubpageUrl("create-teams")}>
+            <Link href={buildSubpageUrl("create-teams")} prefetch={false}>
               <UserCog className="mr-2 h-4 w-4" />
-              {team ? (sprintLocked ? "View team" : "Manage team") : "Create team"}
+              {team
+                ? sprintLocked
+                  ? "View team"
+                  : "Manage team"
+                : "Create team"}
             </Link>
           </Button>
           <Button size="sm" asChild>
-            <Link href={buildSubpageUrl("capacity-planning")}>
+            <Link href={buildSubpageUrl("capacity-planning")} prefetch={false}>
               <Layers className="mr-2 h-4 w-4" />
               {sprintLocked ? "View capacity" : "Plan capacity"}
             </Link>
@@ -212,8 +217,8 @@ export function SprintCanvasPage({ sprintId }: SprintCanvasPageProps) {
         <CardContent>
           {!team ? (
             <p className="text-sm text-muted-foreground">
-              No team for this sprint yet. Create a team to assign members before
-              starting the sprint.
+              No team for this sprint yet. Create a team to assign members
+              before starting the sprint.
             </p>
           ) : (
             <ul className="divide-y rounded-lg border border-border">
@@ -243,8 +248,8 @@ export function SprintCanvasPage({ sprintId }: SprintCanvasPageProps) {
               Leave &amp; holidays timeline
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              Sprint holidays (OFF) and each member&apos;s leave across the sprint
-              window. Read-only on this overview.
+              Sprint holidays (OFF) and each member&apos;s leave across the
+              sprint window. Read-only on this overview.
             </p>
           </CardHeader>
           <CardContent className="p-0 sm:p-2">
@@ -335,7 +340,10 @@ export function SprintCanvasPage({ sprintId }: SprintCanvasPageProps) {
                               {member.role}
                             </Badge>
                             {member.isZeroCapacity ? (
-                              <Badge variant="destructive" className="text-[10px]">
+                              <Badge
+                                variant="destructive"
+                                className="text-[10px]"
+                              >
                                 0 capacity
                               </Badge>
                             ) : null}

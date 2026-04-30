@@ -1,5 +1,6 @@
 import { LeaveType } from "@/features/teams/domain/types/team-types";
 import type { Sprint } from "../../domain/types/sprint-types";
+import { getSprintWorkdayKeys, normalizeDate } from "./sprint-date-utils";
 
 export type AllocationMember = {
   userId: string;
@@ -15,24 +16,6 @@ export type TicketCommitInput = {
   developmentEstimation: number;
   estimationTesting: number;
 };
-
-export function normalizeAllocationDate(date: string) {
-  return date.split("T")[0];
-}
-
-function getWorkDays(start: string, end: string) {
-  const result: string[] = [];
-  const current = new Date(`${normalizeAllocationDate(start)}T00:00:00`);
-  const last = new Date(`${normalizeAllocationDate(end)}T00:00:00`);
-  while (current <= last) {
-    const day = current.getDay();
-    if (day !== 0 && day !== 6) {
-      result.push(current.toISOString().slice(0, 10));
-    }
-    current.setDate(current.getDate() + 1);
-  }
-  return result;
-}
 
 function getLeaveWeight(leaveTypes: LeaveType[] = []) {
   if (leaveTypes.includes(LeaveType.HALF_DAY_LEAVE)) return 0.5;
@@ -55,9 +38,9 @@ export function computeMemberAllocationMetrics(
   members: AllocationMember[],
   tickets: TicketCommitInput[],
 ) {
-  const workDays = getWorkDays(sprint.startDate, sprint.endDate);
+  const workDays = getSprintWorkdayKeys(sprint.startDate, sprint.endDate);
   const holidaySet = new Set(
-    (sprint.dayOff ?? []).map((d) => normalizeAllocationDate(d.date)),
+    (sprint.dayOff ?? []).map((d) => normalizeDate(d.date)),
   );
   const committedMap = new Map<string, number>();
 
@@ -84,7 +67,7 @@ export function computeMemberAllocationMetrics(
 
     const leaveByDate = new Map(
       (member.leave ?? []).map((leave) => [
-        normalizeAllocationDate(leave.leaveDate),
+        normalizeDate(leave.leaveDate),
         leave.leaveType,
       ]),
     );

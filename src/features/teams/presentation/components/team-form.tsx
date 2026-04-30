@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { Trash2 } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import {
@@ -53,7 +53,10 @@ export function TeamForm({
     }
   }, [initialData, form])
 
-  const projectId = form.watch("projectId")
+  const projectId = useWatch({
+    control: form.control,
+    name: "projectId",
+  })
   const isUpdateMode = Boolean(initialData)
   const isUnchangedUpdate = isUpdateMode && !form.formState.isDirty
 

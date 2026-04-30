@@ -12,6 +12,7 @@ export interface TicketRepository {
   getTicketById(id: string): Promise<Ticket>;
   createTicket(data: CreateTicketDTO | CreateTicketDTO[]): Promise<Ticket | Ticket[]>;
   updateTicket(id: string, data: UpdateTicketDTO): Promise<Ticket>;
+  bulkUpdateTickets(tickets: ({ id: string } & UpdateTicketDTO)[]): Promise<Ticket[]>;
   putTicket(id: string, data: PutTicketDTO): Promise<Ticket>;
   deleteTicket(id: string): Promise<void>;
   getAvailableMembers(ticketId: string): Promise<{ devs: { userId: string, name: string }[], qas: { userId: string, name: string }[] }>;

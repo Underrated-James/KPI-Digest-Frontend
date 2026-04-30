@@ -1,0 +1,25 @@
+services:
+  agile-digest-app-ami:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: /api
+        BACKEND_API_URL: http://host.docker.internal:3001
+        NEXT_PUBLIC_API_TIMEOUT: "30000"
+        NEXT_PUBLIC_LOG_API_REQUESTS: "true"
+    image: agile-digest:latest
+    container_name: agile-digest-didyeey
+    env_file:
+      - .env.production
+    environment:
+      NEXT_PUBLIC_API_URL: /api
+      BACKEND_API_URL: http://host.docker.internal:3001
+      NEXT_PUBLIC_API_TIMEOUT: "30000"
+      NEXT_PUBLIC_LOG_API_REQUESTS: "true"
+      HOSTNAME: 0.0.0.0
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "3000:3000"

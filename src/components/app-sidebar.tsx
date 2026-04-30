@@ -35,8 +35,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useTheme, type Theme } from "@/lib/theme-context";
@@ -190,6 +189,7 @@ function SidebarNavButton({
   item: NavItem;
   pathname: string;
 }) {
+  const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
   const isActive =
     pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -203,7 +203,6 @@ function SidebarNavButton({
   return (
     <SidebarMenuItem key={item.title}>
       <SidebarMenuButton
-        asChild
         isActive={isActive}
         tooltip={item.title}
         className={cn(
@@ -211,23 +210,22 @@ function SidebarNavButton({
           isActive &&
           "shadow-sm group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none",
         )}
+        aria-label={item.title}
+        onClick={() => {
+          if (!isActive) {
+            router.push(item.href);
+          }
+          if (isMobile) {
+            setOpenMobile(false);
+          }
+        }}
       >
-        <Link
-          href={item.href}
-          aria-label={item.title}
-          onClick={() => {
-            if (isMobile) {
-              setOpenMobile(false);
-            }
-          }}
-        >
-          <span className={navIconClassName}>
-            <item.icon className="size-4" />
-          </span>
-          <span className="group-data-[collapsible=icon]:hidden">
-            {item.title}
-          </span>
-        </Link>
+        <span className={navIconClassName}>
+          <item.icon className="size-4" />
+        </span>
+        <span className="group-data-[collapsible=icon]:hidden">
+          {item.title}
+        </span>
       </SidebarMenuButton>
     </SidebarMenuItem>
   );

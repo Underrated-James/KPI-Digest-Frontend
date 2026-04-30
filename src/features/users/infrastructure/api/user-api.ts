@@ -1,4 +1,4 @@
-import api from "./axios-instance";
+import { getApiClient, API_ENDPOINTS } from "@/core/api";
 import {
   BackendResponse,
   CreateUserDTO,
@@ -10,36 +10,46 @@ import {
 
 export const userApi = {
   async getUsers(params?: UserQueryParams): Promise<PaginatedData<User>> {
+    const api = getApiClient();
     const { data } = await api.get<BackendResponse<PaginatedData<User>>>(
-      "/users",
-      { params }
+      API_ENDPOINTS.USERS.LIST,
+      { params },
     );
 
     return data.data;
   },
 
   async getUserById(id: string): Promise<User> {
-    const { data } = await api.get<BackendResponse<User>>(`/users/${id}`);
+    const api = getApiClient();
+    const { data } = await api.get<BackendResponse<User>>(
+      API_ENDPOINTS.USERS.GET(id),
+    );
 
     return data.data;
   },
 
   async createUser(userData: CreateUserDTO): Promise<User> {
-    const { data } = await api.post<BackendResponse<User>>("/users", userData);
+    const api = getApiClient();
+    const { data } = await api.post<BackendResponse<User>>(
+      API_ENDPOINTS.USERS.CREATE,
+      userData,
+    );
 
     return data.data;
   },
 
   async updateUser(id: string, userData: UpdateUserDTO): Promise<User> {
+    const api = getApiClient();
     const { data } = await api.patch<BackendResponse<User>>(
-      `/users/${id}`,
-      userData
+      API_ENDPOINTS.USERS.UPDATE(id),
+      userData,
     );
 
     return data.data;
   },
 
   async deleteUser(id: string): Promise<void> {
-    await api.delete(`/users/${id}`);
+    const api = getApiClient();
+    await api.delete(API_ENDPOINTS.USERS.DELETE(id));
   },
 };

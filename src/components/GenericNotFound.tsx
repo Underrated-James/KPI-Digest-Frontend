@@ -22,12 +22,12 @@ export default function GenericNotFound({
       </div>
       <div className="space-y-2">
         <h1 className="text-4xl font-bold tracking-tight">{title}</h1>
-        <p className="text-lg text-muted-foreground max-w-[500px]">
-          {message}
-        </p>
+        <p className="text-lg text-muted-foreground max-w-[500px]">{message}</p>
       </div>
       <Button asChild size="lg">
-        <Link href={buttonHref}>{buttonText}</Link>
+        <Link href={buttonHref} prefetch={false}>
+          {buttonText}
+        </Link>
       </Button>
     </div>
   );
