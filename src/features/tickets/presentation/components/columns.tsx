@@ -135,6 +135,24 @@ export const getColumns = ({ onEdit, onDelete }: ColumnProps): ColumnDef<Ticket>
     ),
   },
   {
+    accessorKey: "devTimeSpent",
+    header: "Dev Spent",
+    meta: {
+      mobileLabel: "Dev spent",
+    },
+    cell: ({ row }) => <div>{formatEstimate(row.original.devTimeSpent)}</div>,
+  },
+  {
+    accessorKey: "testingTimeSpent",
+    header: "QA Spent",
+    meta: {
+      mobileLabel: "QA spent",
+    },
+    cell: ({ row }) => (
+      <div>{formatEstimate(row.original.testingTimeSpent)}</div>
+    ),
+  },
+  {
     id: "actions",
     header: () => <div className="w-full text-center">Actions</div>,
     meta: {

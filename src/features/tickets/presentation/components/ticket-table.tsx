@@ -140,6 +140,7 @@ export function TicketTable({
         data={data}
         isMobile={isMobile}
         getRowId={(row) => row.id}
+        tableClassName="md:min-w-[1400px]"
         selectedRowIds={selectedTicketIds}
         onSelectionChange={onSelectionChange}
         getExpandedRowLabel={(row) => row.ticketNumber}

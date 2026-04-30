@@ -46,6 +46,7 @@ export function SprintCapacityPlanningPage({
     isSaving,
     totalSprintCapacity,
     totalCommitted,
+    totalTimeSpent,
     totalAvailable,
     hasOverCapacity,
     isAddModalOpen,
@@ -62,7 +63,7 @@ export function SprintCapacityPlanningPage({
     isTicketAlreadyAdded,
     updateTicket,
     removeTicket,
-    goBackToSprintList,
+    goBackToSprintOverview,
     save,
   } = useSprintCapacityPlanning(sprintId);
 
@@ -78,13 +79,15 @@ export function SprintCapacityPlanningPage({
     <div className="flex h-full w-full flex-col gap-4 p-4 md:p-6">
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={goBackToSprintList}>
+          <Button variant="outline" size="sm" onClick={goBackToSprintOverview}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
-              {viewOnly ? "Sprint Capacity (view only)" : "Sprint Capacity Planner"}
+              {viewOnly
+                ? "Sprint Capacity (view only)"
+                : "Sprint Capacity Planner"}
             </h1>
             <p className="text-sm text-muted-foreground">
               {sprint?.name ?? "Sprint"}{" "}
@@ -98,10 +101,7 @@ export function SprintCapacityPlanningPage({
               <Plus className="mr-2 h-4 w-4" />
               Add Ticket
             </Button>
-            <Button
-              onClick={save}
-              disabled={isSaving || hasOverCapacity}
-            >
+            <Button onClick={save} disabled={isSaving || hasOverCapacity}>
               <Save className="mr-2 h-4 w-4" />
               {isSaving ? "Saving..." : "Save Bulk Update"}
             </Button>
@@ -111,8 +111,8 @@ export function SprintCapacityPlanningPage({
 
       {viewOnly ? (
         <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-          This sprint is active or completed. Capacity planning is view-only; you
-          can review assignments and estimates but not change them.
+          This sprint is active or completed. Capacity planning is view-only;
+          you can review assignments and estimates but not change them.
         </div>
       ) : null}
 
@@ -131,7 +131,7 @@ export function SprintCapacityPlanningPage({
         </div>
       ) : null}
 
-      <div className="grid gap-3 md:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -165,6 +165,16 @@ export function SprintCapacityPlanningPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Time Spent
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-semibold">{totalTimeSpent}h</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Team Size
             </CardTitle>
           </CardHeader>
@@ -180,13 +190,22 @@ export function SprintCapacityPlanningPage({
         </CardHeader>
         <CardContent>
           <div className="overflow-auto">
-            <table className="w-full min-w-[760px] text-sm">
+            <table className="w-full min-w-[920px] table-fixed text-sm">
+              <colgroup>
+                <col className="w-[280px]" />
+                <col className="w-[140px]" />
+                <col className="w-[120px]" />
+                <col className="w-[120px]" />
+                <col className="w-[120px]" />
+                <col className="w-[220px]" />
+              </colgroup>
               <thead>
                 <tr className="border-b">
                   <th className="px-2 py-2 text-left">Member</th>
                   <th className="px-2 py-2 text-left">Sprint Capacity</th>
                   <th className="px-2 py-2 text-left">Committed</th>
                   <th className="px-2 py-2 text-left">Available</th>
+                  <th className="px-2 py-2 text-left">Time Spent</th>
                   <th className="px-2 py-2 text-left">Utilization</th>
                 </tr>
               </thead>
@@ -217,6 +236,7 @@ export function SprintCapacityPlanningPage({
                     >
                       {member.available}h
                     </td>
+                    <td className="px-2 py-2">{member.timeSpent}h</td>
                     <td className="px-2 py-2">
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-40 overflow-hidden rounded bg-muted">
@@ -244,7 +264,19 @@ export function SprintCapacityPlanningPage({
         </CardHeader>
         <CardContent>
           <div className="overflow-auto">
-            <table className="w-full min-w-[980px] text-sm">
+            <table className="w-full min-w-[1320px] table-fixed text-sm">
+              <colgroup>
+                <col className="w-[100px]" />
+                <col className="w-[220px]" />
+                <col className="w-[100px]" />
+                <col className="w-[140px]" />
+                <col className="w-[140px]" />
+                <col className="w-[112px]" />
+                <col className="w-[112px]" />
+                <col className="w-[112px]" />
+                <col className="w-[112px]" />
+                {!viewOnly ? <col className="w-[52px]" /> : null}
+              </colgroup>
               <thead>
                 <tr className="border-b">
                   <th className="px-2 py-2 text-left">Ticket ID</th>
@@ -254,16 +286,16 @@ export function SprintCapacityPlanningPage({
                   <th className="px-2 py-2 text-left">Assigned QA</th>
                   <th className="px-2 py-2 text-left">Dev Estimation</th>
                   <th className="px-2 py-2 text-left">QA Estimation</th>
-                  {!viewOnly ? (
-                    <th className="px-2 py-2 text-left"></th>
-                  ) : null}
+                  <th className="px-2 py-2 text-left">Dev Time Spent</th>
+                  <th className="px-2 py-2 text-left">QA Time Spent</th>
+                  {!viewOnly ? <th className="px-2 py-2 text-left"></th> : null}
                 </tr>
               </thead>
               <tbody>
                 {tickets.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={viewOnly ? 7 : 8}
+                      colSpan={viewOnly ? 9 : 10}
                       className="px-2 py-8 text-center text-muted-foreground"
                     >
                       No tickets yet. Use Add Ticket to start planning.
@@ -273,10 +305,23 @@ export function SprintCapacityPlanningPage({
                 {tickets.map((ticket) => (
                   <tr key={ticket.ticketId} className="border-b">
                     <td className="px-2 py-2 font-medium">
-                      {ticket.ticketNumber}
+                      <div className="truncate" title={ticket.ticketNumber}>
+                        {ticket.ticketNumber}
+                      </div>
                     </td>
-                    <td className="px-2 py-2">{ticket.title}</td>
-                    <td className="px-2 py-2">{statusLabel(ticket.status)}</td>
+                    <td className="px-2 py-2">
+                      <div className="truncate" title={ticket.title}>
+                        {ticket.title}
+                      </div>
+                    </td>
+                    <td className="px-2 py-2">
+                      <div
+                        className="truncate whitespace-nowrap"
+                        title={statusLabel(ticket.status)}
+                      >
+                        {statusLabel(ticket.status)}
+                      </div>
+                    </td>
                     <td className="px-2 py-2">
                       <select
                         className="h-9 w-full rounded border border-border bg-background px-2 disabled:cursor-not-allowed disabled:opacity-70"
@@ -317,6 +362,7 @@ export function SprintCapacityPlanningPage({
                     </td>
                     <td className="px-2 py-2">
                       <Input
+                        className="h-9 w-20 min-w-20 text-right"
                         min={0}
                         type="number"
                         disabled={viewOnly}
@@ -330,8 +376,9 @@ export function SprintCapacityPlanningPage({
                         }
                       />
                     </td>
-                    <td className="px-2 py-2">
+                    <td className="px-1.5 py-2">
                       <Input
+                        className="h-9 w-20 min-w-20 text-right"
                         min={0}
                         type="number"
                         disabled={viewOnly}
@@ -339,6 +386,34 @@ export function SprintCapacityPlanningPage({
                         onChange={(event) =>
                           updateTicket(ticket.ticketId, {
                             estimationTesting: Number(event.target.value || 0),
+                          })
+                        }
+                      />
+                    </td>
+                    <td className="px-1.5 py-2">
+                      <Input
+                        className="h-9 w-20 min-w-20 text-right"
+                        min={0}
+                        type="number"
+                        disabled={viewOnly}
+                        value={ticket.devTimeSpent}
+                        onChange={(event) =>
+                          updateTicket(ticket.ticketId, {
+                            devTimeSpent: Number(event.target.value || 0),
+                          })
+                        }
+                      />
+                    </td>
+                    <td className="px-1.5 py-2">
+                      <Input
+                        className="h-9 w-20 min-w-20 text-right"
+                        min={0}
+                        type="number"
+                        disabled={viewOnly}
+                        value={ticket.testingTimeSpent}
+                        onChange={(event) =>
+                          updateTicket(ticket.ticketId, {
+                            testingTimeSpent: Number(event.target.value || 0),
                           })
                         }
                       />
@@ -419,7 +494,6 @@ export function SprintCapacityPlanningPage({
                           disabled={isAdded}
                           onClick={() => {
                             addTicket(item);
-                            setIsAddModalOpen(false);
                           }}
                         >
                           {isAdded ? "Added" : "Add"}

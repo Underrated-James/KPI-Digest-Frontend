@@ -284,7 +284,7 @@ export function SprintCanvasPage({ sprintId }: SprintCanvasPageProps) {
             </p>
           ) : (
             <>
-              <div className="mb-4 grid gap-3 sm:grid-cols-3">
+              <div className="mb-4 grid gap-3 sm:grid-cols-4">
                 <div className="rounded-lg border border-border/80 bg-muted/20 px-3 py-2">
                   <p className="text-[10px] font-medium uppercase text-muted-foreground">
                     Total sprint capacity
@@ -309,6 +309,14 @@ export function SprintCanvasPage({ sprintId }: SprintCanvasPageProps) {
                     {memberAllocation.totalAvailable}h
                   </p>
                 </div>
+                <div className="rounded-lg border border-border/80 bg-muted/20 px-3 py-2">
+                  <p className="text-[10px] font-medium uppercase text-muted-foreground">
+                    Total time spent
+                  </p>
+                  <p className="text-lg font-semibold">
+                    {memberAllocation.totalTimeSpent}h
+                  </p>
+                </div>
               </div>
               {memberAllocation.hasOverCapacity ? (
                 <div className="mb-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -316,13 +324,14 @@ export function SprintCanvasPage({ sprintId }: SprintCanvasPageProps) {
                 </div>
               ) : null}
               <div className="overflow-auto">
-                <table className="w-full min-w-[760px] text-sm">
+                <table className="w-full min-w-[900px] text-sm">
                   <thead>
                     <tr className="border-b">
                       <th className="px-2 py-2 text-left">Member</th>
                       <th className="px-2 py-2 text-left">Sprint capacity</th>
                       <th className="px-2 py-2 text-left">Committed</th>
                       <th className="px-2 py-2 text-left">Available</th>
+                      <th className="px-2 py-2 text-left">Time spent</th>
                       <th className="px-2 py-2 text-left">Utilization</th>
                     </tr>
                   </thead>
@@ -360,6 +369,7 @@ export function SprintCanvasPage({ sprintId }: SprintCanvasPageProps) {
                         >
                           {member.available}h
                         </td>
+                        <td className="px-2 py-2">{member.timeSpent}h</td>
                         <td className="px-2 py-2">
                           <div className="flex items-center gap-2">
                             <div className="h-2 w-40 max-w-[min(10rem,40vw)] overflow-hidden rounded bg-muted">
@@ -389,7 +399,7 @@ export function SprintCanvasPage({ sprintId }: SprintCanvasPageProps) {
         </CardHeader>
         <CardContent>
           <div className="overflow-auto">
-            <table className="w-full min-w-[720px] text-sm">
+            <table className="w-full min-w-[980px] text-sm">
               <thead>
                 <tr className="border-b">
                   <th className="px-2 py-2 text-left">ID</th>
@@ -399,13 +409,15 @@ export function SprintCanvasPage({ sprintId }: SprintCanvasPageProps) {
                   <th className="px-2 py-2 text-left">QA</th>
                   <th className="px-2 py-2 text-right">Dev Est.</th>
                   <th className="px-2 py-2 text-right">QA Est.</th>
+                  <th className="px-2 py-2 text-right">Dev Spent</th>
+                  <th className="px-2 py-2 text-right">QA Spent</th>
                 </tr>
               </thead>
               <tbody>
                 {tickets.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={9}
                       className="px-2 py-10 text-center text-muted-foreground"
                     >
                       No tickets linked to this sprint. Assign tickets in Plan
@@ -437,6 +449,12 @@ export function SprintCanvasPage({ sprintId }: SprintCanvasPageProps) {
                       </td>
                       <td className="px-2 py-2 text-right font-mono">
                         {t.estimationTesting ?? 0}
+                      </td>
+                      <td className="px-2 py-2 text-right font-mono">
+                        {t.devTimeSpent ?? 0}
+                      </td>
+                      <td className="px-2 py-2 text-right font-mono">
+                        {t.testingTimeSpent ?? 0}
                       </td>
                     </tr>
                   ))

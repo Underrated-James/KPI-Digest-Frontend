@@ -24,6 +24,8 @@ export type SprintCanvasTicketRow = {
   assignedQaName?: string;
   developmentEstimation: number;
   estimationTesting: number;
+  devTimeSpent: number;
+  testingTimeSpent: number;
 };
 
 export function useSprintCanvas(sprintId: string) {
@@ -67,6 +69,8 @@ export function useSprintCanvas(sprintId: string) {
         : undefined,
       developmentEstimation: ticket.developmentEstimation,
       estimationTesting: ticket.estimationTesting,
+      devTimeSpent: ticket.devTimeSpent,
+      testingTimeSpent: ticket.testingTimeSpent,
     }));
   }, [editableTickets, userNameById]);
 
@@ -89,6 +93,8 @@ export function useSprintCanvas(sprintId: string) {
         assignedQaId: ticket.assignedQaId,
         developmentEstimation: ticket.developmentEstimation,
         estimationTesting: ticket.estimationTesting,
+        devTimeSpent: ticket.devTimeSpent,
+        testingTimeSpent: ticket.testingTimeSpent,
       })),
     [editableTickets],
   );
@@ -99,6 +105,7 @@ export function useSprintCanvas(sprintId: string) {
         byMember: [] as MemberAllocationRow[],
         totalSprintCapacity: 0,
         totalCommitted: 0,
+        totalTimeSpent: 0,
         totalAvailable: 0,
         hasOverCapacity: false,
       };
@@ -150,6 +157,14 @@ export function useSprintCanvas(sprintId: string) {
     router.push(target);
   };
 
+  const buildOverviewUrl = () => {
+    const params = new URLSearchParams();
+    if (sprint?.projectId) params.set("projectId", sprint.projectId);
+    if (sprint?.projectName) params.set("projectName", sprint.projectName);
+    const query = params.toString();
+    return query ? `/sprints/${sprintId}?${query}` : `/sprints/${sprintId}`;
+  };
+
   const buildSubpageUrl = (path: "capacity-planning" | "create-teams") => {
     const params = new URLSearchParams();
     if (sprint?.projectId) params.set("projectId", sprint.projectId);
@@ -181,6 +196,7 @@ export function useSprintCanvas(sprintId: string) {
     getEffectiveLeaveReadonly,
     isLoading,
     goBackToSprintList,
+    buildOverviewUrl,
     buildSubpageUrl,
   };
 }

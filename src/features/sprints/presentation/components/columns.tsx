@@ -8,6 +8,8 @@ import {
   Eye,
   Trash,
   Calendar,
+  Clock,
+  FolderKanban,
   UserPlus,
   MoreHorizontal,
   Layers,
@@ -53,6 +55,19 @@ function buildSprintCanvasHref(sprint: Sprint) {
   return `/sprints/${sprint.id}?${params.toString()}`;
 }
 
+function buildSprintCapacityHref(sprint: Sprint) {
+  const params = new URLSearchParams();
+  params.set("projectId", sprint.projectId);
+  if (sprint.projectName) {
+    params.set("projectName", sprint.projectName);
+  }
+  return `/sprints/${sprint.id}/capacity-planning?${params.toString()}`;
+}
+
+function formatSprintDate(date: string | null | undefined) {
+  return date ? format(new Date(date), "MMM dd, yyyy") : "N/A";
+}
+
 interface ColumnsProps {
   onEdit: (sprint: Sprint) => void;
   onDelete: (id: string) => void;
@@ -87,17 +102,94 @@ export const getSprintColumns = ({
     },
     cell: ({ row }) => {
       const sprint = row.original;
+      const displayStatus = getSprintStatusLabel(sprint);
+      const dayOffCount = sprint.dayOff?.length ?? 0;
       return (
         <div className="flex min-w-0 items-center">
           <div className="min-w-0 flex-1">
-            <Link
-              href={buildSprintCanvasHref(sprint)}
-              prefetch={false}
-              className="block truncate font-medium text-primary underline-offset-4 hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {sprint.name}
-            </Link>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="block truncate font-medium text-primary underline-offset-4 hover:underline"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  {sprint.name}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-80 space-y-4 p-4"
+                align="start"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="truncate text-sm font-semibold">
+                      {sprint.name}
+                    </h4>
+                    <Badge variant="secondary" className="shrink-0 text-[10px]">
+                      {displayStatus}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Quick sprint overview
+                  </p>
+                </div>
+
+                <div className="grid gap-2 text-xs">
+                  <div className="flex items-start gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
+                    <FolderKanban className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium text-foreground">Project</p>
+                      <p className="text-muted-foreground">
+                        {sprint.projectName || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
+                    <Calendar className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium text-foreground">Dates</p>
+                      <p className="text-muted-foreground">
+                        {formatSprintDate(sprint.startDate)} to{" "}
+                        {formatSprintDate(sprint.endDate)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
+                    <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium text-foreground">Planning</p>
+                      <p className="text-muted-foreground">
+                        {sprint.workingHoursDay}h/day, {sprint.sprintDuration} days,{" "}
+                        {dayOffCount} holiday{dayOffCount === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Button size="sm" asChild>
+                    <Link
+                      href={buildSprintCanvasHref(sprint)}
+                      prefetch={false}
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      Open Overview
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link
+                      href={buildSprintCapacityHref(sprint)}
+                      prefetch={false}
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      Plan Capacity
+                    </Link>
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       );

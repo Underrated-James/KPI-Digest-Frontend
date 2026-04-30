@@ -9,6 +9,8 @@ export type LoadedSprintTicket = {
   assignedQaId?: string | null;
   developmentEstimation?: number | null;
   estimationTesting?: number | null;
+  devTimeSpent?: number | null;
+  testingTimeSpent?: number | null;
 };
 
 export type EditableSprintTicket = {
@@ -20,6 +22,8 @@ export type EditableSprintTicket = {
   assignedQaId: string | null;
   developmentEstimation: number;
   estimationTesting: number;
+  devTimeSpent: number;
+  testingTimeSpent: number;
 };
 
 type TicketListEnvelope = {
@@ -45,6 +49,8 @@ export function mapLoadedTicketToEditable(
     assignedQaId: ticket.assignedQaId ?? null,
     developmentEstimation: Number(ticket.developmentEstimation ?? 0),
     estimationTesting: Number(ticket.estimationTesting ?? 0),
+    devTimeSpent: Number(ticket.devTimeSpent ?? 0),
+    testingTimeSpent: Number(ticket.testingTimeSpent ?? 0),
   };
 }
 

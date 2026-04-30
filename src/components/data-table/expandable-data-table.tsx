@@ -28,6 +28,7 @@ interface ExpandableDataTableProps<TData> {
   columns: ColumnDef<TData>[];
   isMobile: boolean;
   getRowId: (row: TData) => string;
+  tableClassName?: string;
   selectedRowIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
   emptyState?: React.ReactNode;
@@ -87,6 +88,7 @@ export function ExpandableDataTable<TData>({
   columns,
   isMobile,
   getRowId,
+  tableClassName,
   selectedRowIds = [],
   onSelectionChange,
   emptyState,
@@ -192,7 +194,12 @@ export function ExpandableDataTable<TData>({
 
   return (
     <div className="w-full overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm">
-      <Table className="relative w-full table-fixed md:min-w-150 md:table-auto">
+      <Table
+        className={cn(
+          "relative w-full table-fixed md:table-auto",
+          tableClassName,
+        )}
+      >
         <TableHeader className="sticky top-0 z-10 bg-card">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow

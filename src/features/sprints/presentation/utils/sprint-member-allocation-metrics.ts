@@ -15,6 +15,8 @@ export type TicketCommitInput = {
   assignedQaId: string | null;
   developmentEstimation: number;
   estimationTesting: number;
+  devTimeSpent: number;
+  testingTimeSpent: number;
 };
 
 function getLeaveWeight(leaveTypes: LeaveType[] = []) {
@@ -28,6 +30,7 @@ export type MemberAllocationRow = {
   role: "DEVS" | "QA";
   sprintCapacity: number;
   committed: number;
+  timeSpent: number;
   available: number;
   utilization: number;
   isZeroCapacity: boolean;
@@ -43,6 +46,7 @@ export function computeMemberAllocationMetrics(
     (sprint.dayOff ?? []).map((d) => normalizeDate(d.date)),
   );
   const committedMap = new Map<string, number>();
+  const timeSpentMap = new Map<string, number>();
 
   for (const ticket of tickets) {
     if (ticket.assignedDevId) {
@@ -51,12 +55,22 @@ export function computeMemberAllocationMetrics(
         (committedMap.get(ticket.assignedDevId) ?? 0) +
           Number(ticket.developmentEstimation || 0),
       );
+      timeSpentMap.set(
+        ticket.assignedDevId,
+        (timeSpentMap.get(ticket.assignedDevId) ?? 0) +
+          Number(ticket.devTimeSpent || 0),
+      );
     }
     if (ticket.assignedQaId) {
       committedMap.set(
         ticket.assignedQaId,
         (committedMap.get(ticket.assignedQaId) ?? 0) +
           Number(ticket.estimationTesting || 0),
+      );
+      timeSpentMap.set(
+        ticket.assignedQaId,
+        (timeSpentMap.get(ticket.assignedQaId) ?? 0) +
+          Number(ticket.testingTimeSpent || 0),
       );
     }
   }
@@ -86,6 +100,7 @@ export function computeMemberAllocationMetrics(
     const committed = Number(
       (committedMap.get(member.userId) ?? 0).toFixed(2),
     );
+    const timeSpent = Number((timeSpentMap.get(member.userId) ?? 0).toFixed(2));
     const available = Number((sprintCapacity - committed).toFixed(2));
     const utilization =
       sprintCapacity <= 0
@@ -100,6 +115,7 @@ export function computeMemberAllocationMetrics(
       role: member.role,
       sprintCapacity,
       committed,
+      timeSpent,
       available,
       utilization,
       isZeroCapacity: sprintCapacity === 0,
@@ -112,6 +128,9 @@ export function computeMemberAllocationMetrics(
   const totalCommitted = Number(
     byMember.reduce((sum, m) => sum + m.committed, 0).toFixed(2),
   );
+  const totalTimeSpent = Number(
+    byMember.reduce((sum, m) => sum + m.timeSpent, 0).toFixed(2),
+  );
   const totalAvailable = Number(
     (totalSprintCapacity - totalCommitted).toFixed(2),
   );
@@ -121,6 +140,7 @@ export function computeMemberAllocationMetrics(
     byMember,
     totalSprintCapacity,
     totalCommitted,
+    totalTimeSpent,
     totalAvailable,
     hasOverCapacity,
   };
