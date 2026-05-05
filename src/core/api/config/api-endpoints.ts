@@ -29,6 +29,12 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/sprints/${id}`,
   },
 
+  SPRINT_OVERVIEWS: {
+    LIST: "/sprint-overviews",
+    GET: (id: string) => `/sprint-overviews/${id}`,
+    CREATE: "/sprint-overviews",
+  },
+
   TICKETS: {
     LIST: "/tickets",
     GET: (id: string) => `/tickets/${id}`,

@@ -50,8 +50,21 @@ import {
   getSprintStatusLabel,
   isSprintViewOnly,
 } from "../utils/sprint-control-utils";
+import { getStoredSprintOverviewId } from "@/features/sprint-overviews/presentation/utils/sprint-overview-storage";
 
 function buildSprintCanvasHref(sprint: Sprint) {
+  if (sprint.status === "completed") {
+    const overviewId =
+      typeof window !== "undefined"
+        ? getStoredSprintOverviewId(sprint.id)
+        : null;
+    if (overviewId) {
+      return `/sprint-overviews/${overviewId}`;
+    }
+
+    return `/sprint-overviews/by-sprint/${sprint.id}`;
+  }
+
   const params = new URLSearchParams();
   params.set("projectId", sprint.projectId);
   if (sprint.projectName) {

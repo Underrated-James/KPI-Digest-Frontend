@@ -274,15 +274,13 @@ export function SprintCapacityPlanningPage({
         </CardHeader>
         <CardContent>
           <div className="overflow-auto">
-            <table className="w-full min-w-[1320px] table-fixed text-sm">
+            <table className="w-full min-w-[1100px] table-fixed text-sm">
               <colgroup>
                 <col className="w-[100px]" />
                 <col className="w-[220px]" />
                 <col className="w-[100px]" />
                 <col className="w-[140px]" />
                 <col className="w-[140px]" />
-                <col className="w-[112px]" />
-                <col className="w-[112px]" />
                 <col className="w-[112px]" />
                 <col className="w-[112px]" />
                 {!viewOnly ? <col className="w-[52px]" /> : null}
@@ -296,8 +294,6 @@ export function SprintCapacityPlanningPage({
                   <th className="px-2 py-2 text-left">Assigned QA</th>
                   <th className="px-2 py-2 text-left">Dev Estimation</th>
                   <th className="px-2 py-2 text-left">QA Estimation</th>
-                  <th className="px-2 py-2 text-left">Dev Time Spent</th>
-                  <th className="px-2 py-2 text-left">QA Time Spent</th>
                   {!viewOnly ? <th className="px-2 py-2 text-left"></th> : null}
                 </tr>
               </thead>
@@ -305,7 +301,7 @@ export function SprintCapacityPlanningPage({
                 {tickets.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={viewOnly ? 9 : 10}
+                      colSpan={viewOnly ? 7 : 8}
                       className="px-2 py-8 text-center text-muted-foreground"
                     >
                       No tickets yet. Use Add Ticket to start planning.
@@ -415,34 +411,6 @@ export function SprintCapacityPlanningPage({
                         onChange={(event) =>
                           updateTicket(ticket.ticketId, {
                             estimationTesting: Number(event.target.value || 0),
-                          })
-                        }
-                      />
-                    </td>
-                    <td className="px-1.5 py-2">
-                      <Input
-                        className="h-9 w-20 min-w-20 text-right"
-                        min={0}
-                        type="number"
-                        disabled={viewOnly}
-                        value={ticket.devTimeSpent}
-                        onChange={(event) =>
-                          updateTicket(ticket.ticketId, {
-                            devTimeSpent: Number(event.target.value || 0),
-                          })
-                        }
-                      />
-                    </td>
-                    <td className="px-1.5 py-2">
-                      <Input
-                        className="h-9 w-20 min-w-20 text-right"
-                        min={0}
-                        type="number"
-                        disabled={viewOnly}
-                        value={ticket.testingTimeSpent}
-                        onChange={(event) =>
-                          updateTicket(ticket.ticketId, {
-                            testingTimeSpent: Number(event.target.value || 0),
                           })
                         }
                       />

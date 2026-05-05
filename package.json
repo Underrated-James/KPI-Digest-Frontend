@@ -6,8 +6,17 @@
     "dev": "next dev",
     "build": "next build --debug && eslint . --max-warnings 0",
     "start": "next start",
-    "lint": "eslint",
-    "init-tailwind": "tailwindcss init -p"
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "init-tailwind": "tailwindcss init -p",
+    "env:local": "cross-env NODE_ENV=development cp .env.local .env",
+    "env:staging": "cross-env NODE_ENV=staging cp .env.staging .env",
+    "env:prod": "cross-env NODE_ENV=production cp .env.production .env",
+    "build:local": "npm run env:local && next build",
+    "build:staging": "npm run env:staging && next build",
+    "build:prod": "npm run env:prod && next build",
+    "start:staging": "npm run env:staging && next start",
+    "start:prod": "npm run env:prod && next start"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -53,6 +62,6 @@
     "typescript": "^5"
   },
   "engines": {
-  "node": "22.22.0"
-}
+    "node": "22.22.0"
+  }
 }
