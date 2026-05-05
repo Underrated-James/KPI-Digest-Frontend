@@ -378,10 +378,13 @@ export function useSprintPage() {
   };
 
   const handleCompleteSprint = (sprint: Sprint) => {
-    patchSprintControl(sprint.id, {
-      status: "completed",
-      officialEndDate: new Date().toISOString(),
-    });
+    const params = new URLSearchParams();
+    if (selectedProjectId) params.set("projectId", selectedProjectId);
+    if (activeProjectName) params.set("projectName", activeProjectName);
+    const query = params.toString();
+    router.push(
+      query ? `/sprints/${sprint.id}/complete?${query}` : `/sprints/${sprint.id}/complete`,
+    );
   };
 
   const handleDeleteClick = (sprint: Sprint) => {
