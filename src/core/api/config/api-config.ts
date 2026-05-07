@@ -12,22 +12,30 @@ interface ApiConfig {
   logRequests: boolean;
 }
 
+const DEFAULT_BROWSER_API_BASE_URL = "/api";
+const DEFAULT_SERVER_API_BASE_URL = "http://localhost:3001";
+
 const getApiConfig = (): ApiConfig => {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+  const publicBaseUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+  const backendBaseUrl = process.env.BACKEND_API_URL?.trim();
   const timeout = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || "30000", 10);
   const logRequests = process.env.NEXT_PUBLIC_LOG_API_REQUESTS === "true";
   const isDevelopment = process.env.NODE_ENV === "development";
   const isProduction = process.env.NODE_ENV === "production";
+  const isBrowser = typeof window !== "undefined";
 
-  // Validate required config
+  const baseUrl = isBrowser
+    ? DEFAULT_BROWSER_API_BASE_URL
+    : backendBaseUrl || publicBaseUrl || DEFAULT_SERVER_API_BASE_URL;
+
   if (!baseUrl) {
     throw new Error(
-      "❌ NEXT_PUBLIC_API_URL is not defined. Check your .env file",
+      "API base URL is not defined. Check your environment variables.",
     );
   }
 
   if (!Number.isFinite(timeout) || timeout <= 0) {
-    throw new Error("❌ NEXT_PUBLIC_API_TIMEOUT must be a positive number");
+    throw new Error("NEXT_PUBLIC_API_TIMEOUT must be a positive number");
   }
 
   return {
@@ -39,7 +47,6 @@ const getApiConfig = (): ApiConfig => {
   };
 };
 
-// Singleton pattern - validate once at startup
 let cachedConfig: ApiConfig | null = null;
 
 export const apiConfig = (): ApiConfig => {
@@ -49,7 +56,6 @@ export const apiConfig = (): ApiConfig => {
   return cachedConfig;
 };
 
-// For debugging
 export const debugApiConfig = () => {
   const config = apiConfig();
   console.table({
@@ -57,6 +63,6 @@ export const debugApiConfig = () => {
     "Base URL": config.baseUrl,
     "Timeout (ms)": config.timeout,
     "Log Requests": config.logRequests,
-    Mode: config.isProduction ? "🔒 Production" : "🔧 Development",
+    Mode: config.isProduction ? "Production" : "Development",
   });
 };
