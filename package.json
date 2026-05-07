@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "init-tailwind": "tailwindcss init -p",
+    "init-tailwind": "echo Tailwind v4 is already configured through src/app/globals.css and postcss.config.mjs",
     "env:local": "cross-env NODE_ENV=development cp .env.local .env",
     "env:staging": "cross-env NODE_ENV=staging cp .env.staging .env",
     "env:prod": "cross-env NODE_ENV=production cp .env.production .env",

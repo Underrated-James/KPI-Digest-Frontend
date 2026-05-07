@@ -14,47 +14,26 @@ export interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   startTime?: number;
 }
 
-/**
- * Request Interceptor
- * - Log requests in development
- * - Add auth tokens if available
- * - Track request timing
- */
 export const setupRequestInterceptor = (config: ExtendedAxiosRequestConfig) => {
   const { logRequests } = apiConfig();
 
-  // Track request timing for performance monitoring
   config.startTime = Date.now();
 
-  // Add auth token if available
-  // const token = localStorage.getItem("authToken");
-  // if (token) {
-  //   config.headers.Authorization = `Bearer ${token}`;
-  // }
-
-  // Log in development
   if (logRequests) {
+    const requestTarget = `${config.baseURL ?? ""}${config.url ?? ""}`;
     console.debug(
-      `📤 API Request: ${config.method?.toUpperCase()} ${config.url}`,
+      `API Request: ${config.method?.toUpperCase()} ${requestTarget}`,
     );
   }
 
   return config;
 };
 
-/**
- * Request Error Interceptor
- */
 export const setupRequestErrorInterceptor = (error: AxiosError) => {
-  console.error("❌ Request Error:", error.message);
+  console.error("Request Error:", error.message);
   return Promise.reject(error);
 };
 
-/**
- * Response Interceptor
- * - Log successful responses
- * - Calculate response time
- */
 export const setupResponseInterceptor = (
   response: AxiosResponse & { config: ExtendedAxiosRequestConfig },
 ) => {
@@ -63,30 +42,23 @@ export const setupResponseInterceptor = (
   const duration = startTime ? Date.now() - startTime : 0;
 
   if (logRequests) {
-    console.debug(
-      `📥 API Response: ${response.status} ${response.config.url} (${duration}ms)`,
-    );
+    const requestTarget = `${response.config.baseURL ?? ""}${response.config.url ?? ""}`;
+    console.debug(`API Response: ${response.status} ${requestTarget} (${duration}ms)`);
   }
 
   return response;
 };
 
-/**
- * Response Error Interceptor
- * - Normalize errors using existing error handler
- * - Log error details
- */
 export const setupResponseErrorInterceptor = (error: AxiosError) => {
   const { logRequests } = apiConfig();
 
   if (logRequests) {
     console.error(
-      "❌ API Error:",
+      "API Error:",
       error.response?.status,
       error.response?.data || error.message,
     );
   }
 
-  // Use existing error normalization
   return Promise.reject(normalizeApiError(error));
 };
