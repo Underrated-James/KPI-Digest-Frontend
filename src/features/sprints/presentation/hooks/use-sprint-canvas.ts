@@ -1,11 +1,15 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { LeaveType } from "@/features/teams/domain/types/team-types";
 import { useSprintById } from "./use-sprint-by-id";
 import { useSprintAttachedTickets } from "./use-sprint-attached-tickets";
 import { useTeams } from "@/features/teams/presentation/hooks/use-teams";
+import { teamService } from "@/features/teams/infrastructure/team-service";
+import { teamKeys } from "@/features/teams/presentation/queries/team-keys";
+import { useProjectMembers } from "@/features/projects/presentation/hooks/use-project-members";
 import { getSprintDays, normalizeDate } from "../utils/sprint-date-utils";
 import {
   computeMemberAllocationMetrics,
@@ -28,13 +32,48 @@ export type SprintCanvasTicketRow = {
   testingTimeSpent: number;
 };
 
+function isActiveMemberStatus(status: boolean | string | undefined): boolean {
+  if (typeof status === "string") {
+    return status.toLowerCase() === "true";
+  }
+
+  return Boolean(status);
+}
+
 export function useSprintCanvas(sprintId: string) {
   const router = useRouter();
   const sprintQuery = useSprintById(sprintId);
   const sprint = sprintQuery.data;
 
   const teamsQuery = useTeams({ sprintId, size: 50 }, Boolean(sprintId));
-  const team = teamsQuery.data?.content?.[0] ?? null;
+  const listTeam = teamsQuery.data?.content?.[0] ?? null;
+  const teamDetailQuery = useQuery({
+    queryKey: teamKeys.detail(listTeam?.id ?? "__disabled__"),
+    queryFn: () => teamService.getTeamById.execute(listTeam!.id),
+    enabled: Boolean(listTeam?.id),
+    staleTime: 1000 * 60 * 5,
+  });
+  const team = teamDetailQuery.data ?? listTeam;
+  const projectMembersQuery = useProjectMembers(sprint?.projectId ?? null);
+
+  const teamUsers = useMemo(() => {
+    if ((team?.users?.length ?? 0) > 0) {
+      return team?.users ?? [];
+    }
+
+    const hoursPerDay = Number(sprint?.workingHoursDay ?? 0);
+
+    return (projectMembersQuery.data ?? [])
+      .filter((member) => isActiveMemberStatus(member.status))
+      .map((member) => ({
+        userId: member.id,
+        name: member.name,
+        allocationPercentage: 100,
+        hoursPerDay,
+        role: member.role === "QA" ? "QA" : "DEVS",
+        leave: [],
+      }));
+  }, [projectMembersQuery.data, sprint?.workingHoursDay, team?.users]);
 
   const attachedTicketsQuery = useSprintAttachedTickets({
     sprintId,
@@ -49,11 +88,11 @@ export function useSprintCanvas(sprintId: string) {
 
   const userNameById = useMemo(() => {
     const lookup = new Map<string, string>();
-    for (const user of team?.users ?? []) {
+    for (const user of teamUsers) {
       lookup.set(user.userId, user.name ?? "");
     }
     return lookup;
-  }, [team]);
+  }, [teamUsers]);
 
   const ticketsForDisplay: SprintCanvasTicketRow[] = useMemo(() => {
     return editableTickets.map((ticket) => ({
@@ -75,16 +114,14 @@ export function useSprintCanvas(sprintId: string) {
   }, [editableTickets, userNameById]);
 
   const allocationMembers: AllocationMember[] = useMemo(() => {
-    if (!team) return [];
-
-    return (team.users ?? []).map((user) => ({
+    return teamUsers.map((user) => ({
       userId: user.userId,
       name: user.name ?? "Unknown",
       role: user.role === "QA" ? "QA" : "DEVS",
       hoursPerDay: Number(user.hoursPerDay ?? 0),
       leave: user.leave ?? [],
     }));
-  }, [team]);
+  }, [teamUsers]);
 
   const ticketCommitInputs: TicketCommitInput[] = useMemo(
     () =>
@@ -129,16 +166,14 @@ export function useSprintCanvas(sprintId: string) {
   }, [sprint]);
 
   const timelineMembers: SprintTeamMember[] = useMemo(() => {
-    if (!team) return [];
-
-    return (team.users ?? []).map((user) => ({
+    return teamUsers.map((user) => ({
       userId: user.userId,
       name: user.name ?? "Member",
       role: user.role === "QA" ? "QA" : "DEVS",
       allocationPercentage: user.allocationPercentage ?? 100,
       leave: user.leave ?? [],
     }));
-  }, [team]);
+  }, [teamUsers]);
 
   const getEffectiveLeaveReadonly = useCallback(
     (_userId: string, _date: string, originalType?: LeaveType) => originalType,
@@ -185,11 +220,14 @@ export function useSprintCanvas(sprintId: string) {
   const isLoading =
     sprintQuery.isLoading ||
     teamsQuery.isLoading ||
+    teamDetailQuery.isLoading ||
+    (!team && projectMembersQuery.isLoading) ||
     (Boolean(sprint?.projectId) && attachedTicketsQuery.isLoading);
 
   return {
     sprint,
     team,
+    teamUsers,
     tickets: ticketsForDisplay,
     editableTickets,
     memberAllocation,

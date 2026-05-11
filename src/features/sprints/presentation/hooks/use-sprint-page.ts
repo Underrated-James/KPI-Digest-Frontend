@@ -38,6 +38,8 @@ import { useTeams } from "@/features/teams/presentation/hooks/use-teams";
 import { ticketService } from "@/features/tickets/infrastructure/ticket-service";
 import { ticketKeys } from "@/features/tickets/presentation/queries/ticket-keys";
 
+const VISIBLE_PROJECT_STATUSES: ProjectStatus[] = ["active", "inactive"];
+
 export function useSprintPage() {
   const pathname = usePathname();
   const router = useRouter();
@@ -60,9 +62,14 @@ export function useSprintPage() {
 
   const projectPage = Number(searchParams.get("projectPage")) || 1;
   const projectSize = Number(searchParams.get("projectSize")) || 10;
-  const selectedProjectStatus = searchParams.get("projectStatus") as
+  const rawSelectedProjectStatus = searchParams.get("projectStatus") as
     | ProjectStatus
     | null;
+  const selectedProjectStatus = VISIBLE_PROJECT_STATUSES.includes(
+    rawSelectedProjectStatus as ProjectStatus,
+  )
+    ? rawSelectedProjectStatus
+    : null;
 
   const sprintPage = Number(searchParams.get("sprintPage")) || 1;
   const sprintSize = Number(searchParams.get("sprintSize")) || 10;
@@ -152,6 +159,19 @@ export function useSprintPage() {
 
     replaceSprintsUrl(pathname, params);
   }, [debouncedProjectSearchTerm, isSprintView, pathname, projectSearch, searchParams]);
+
+  useEffect(() => {
+    if (
+      !rawSelectedProjectStatus ||
+      VISIBLE_PROJECT_STATUSES.includes(rawSelectedProjectStatus)
+    ) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("projectStatus");
+    replaceSprintsUrl(pathname, params);
+  }, [pathname, rawSelectedProjectStatus, searchParams]);
 
   useEffect(() => {
     if (!isSprintView) {
@@ -333,6 +353,11 @@ export function useSprintPage() {
   };
 
   const handleStartSprint = async (sprint: Sprint) => {
+    if (projectDetailQuery.data?.status === "draft") {
+      toast.error("Activate the project before starting this sprint.");
+      return;
+    }
+
     const hasTeam = teamSprintMap.has(sprint.id);
     if (!hasTeam) {
       toast.error("Add a team before starting this sprint.");
@@ -430,11 +455,17 @@ export function useSprintPage() {
     dispatch(closeDeleteSprintModal());
   };
 
-  const projects = projectsQuery.data?.content ?? [];
+  const projects = (projectsQuery.data?.content ?? []).filter((project) =>
+    VISIBLE_PROJECT_STATUSES.includes(project.status),
+  );
   const sprints = sprintQuery.data?.content ?? [];
 
   const activeProjectName =
     projectDetailQuery.data?.name ?? selectedProjectNameFromUrl;
+  const startBlockedReason =
+    projectDetailQuery.data?.status === "draft"
+      ? "This sprint cannot start while the project is still Draft."
+      : null;
 
   const isLoading = isSprintView ? sprintQuery.isLoading : projectsQuery.isLoading;
   const isError = isSprintView ? sprintQuery.isError : projectsQuery.isError;
@@ -452,7 +483,10 @@ export function useSprintPage() {
     projectPage,
     projectSize,
     projects,
-    totalProjects: projectsQuery.data?.totalElements ?? 0,
+    totalProjects:
+      selectedProjectStatus == null
+        ? projects.length
+        : projectsQuery.data?.totalElements ?? 0,
     sprintSearchTerm,
     setSprintSearchTerm,
     selectedSprintStatus,
@@ -492,5 +526,6 @@ export function useSprintPage() {
     updateSprintFilters,
     teamSprintMap,
     pendingStartSprintId,
+    startBlockedReason,
   };
 }

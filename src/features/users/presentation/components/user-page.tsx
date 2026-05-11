@@ -13,6 +13,7 @@ export function UserPage() {
     searchTerm,
     setSearchTerm,
     selectedRole,
+    isViewMode,
     isMobile,
     isFormOpen,
     editingUser,
@@ -30,6 +31,7 @@ export function UserPage() {
     handleSubmit,
     handleDeleteConfirm,
     handleEditClick,
+    handleViewClick,
     handleDeleteById,
     handleBulkDeleteClick,
     handleAddClick,
@@ -71,6 +73,7 @@ export function UserPage() {
             <div className="w-full max-w-md animate-in fade-in zoom-in duration-300">
               <UserForm
                 initialData={editingUser}
+                viewOnly={isViewMode}
                 onSubmit={handleSubmit}
                 isLoading={isSubmitting}
                 onCancel={handleCancel}
@@ -88,6 +91,7 @@ export function UserPage() {
                 data={users}
                 total={totalUsers}
                 isMobile={isMobile}
+                onView={handleViewClick}
                 onEdit={handleEditClick}
                 onDelete={handleDeleteById}
                 selectedUserIds={selectedUserIds}

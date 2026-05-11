@@ -1,4 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import type { RootState } from "@/lib/store";
+import type { FormMode } from "@/lib/form-mode";
 import { Project } from "../../domain/types/project-types";
 
 interface DeleteTarget {
@@ -9,6 +11,7 @@ interface DeleteTarget {
 export interface ProjectUiState {
   isFormOpen: boolean;
   editingProject: Project | null;
+  formMode: FormMode;
   deleteTarget: DeleteTarget | null;
   selectedProjectIds: string[];
 }
@@ -16,6 +19,7 @@ export interface ProjectUiState {
 const initialState: ProjectUiState = {
   isFormOpen: false,
   editingProject: null,
+  formMode: "create",
   deleteTarget: null,
   selectedProjectIds: [],
 };
@@ -27,14 +31,22 @@ const projectUiSlice = createSlice({
     openCreateProjectForm: (state) => {
       state.isFormOpen = true;
       state.editingProject = null;
+      state.formMode = "create";
     },
     openEditProjectForm: (state, action: PayloadAction<Project>) => {
       state.isFormOpen = true;
       state.editingProject = action.payload;
+      state.formMode = "edit";
+    },
+    openViewProjectForm: (state, action: PayloadAction<Project>) => {
+      state.isFormOpen = true;
+      state.editingProject = action.payload;
+      state.formMode = "view";
     },
     closeProjectForm: (state) => {
       state.isFormOpen = false;
       state.editingProject = null;
+      state.formMode = "create";
     },
     openDeleteProjectModal: (state, action: PayloadAction<DeleteTarget>) => {
       state.deleteTarget = action.payload;
@@ -51,13 +63,10 @@ const projectUiSlice = createSlice({
   },
 });
 
-type ProjectUiRootState = {
-  projectUi: ProjectUiState;
-};
-
 export const {
   openCreateProjectForm,
   openEditProjectForm,
+  openViewProjectForm,
   closeProjectForm,
   openDeleteProjectModal,
   closeDeleteProjectModal,
@@ -65,14 +74,16 @@ export const {
   clearSelectedProjectIds,
 } = projectUiSlice.actions;
 
-export const selectProjectUi = (state: ProjectUiRootState) => state.projectUi;
-export const selectIsProjectFormOpen = (state: ProjectUiRootState) =>
+export const selectProjectUi = (state: RootState) => state.projectUi;
+export const selectIsProjectFormOpen = (state: RootState) =>
   state.projectUi.isFormOpen;
-export const selectEditingProject = (state: ProjectUiRootState) =>
+export const selectEditingProject = (state: RootState) =>
   state.projectUi.editingProject;
-export const selectDeleteTarget = (state: ProjectUiRootState) =>
+export const selectProjectFormMode = (state: RootState) =>
+  state.projectUi.formMode;
+export const selectDeleteTarget = (state: RootState) =>
   state.projectUi.deleteTarget;
-export const selectSelectedProjectIds = (state: ProjectUiRootState) =>
+export const selectSelectedProjectIds = (state: RootState) =>
   state.projectUi.selectedProjectIds;
 
 export const projectUiReducer = projectUiSlice.reducer;

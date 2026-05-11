@@ -5,10 +5,9 @@ import { Input } from "@/components/ui/input";
 import { ProjectStatus } from "@/features/projects/domain/types/project-types";
 
 const statusOptions: Array<{ label: string; value: ProjectStatus | "ALL" }> = [
-  { label: "All Status", value: "ALL" },
+  { label: "Active & Inactive", value: "ALL" },
   { label: "Active", value: "active" },
   { label: "Inactive", value: "inactive" },
-  { label: "In-Progress", value: "inProgress" },
 ];
 
 interface SprintProjectPageToolbarProps {
@@ -43,7 +42,9 @@ export function SprintProjectPageToolbar({
                 id="project-search"
                 value={searchTerm}
                 onChange={(event) => onSearchTermChange(event.target.value)}
-                placeholder={isMobile ? "Search projects..." : "Search by keyword..."}
+                placeholder={
+                  isMobile ? "Search projects..." : "Search by keyword..."
+                }
                 className="h-11 border-border bg-background pl-9 text-foreground placeholder:text-muted-foreground"
               />
             </div>
@@ -83,7 +84,6 @@ export function SprintProjectPageToolbar({
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

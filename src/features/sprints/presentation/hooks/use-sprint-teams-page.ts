@@ -10,7 +10,7 @@ import { useCreateTeam } from "@/features/teams/presentation/hooks/use-create-te
 import { useUpdateTeam } from "@/features/teams/presentation/hooks/use-update-team";
 import { teamService } from "@/features/teams/infrastructure/team-service";
 import { teamKeys } from "@/features/teams/presentation/queries/team-keys";
-import { useUsers } from "@/features/users/presentation/hooks/use-users";
+import { useProjectMembers } from "@/features/projects/presentation/hooks/use-project-members";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { sprintService } from "../../infrastructure/sprint-service";
 import { sprintKeys } from "../queries/sprint-keys";
@@ -33,6 +33,14 @@ export interface SprintTeamMember {
   role: "DEVS" | "QA";
   allocationPercentage: number;
   leave?: LeaveDays[];
+}
+
+function isActiveMemberStatus(status: boolean | string | undefined): boolean {
+  if (typeof status === "string") {
+    return status.toLowerCase() === "true";
+  }
+
+  return Boolean(status);
 }
 
 // ─── Date utilities ────────────────────────────────────────
@@ -129,15 +137,24 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
   const isEditMode = Boolean(existingTeam);
   const teamId = existingTeam?.id ?? null;
 
-  // Fetch users for Add Member dropdown
+  // Fetch project members for Add Member dropdown
   const [userSearchQuery, setUserSearchQuery] = useState("");
 
-  // Use a single user query and filter locally
-  // Increased staleTime to prevent redundant fetches
-  const usersQuery = useUsers({ size: 100 });
-  const allUsers = useMemo(
-    () => usersQuery.data?.users ?? [],
-    [usersQuery.data?.users],
+  const projectMembersQuery = useProjectMembers(projectId || null);
+  const allUsers = useMemo<User[]>(
+    () =>
+      (projectMembersQuery.data ?? [])
+        .filter((member) => isActiveMemberStatus(member.status))
+        .map((member) => ({
+          id: member.id,
+          name: member.name,
+          email: member.email,
+          role: member.role,
+          status: isActiveMemberStatus(member.status),
+          createdAt: member.createdAt,
+          updatedAt: member.updatedAt,
+        })),
+    [projectMembersQuery.data],
   );
 
   const normalizedUserSearch = userSearchQuery.trim().toLowerCase();
@@ -149,7 +166,8 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
       result = result.filter(
         (u) =>
           u.name.toLowerCase().includes(normalizedUserSearch) ||
-          u.email?.toLowerCase().includes(normalizedUserSearch),
+          u.email?.toLowerCase().includes(normalizedUserSearch) ||
+          u.role.toLowerCase().includes(normalizedUserSearch),
       );
     }
     return result;
@@ -194,7 +212,7 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
     if (isInitialized) return;
     if (teamsQuery.isLoading) return;
     if (teamIdFromUrl && teamByIdQuery.isLoading) return;
-    if (existingTeam && usersQuery.isLoading) return;
+    if (projectMembersQuery.isLoading) return;
 
     const timer = setTimeout(() => {
       if (existingTeam) {
@@ -204,7 +222,7 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
 
         const mapped: SprintTeamMember[] = teamUsers.map((u) => ({
           userId: u.userId,
-          name: userLookup.get(u.userId)?.name ?? u.userId,
+          name: u.name ?? userLookup.get(u.userId)?.name ?? u.userId,
           role:
             (u.role as "DEVS" | "QA" | undefined) ??
             (userLookup.get(u.userId)?.role === "QA" ? "QA" : "DEVS"),
@@ -213,6 +231,16 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
         }));
         setInitialTeamSnapshot(serializeTeamMembers(mapped));
         setMembers(mapped);
+      } else {
+        const seededMembers: SprintTeamMember[] = allUsers.map((user) => ({
+          userId: user.id,
+          name: user.name,
+          role: user.role === "QA" ? "QA" : "DEVS",
+          allocationPercentage: 100,
+          leave: [],
+        }));
+
+        setMembers(seededMembers);
       }
 
       setIsInitialized(true);
@@ -221,10 +249,11 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
     return () => clearTimeout(timer);
   }, [
     existingTeam,
+    allUsers,
     teamByIdQuery.isLoading,
     teamIdFromUrl,
     teamsQuery.isLoading,
-    usersQuery.isLoading,
+    projectMembersQuery.isLoading,
     isInitialized,
     userLookup,
   ]);
@@ -467,10 +496,10 @@ export function useSprintTeamsPage({ sprintId }: UseSprintTeamsPageOptions) {
     teamsQuery.isLoading ||
     teamByIdQuery.isLoading ||
     sprintQuery.isLoading ||
-    usersQuery.isLoading ||
+    projectMembersQuery.isLoading ||
     !isInitialized;
   const isSaving = createTeam.isPending || updateTeam.isPending;
-  const isUsersLoading = usersQuery.isFetching;
+  const isUsersLoading = projectMembersQuery.isFetching;
 
   return {
     // Page info

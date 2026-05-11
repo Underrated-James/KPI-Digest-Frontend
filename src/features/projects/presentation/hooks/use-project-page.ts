@@ -6,7 +6,11 @@ import toast from "react-hot-toast";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useAppDispatch, useAppSelector } from "@/lib/redux-hooks";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { CreateProjectDTO, Project, ProjectStatus } from "../../domain/types/project-types";
+import {
+  CreateProjectDTO,
+  Project,
+  ProjectStatus,
+} from "../../domain/types/project-types";
 import { useProjects } from "./use-projects";
 import { useCreateProject } from "./use-create-project";
 import { useUpdateProject } from "./use-update-project";
@@ -18,13 +22,18 @@ import {
   openCreateProjectForm,
   openDeleteProjectModal,
   openEditProjectForm,
+  openViewProjectForm,
   selectDeleteTarget,
   selectEditingProject,
+  selectProjectFormMode,
   selectIsProjectFormOpen,
   selectSelectedProjectIds,
   setSelectedProjectIds,
 } from "../store/project-slice";
-import { pushProjectsUrl, replaceProjectsUrl } from "../utils/projects-url-state";
+import {
+  pushProjectsUrl,
+  replaceProjectsUrl,
+} from "../utils/projects-url-state";
 
 export function useProjectPage() {
   const pathname = usePathname();
@@ -42,6 +51,7 @@ export function useProjectPage() {
 
   const isFormOpen = useAppSelector(selectIsProjectFormOpen);
   const editingProject = useAppSelector(selectEditingProject) ?? undefined;
+  const formMode = useAppSelector(selectProjectFormMode);
   const deleteTarget = useAppSelector(selectDeleteTarget);
   const selectedProjectIds = useAppSelector(selectSelectedProjectIds);
 
@@ -117,7 +127,7 @@ export function useProjectPage() {
         onSuccess: () => {
           dispatch(closeProjectForm());
         },
-      }
+      },
     );
   };
 
@@ -144,14 +154,23 @@ export function useProjectPage() {
     toast.success(
       totalSelectedProjects === 1
         ? "Project deleted successfully"
-        : `${totalSelectedProjects} projects deleted successfully`
+        : `${totalSelectedProjects} projects deleted successfully`,
     );
     dispatch(clearSelectedProjectIds());
     dispatch(closeDeleteProjectModal());
   };
 
   const handleEditClick = (project: Project) => {
-    dispatch(openEditProjectForm(project));
+    // If project is inactive, open in view mode instead
+    if (project.status === "inactive") {
+      dispatch(openViewProjectForm(project));
+    } else {
+      dispatch(openEditProjectForm(project));
+    }
+  };
+
+  const handleViewClick = (project: Project) => {
+    dispatch(openViewProjectForm(project));
   };
 
   const handleDeleteClick = (project: Project) => {
@@ -159,7 +178,7 @@ export function useProjectPage() {
       openDeleteProjectModal({
         id: project.id,
         name: project.name,
-      })
+      }),
     );
   };
 
@@ -176,7 +195,7 @@ export function useProjectPage() {
       dispatch(
         openDeleteProjectModal({
           name: `${selectedProjectIds.length} selected projects`,
-        })
+        }),
       );
     }
   };
@@ -201,6 +220,8 @@ export function useProjectPage() {
     searchTerm,
     setSearchTerm,
     selectedStatus,
+    formMode,
+    isViewMode: formMode === "view",
     isMobile,
     isFormOpen,
     editingProject,
@@ -218,6 +239,7 @@ export function useProjectPage() {
     handleSubmit: editingProject ? handleUpdate : handleCreate,
     handleDeleteConfirm,
     handleEditClick,
+    handleViewClick,
     handleDeleteById,
     handleBulkDeleteClick,
     handleAddClick,

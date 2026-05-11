@@ -11,13 +11,16 @@ import { useProjects } from "@/features/projects/presentation/hooks/use-projects
 import { Ticket, TicketStatus } from "../../domain/types/ticket-types";
 import { useTickets } from "./use-tickets";
 import { useDeleteTicket } from "./use-delete-ticket";
+import { usePatchTicketStatus } from "./use-patch-ticket-status";
 import { ticketService } from "../../infrastructure/ticket-service";
 import { ticketKeys } from "../queries/ticket-keys";
 import {
   closeDeleteTicketModal,
+  openCompleteTicketForm,
   openCreateTicketForm,
   openDeleteTicketModal,
   openEditTicketForm,
+  openViewTicketForm,
   selectDeleteTarget,
   selectEditingTicket,
   selectIsTicketFormOpen,
@@ -49,6 +52,7 @@ export function useTicketPage() {
   const deleteTarget = useAppSelector(selectDeleteTarget);
   const selectedTicketIds = useAppSelector(selectSelectedTicketIds);
   const deleteTicket = useDeleteTicket();
+  const patchTicketStatus = usePatchTicketStatus();
   const { data: projectsData } = useProjects({ size: 100 });
 
   useEffect(() => {
@@ -164,7 +168,21 @@ export function useTicketPage() {
     deleteTarget,
     selectedTicketIds,
     onAddTicket: () => dispatch(openCreateTicketForm()),
-    onEditTicket: (ticket: Ticket) => dispatch(openEditTicketForm(ticket)),
+    onEditTicket: (ticket: Ticket) =>
+      dispatch(
+        ticket.status === "completed" || ticket.status === "cancelled"
+          ? openViewTicketForm(ticket)
+          : openEditTicketForm(ticket),
+      ),
+    onViewTicket: (ticket: Ticket) => dispatch(openViewTicketForm(ticket)),
+    onStatusChange: (ticket: Ticket, status: TicketStatus) => {
+      if (ticket.status === "inProgress" && status === "completed") {
+        dispatch(openCompleteTicketForm(ticket));
+        return;
+      }
+
+      patchTicketStatus.mutate({ id: ticket.id, status });
+    },
     onDeleteTicket: (ticket: Ticket) => 
       dispatch(openDeleteTicketModal({ id: ticket.id, ticketNumber: ticket.ticketNumber })),
     onSelectionChange: (ids: string[]) => dispatch(setSelectedTicketIds(ids)),
@@ -183,6 +201,8 @@ export function useTicketPage() {
       );
     },
     isDeleteLoading: deleteTicket.isPending || isBulkDeleting,
+    statusChangePendingTicketId:
+      patchTicketStatus.isPending ? patchTicketStatus.variables?.id ?? null : null,
     handleDeleteConfirm,
     handleCloseDeleteModal,
   };

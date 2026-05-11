@@ -9,62 +9,90 @@ import {
   TicketQueryParams,
 } from "../../domain/types/ticket-types";
 
+type RawTicketStatus = Ticket["status"] | "done";
+
+type RawTicket = Omit<Ticket, "status"> & {
+  status: RawTicketStatus;
+};
+
+function normalizeTicketStatus(status: RawTicketStatus): Ticket["status"] {
+  if (status === "done") {
+    return "completed";
+  }
+
+  return status;
+}
+
+function normalizeTicket(ticket: RawTicket): Ticket {
+  return {
+    ...ticket,
+    status: normalizeTicketStatus(ticket.status),
+  };
+}
+
 export const ticketApi = {
   async getTickets(params?: TicketQueryParams): Promise<PaginatedData<Ticket>> {
     const api = getApiClient();
-    const { data } = await api.get<BackendResponse<PaginatedData<Ticket>>>(
+    const { data } = await api.get<BackendResponse<PaginatedData<RawTicket>>>(
       API_ENDPOINTS.TICKETS.LIST,
       { params },
     );
-    return data.data;
+
+    return {
+      ...data.data,
+      content: data.data.content.map(normalizeTicket),
+    };
   },
 
   async getTicketById(id: string): Promise<Ticket> {
     const api = getApiClient();
-    const { data } = await api.get<BackendResponse<Ticket>>(
+    const { data } = await api.get<BackendResponse<RawTicket>>(
       API_ENDPOINTS.TICKETS.GET(id),
     );
-    return data.data;
+    return normalizeTicket(data.data);
   },
 
   async createTicket(
     ticketData: CreateTicketDTO | CreateTicketDTO[],
   ): Promise<Ticket | Ticket[]> {
     const api = getApiClient();
-    const { data } = await api.post<BackendResponse<Ticket | Ticket[]>>(
+    const { data } = await api.post<BackendResponse<RawTicket | RawTicket[]>>(
       API_ENDPOINTS.TICKETS.CREATE,
       ticketData,
     );
-    return data.data;
+
+    return Array.isArray(data.data)
+      ? data.data.map(normalizeTicket)
+      : normalizeTicket(data.data);
   },
 
   async updateTicket(id: string, ticketData: UpdateTicketDTO): Promise<Ticket> {
     const api = getApiClient();
-    const { data } = await api.patch<BackendResponse<Ticket>>(
+    const { data } = await api.patch<BackendResponse<RawTicket>>(
       API_ENDPOINTS.TICKETS.UPDATE(id),
       ticketData,
     );
-    return data.data;
+    return normalizeTicket(data.data);
   },
 
   async bulkUpdateTickets(
     tickets: ({ id: string } & UpdateTicketDTO)[],
   ): Promise<Ticket[]> {
     const api = getApiClient();
-    const { data } = await api.patch<BackendResponse<Ticket[]>>(
+    const { data } = await api.patch<BackendResponse<RawTicket[]>>(
       API_ENDPOINTS.TICKETS.LIST,
       { tickets },
     );
-    return data.data;
+    return data.data.map(normalizeTicket);
   },
 
   async putTicket(id: string, ticketData: PutTicketDTO): Promise<Ticket> {
     const api = getApiClient();
-    const { data } = await api.put<BackendResponse<Ticket>>(
+    const { data } = await api.put<BackendResponse<RawTicket>>(
       API_ENDPOINTS.TICKETS.UPDATE(id),
       ticketData,
     );
-    return data.data;
+    return normalizeTicket(data.data);
   },
 
   async deleteTicket(id: string): Promise<void> {

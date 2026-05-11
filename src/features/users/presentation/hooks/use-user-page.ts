@@ -18,8 +18,10 @@ import {
   openCreateUserForm,
   openDeleteUserModal,
   openEditUserForm,
+  openViewUserForm,
   selectDeleteTarget,
   selectEditingUser,
+  selectUserFormMode,
   selectIsUserFormOpen,
   selectSelectedUserIds,
   setSelectedUserIds,
@@ -42,6 +44,7 @@ export function useUserPage() {
 
   const isFormOpen = useAppSelector(selectIsUserFormOpen);
   const editingUser = useAppSelector(selectEditingUser) ?? undefined;
+  const formMode = useAppSelector(selectUserFormMode);
   const deleteTarget = useAppSelector(selectDeleteTarget);
   const selectedUserIds = useAppSelector(selectSelectedUserIds);
 
@@ -157,6 +160,10 @@ export function useUserPage() {
     dispatch(openEditUserForm(user));
   };
 
+  const handleViewClick = (user: User) => {
+    dispatch(openViewUserForm(user));
+  };
+
   const handleDeleteClick = (user: User) => {
     dispatch(
       openDeleteUserModal({
@@ -204,6 +211,8 @@ export function useUserPage() {
     searchTerm,
     setSearchTerm,
     selectedRole,
+    formMode,
+    isViewMode: formMode === "view",
     isMobile,
     isFormOpen,
     editingUser,
@@ -221,6 +230,7 @@ export function useUserPage() {
     handleSubmit: editingUser ? handleUpdate : handleCreate,
     handleDeleteConfirm,
     handleEditClick,
+    handleViewClick,
     handleDeleteById,
     handleBulkDeleteClick,
     handleAddClick,

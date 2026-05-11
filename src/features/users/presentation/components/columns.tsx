@@ -1,17 +1,43 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, Pencil, Trash } from "lucide-react";
+import { ChevronDown, Mail, Pencil, ShieldCheck, Trash, UserRound, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { User } from "../../domain/types/user-types";
 
+const previewTooltipContentClassName =
+  "z-50 flex w-[min(20rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] flex-col items-stretch gap-4 rounded-md border bg-popover p-4 text-popover-foreground shadow-md";
+
+function formatUserRole(role: User["role"]) {
+  switch (role) {
+    case "ADMIN":
+      return "Administrator";
+    case "DEVS":
+      return "Developer";
+    default:
+      return "QA Engineer";
+  }
+}
+
+function formatUserDate(date: string | undefined) {
+  return date ? new Date(date).toLocaleDateString() : "N/A";
+}
+
 interface ColumnsProps {
+  onView: (user: User) => void;
   onEdit: (user: User) => void;
   onDelete: (id: string) => void;
 }
 
 export const getColumns = ({
+  onView,
   onEdit,
   onDelete,
 }: ColumnsProps): ColumnDef<User>[] => [
@@ -22,15 +48,78 @@ export const getColumns = ({
       mobileLabel: "Name",
       mobileVisible: true,
     },
-    cell: ({ row }) => (
-      <div className="flex min-w-0 items-center">
-        <div className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-foreground">
-            {row.original.name}
-          </span>
+    cell: ({ row }) => {
+      const user = row.original;
+
+      return (
+        <div className="flex min-w-0 items-center">
+          <div className="min-w-0 flex-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="block truncate font-medium text-primary text-left underline-offset-4 hover:underline"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onView(user);
+                  }}
+                >
+                  {user.name}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent
+                className={previewTooltipContentClassName}
+                align="start"
+                side="bottom"
+                sideOffset={8}
+                collisionPadding={16}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="truncate text-sm font-semibold">{user.name}</h4>
+                    <Badge variant="secondary" className="shrink-0 text-[10px]">
+                      {user.status ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="grid gap-2 text-xs">
+                  <div className="flex items-start gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
+                    <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium text-foreground">Email</p>
+                      <p className="break-all text-muted-foreground">{user.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
+                    <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium text-foreground">Role</p>
+                      <p className="text-muted-foreground">{formatUserRole(user.role)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
+                    <UserRound className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium text-foreground">Account Status</p>
+                      <p className="text-muted-foreground">{user.status ? "Enabled" : "Disabled"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
+                    <Calendar className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium text-foreground">Updated</p>
+                      <p className="text-muted-foreground">{formatUserDate(user.updatedAt)}</p>
+                    </div>
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </div>
-      </div>
-    ),
+      );
+    },
   },
   {
     accessorKey: "email",

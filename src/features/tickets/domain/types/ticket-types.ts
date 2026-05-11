@@ -1,4 +1,4 @@
-export type TicketStatus = 'open' | 'inProgress' | 'done' | 'cancelled';
+export type TicketStatus = "open" | "inProgress" | "completed" | "cancelled";
 
 export interface Ticket {
   id: string;
@@ -10,6 +10,7 @@ export interface Ticket {
   ticketNumber: string;
   status: TicketStatus;
   ticketTitle: string;
+  description?: string | null;
   descriptionLink: string;
   estimationTesting?: number | null;
   developmentEstimation?: number | null;
@@ -34,6 +35,7 @@ export interface CreateTicketDTO {
   assignedQaId?: string | null;
   ticketNumber?: string;
   ticketTitle: string;
+  description?: string | null;
   descriptionLink: string;
   estimationTesting?: number | null;
   developmentEstimation?: number | null;

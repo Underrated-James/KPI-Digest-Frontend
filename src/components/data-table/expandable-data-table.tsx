@@ -48,6 +48,10 @@ function getColumnHeaderClass(columnId: string) {
     return "w-[104px] whitespace-nowrap py-3 pl-2 pr-4 text-right md:w-auto md:p-2 md:text-left";
   }
 
+  if (columnId === "description") {
+    return "w-[360px] min-w-[360px] max-w-[360px] align-middle py-3 pl-2 pr-8 md:w-[360px] md:min-w-[360px] md:max-w-[360px] md:pr-10 md:pl-2";
+  }
+
   if (columnId === "actions") {
     return "w-[140px] whitespace-nowrap py-3 pl-2 pr-4 text-center md:w-auto md:p-2";
   }
@@ -74,6 +78,10 @@ function getColumnCellClass(columnId: string) {
 
   if (columnId === "dayOff") {
     return "w-[104px] whitespace-nowrap py-3 pl-2 pr-4 text-right align-middle md:w-auto md:p-2 md:text-left";
+  }
+
+  if (columnId === "description") {
+    return "w-[320px] min-w-[320px] max-w-[320px] align-middle py-3 pl-2 pr-3 md:w-[320px] md:min-w-[320px] md:max-w-[320px] md:p-2";
   }
 
   if (columnId === "actions") {

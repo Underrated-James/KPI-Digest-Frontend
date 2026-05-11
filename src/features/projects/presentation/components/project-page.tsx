@@ -13,6 +13,7 @@ export function ProjectPage() {
     searchTerm,
     setSearchTerm,
     selectedStatus,
+    isViewMode,
     isMobile,
     isFormOpen,
     editingProject,
@@ -30,6 +31,7 @@ export function ProjectPage() {
     handleSubmit,
     handleDeleteConfirm,
     handleEditClick,
+    handleViewClick,
     handleDeleteById,
     handleBulkDeleteClick,
     handleAddClick,
@@ -70,6 +72,7 @@ export function ProjectPage() {
             <div className="w-full max-w-md animate-in fade-in zoom-in duration-300">
               <ProjectForm
                 initialData={editingProject}
+                viewOnly={isViewMode}
                 onSubmit={handleSubmit}
                 isLoading={isSubmitting}
                 onCancel={handleCancel}
@@ -87,6 +90,7 @@ export function ProjectPage() {
                 data={projects}
                 total={totalProjects}
                 isMobile={isMobile}
+                onView={handleViewClick}
                 onEdit={handleEditClick}
                 onDelete={handleDeleteById}
                 selectedProjectIds={selectedProjectIds}

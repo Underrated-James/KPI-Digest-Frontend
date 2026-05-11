@@ -179,9 +179,7 @@ function removeLeaveEntry(
 }
 
 function buildReviewMembers(
-  users: NonNullable<
-    ReturnType<typeof useSprintCanvas>["team"]
-  >["users"] = [],
+  users: ReturnType<typeof useSprintCanvas>["teamUsers"] = [],
 ): ReviewMember[] {
   return users.map((user) => ({
     userId: user.userId,
@@ -224,6 +222,7 @@ export function SprintCanvasPage({
   const {
     sprint,
     team,
+    teamUsers,
     tickets,
     editableTickets,
     memberAllocation,
@@ -241,7 +240,7 @@ export function SprintCanvasPage({
       return;
     }
 
-    setReviewMembers(buildReviewMembers(team?.users ?? []));
+    setReviewMembers(buildReviewMembers(teamUsers));
     setReviewTickets(buildReviewTickets(editableTickets));
     setReviewInitialized(true);
   }, [
@@ -250,7 +249,7 @@ export function SprintCanvasPage({
     isLoading,
     reviewInitialized,
     sprint,
-    team?.users,
+    teamUsers,
   ]);
 
   const displayedMembers = isCompleteMode ? reviewMembers : [];
@@ -736,14 +735,14 @@ export function SprintCanvasPage({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {!team || (isCompleteMode && displayedMembers.length === 0) ? (
+          {teamUsers.length === 0 || (isCompleteMode && displayedMembers.length === 0) ? (
             <p className="text-sm text-muted-foreground">
-              No team for this sprint yet. Create a team to assign members
-              before starting the sprint.
+              No team members are available for this sprint yet. Add or save the
+              sprint team before starting the sprint.
             </p>
           ) : (
             <ul className="divide-y rounded-lg border border-border">
-              {(isCompleteMode ? displayedMembers : team.users ?? []).map((member) => (
+              {(isCompleteMode ? displayedMembers : teamUsers).map((member) => (
                 <li
                   key={member.userId}
                   className="flex flex-wrap items-center justify-between gap-3 px-3 py-3 text-sm"

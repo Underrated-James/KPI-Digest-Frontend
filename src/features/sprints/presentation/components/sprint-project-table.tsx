@@ -23,7 +23,10 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Project, ProjectStatus } from "@/features/projects/domain/types/project-types";
+import {
+  Project,
+  ProjectStatus,
+} from "@/features/projects/domain/types/project-types";
 import { pushSprintsUrl } from "../utils/sprint-url-state";
 
 interface SprintProjectTableProps {
@@ -41,6 +44,8 @@ function getStatusStyles(status: ProjectStatus) {
       return "border-rose-300 bg-rose-100 text-rose-950 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300";
     case "inProgress":
       return "border-amber-300 bg-amber-100 text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300";
+    case "draft":
+      return "border-zinc-300 bg-zinc-100 text-zinc-900 dark:border-zinc-500/30 dark:bg-zinc-500/10 dark:text-zinc-300";
     default:
       return "border-border bg-muted text-foreground";
   }
@@ -54,6 +59,8 @@ function getStatusLabel(status: ProjectStatus) {
       return "Inactive";
     case "inProgress":
       return "In Progress";
+    case "draft":
+      return "Draft";
     default:
       return status;
   }
@@ -107,12 +114,14 @@ export function SprintProjectTable({
 
   if (data.length === 0) {
     return (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 py-14 text-center text-muted-foreground">
-          <p className="text-base font-medium text-foreground">No projects found.</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Try adjusting the search or status filter.
-          </p>
-        </div>
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 py-14 text-center text-muted-foreground">
+        <p className="text-base font-medium text-foreground">
+          No projects found.
+        </p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Try adjusting the search or status filter.
+        </p>
+      </div>
     );
   }
 

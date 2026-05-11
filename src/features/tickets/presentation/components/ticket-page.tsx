@@ -26,12 +26,15 @@ export default function TicketsPage() {
     selectedTicketIds,
     onAddTicket,
     onEditTicket,
+    onViewTicket,
+    onStatusChange,
     onDeleteTicket,
     onSelectionChange,
     onBulkDelete,
     isFormOpen,
     deleteTarget,
     isDeleteLoading,
+    statusChangePendingTicketId,
     handleDeleteConfirm,
     handleCloseDeleteModal,
     refetch,
@@ -100,10 +103,13 @@ export default function TicketsPage() {
                     data={tickets}
                     total={total}
                     isMobile={isMobile}
+                    onView={onViewTicket}
+                    onStatusChange={onStatusChange}
                     onEdit={onEditTicket}
                     onDelete={onDeleteTicket}
                     selectedTicketIds={selectedTicketIds}
                     onSelectionChange={onSelectionChange}
+                    statusChangePendingTicketId={statusChangePendingTicketId}
                   />
                 )}
               </div>
