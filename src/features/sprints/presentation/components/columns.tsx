@@ -88,6 +88,7 @@ interface ColumnsProps {
   controlsPending?: boolean;
   teamSprintMap?: Map<string, string>;
   pendingStartSprintId?: string | null;
+  startBlockedReason?: string | null;
 }
 
 export const getSprintColumns = ({
@@ -101,6 +102,7 @@ export const getSprintColumns = ({
   controlsPending = false,
   teamSprintMap,
   pendingStartSprintId,
+  startBlockedReason,
 }: ColumnsProps): ColumnDef<Sprint>[] => [
   {
     accessorKey: "name",
@@ -300,7 +302,11 @@ export const getSprintColumns = ({
       const hasTeam = teamSprintMap?.has(sprint.id) ?? false;
       const startPending = pendingStartSprintId === sprint.id;
       const startDisabled =
-        controlsPending || startPending || !startOk || !hasTeam;
+        controlsPending ||
+        startPending ||
+        !startOk ||
+        !hasTeam ||
+        Boolean(startBlockedReason);
 
       return (
         <div className="md:min-w-[9.5rem]">
@@ -334,6 +340,11 @@ export const getSprintColumns = ({
               {startPending ? (
                 <p className="px-2 py-1.5 text-[11px] text-muted-foreground">
                   Checking sprint tickets...
+                </p>
+              ) : null}
+              {startOk && startBlockedReason ? (
+                <p className="px-2 py-1.5 text-[11px] leading-snug text-muted-foreground">
+                  {startBlockedReason}
                 </p>
               ) : null}
               <DropdownMenuItem

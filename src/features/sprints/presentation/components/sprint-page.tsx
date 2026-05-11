@@ -62,6 +62,7 @@ export function SprintPage() {
     handleBackToProjects,
     teamSprintMap,
     pendingStartSprintId,
+    startBlockedReason,
   } = useSprintPage();
 
   const projectTitle = selectedProjectName || selectedProjectId || "Selected Project";
@@ -212,6 +213,7 @@ export function SprintPage() {
                 hidePagination={false}
                 teamSprintMap={teamSprintMap}
                 pendingStartSprintId={pendingStartSprintId}
+                startBlockedReason={startBlockedReason}
               />
             </motion.div>
           )}

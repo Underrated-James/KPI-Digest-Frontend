@@ -28,6 +28,7 @@ import {
   isValidDateValue,
   toDateInputValue,
 } from "./sprint-form/sprint-form-utils";
+import { useSprints } from "../hooks/use-sprints";
 
 interface SprintFormProps {
   initialData?: Sprint;
@@ -60,9 +61,17 @@ export function SprintForm({
     control: form.control,
     name: ["startDate", "endDate", "dayOff", "durationPreset"],
   });
+  const [selectedProjectId, sprintName] = useWatch({
+    control: form.control,
+    name: ["projectId", "name"],
+  });
 
   const isUpdateMode = Boolean(initialData);
   const isUnchangedUpdate = isUpdateMode && !form.formState.isDirty;
+  const siblingSprintsQuery = useSprints(
+    { projectId: selectedProjectId || undefined, size: 200 },
+    Boolean(selectedProjectId),
+  );
 
   const computedDuration = useMemo(
     () => calculateSprintDurationDays(startDate, endDate, dayOffs ?? []),
@@ -111,11 +120,68 @@ export function SprintForm({
     });
   }, [durationPreset, endDate, form, form.formState.isSubmitted, startDate]);
 
+  const duplicateSprintName = useMemo(() => {
+    const normalizedSprintName = sprintName?.trim().toLowerCase();
+
+    if (!selectedProjectId || !normalizedSprintName) {
+      return null;
+    }
+
+    return (
+      siblingSprintsQuery.data?.content.find((sprint) => {
+        if (initialData && sprint.id === initialData.id) {
+          return false;
+        }
+
+        if (sprint.projectId !== selectedProjectId) {
+          return false;
+        }
+
+        return sprint.name.trim().toLowerCase() === normalizedSprintName;
+      }) ?? null
+    );
+  }, [
+    initialData,
+    selectedProjectId,
+    siblingSprintsQuery.data?.content,
+    sprintName,
+  ]);
+
+  useEffect(() => {
+    if (!sprintName?.trim()) {
+      if (form.getFieldState("name").error?.type === "duplicate") {
+        form.clearErrors("name");
+      }
+      return;
+    }
+
+    if (duplicateSprintName) {
+      form.setError("name", {
+        type: "duplicate",
+        message:
+          "A sprint with this name already exists in the selected project.",
+      });
+      return;
+    }
+
+    if (form.getFieldState("name").error?.type === "duplicate") {
+      form.clearErrors("name");
+    }
+  }, [duplicateSprintName, form, sprintName]);
+
   const handleSubmit = (data: SprintFormValues) => {
     if (viewOnly) {
       return;
     }
     if (isUnchangedUpdate) {
+      return;
+    }
+    if (duplicateSprintName) {
+      form.setError("name", {
+        type: "duplicate",
+        message:
+          "A sprint with this name already exists in the selected project.",
+      });
       return;
     }
 
@@ -209,7 +275,7 @@ export function SprintForm({
               type="submit"
               form="sprint-form"
               className="px-8"
-              disabled={isLoading || isUnchangedUpdate}
+              disabled={isLoading || isUnchangedUpdate || Boolean(duplicateSprintName)}
             >
               {buttonLabel}
             </Button>

@@ -32,10 +32,13 @@ interface TicketTableProps {
   data: Ticket[];
   total: number;
   isMobile: boolean;
+  onView: (ticket: Ticket) => void;
+  onStatusChange: (ticket: Ticket, status: Ticket["status"]) => void;
   onEdit: (ticket: Ticket) => void;
   onDelete: (ticket: Ticket) => void;
   selectedTicketIds: string[];
   onSelectionChange: (ids: string[]) => void;
+  statusChangePendingTicketId?: string | null;
   hidePagination?: boolean;
 }
 
@@ -43,10 +46,13 @@ export function TicketTable({
   data,
   total,
   isMobile,
+  onView,
+  onStatusChange,
   onEdit,
   onDelete,
   selectedTicketIds,
   onSelectionChange,
+  statusChangePendingTicketId,
   hidePagination = false,
 }: TicketTableProps) {
   const pageSizeOptions = [5, 10, 20, 50];
@@ -96,9 +102,15 @@ export function TicketTable({
         enableSorting: false,
         enableHiding: false,
       },
-      ...getColumns({ onEdit, onDelete }),
+      ...getColumns({
+        onView,
+        onStatusChange,
+        onEdit,
+        onDelete,
+        statusChangePendingTicketId,
+      }),
     ],
-    [onDelete, onEdit],
+    [onDelete, onEdit, onStatusChange, onView, statusChangePendingTicketId],
   );
 
   const handlePageChange = (newPage: number) => {

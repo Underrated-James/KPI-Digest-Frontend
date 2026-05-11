@@ -6,6 +6,7 @@ export { default as TicketPage } from "./presentation/components/ticket-page";
 export * from "./presentation/store/ticket-slice";
 export * from "./presentation/hooks/use-tickets";
 export * from "./presentation/hooks/use-create-ticket";
+export * from "./presentation/hooks/use-patch-ticket-status";
 export * from "./presentation/hooks/use-update-ticket";
 export * from "./presentation/hooks/use-delete-ticket";
 export * from "./presentation/hooks/use-ticket-page";

@@ -25,6 +25,7 @@ interface ProjectTableProps {
   data: Project[];
   total: number;
   isMobile: boolean;
+  onView: (project: Project) => void;
   onEdit: (project: Project) => void;
   onDelete: (id: string) => void;
   selectedProjectIds: string[];
@@ -36,6 +37,7 @@ export function ProjectTable({
   data,
   total,
   isMobile,
+  onView,
   onEdit,
   onDelete,
   selectedProjectIds,
@@ -82,9 +84,9 @@ export function ProjectTable({
           mobileVisible: true,
         },
       },
-      ...getProjectColumns({ onEdit, onDelete }),
+      ...getProjectColumns({ onView, onEdit, onDelete }),
     ],
-    [onDelete, onEdit],
+    [onDelete, onEdit, onView],
   );
 
   const handlePageChange = (newPage: number) => {

@@ -1,5 +1,6 @@
 "use client"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
 import * as z from "zod"
 
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { User, CreateUserDTO, UserRole } from "../../domain/types/user-types"
+import { useUser } from "../hooks/use-user"
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -30,8 +32,18 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>
 
+function buildDefaultValues(user?: User): FormValues {
+  return {
+    name: user?.name ?? "",
+    email: user?.email ?? "",
+    role: (user?.role as UserRole) ?? "DEVS",
+    status: user?.status ?? true,
+  };
+}
+
 interface UserFormProps {
   initialData?: User
+  viewOnly?: boolean
   onSubmit: (data: CreateUserDTO) => void
   isLoading: boolean
   onCancel: () => void
@@ -39,24 +51,31 @@ interface UserFormProps {
 
 export function UserForm({
   initialData,
+  viewOnly = false,
   onSubmit,
   isLoading,
   onCancel,
 }: UserFormProps) {
+  const { data: userDetail } = useUser(initialData?.id ?? "");
+  const userForForm = userDetail ?? initialData;
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: initialData?.name ?? "",
-      email: initialData?.email ?? "",
-      role: (initialData?.role as UserRole) ?? "DEVS",
-      status: initialData?.status ?? true,
-    },
+    defaultValues: buildDefaultValues(userForForm),
   })
+
+  useEffect(() => {
+    form.reset(buildDefaultValues(userForForm))
+  }, [form, userForForm])
 
   const isUpdateMode = Boolean(initialData)
   const isUnchangedUpdate = isUpdateMode && !form.formState.isDirty
 
   const handleSubmit = (data: FormValues) => {
+    if (viewOnly) {
+      return
+    }
+
     if (isUnchangedUpdate) {
       return
     }
@@ -70,9 +89,13 @@ export function UserForm({
   return (
     <Card className="w-full border border-border bg-card shadow-xl ring-1 ring-border/70 sm:max-w-md">
       <CardHeader className="border-b border-border/80 pb-5">
-        <CardTitle>{initialData ? "Edit User" : "Create User"}</CardTitle>
+        <CardTitle>
+          {viewOnly ? "View User" : initialData ? "Edit User" : "Create User"}
+        </CardTitle>
         <CardDescription>
-          {initialData
+          {viewOnly
+            ? "Review this team member's profile, role, and account status."
+            : initialData
             ? "Update the details for this user, including whether they are active."
             : "Fill in the details to add a new user."}
         </CardDescription>
@@ -92,7 +115,7 @@ export function UserForm({
                     aria-invalid={fieldState.invalid}
                     placeholder="John Doe"
                     autoComplete="off"
-                    disabled={isLoading}
+                    disabled={isLoading || viewOnly}
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -114,7 +137,7 @@ export function UserForm({
                     aria-invalid={fieldState.invalid}
                     placeholder="john@example.com"
                     autoComplete="off"
-                    disabled={isLoading}
+                    disabled={isLoading || viewOnly}
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -133,7 +156,7 @@ export function UserForm({
                     <select
                       {...field}
                       id="user-role"
-                      disabled={isLoading}
+                      disabled={isLoading || viewOnly}
                       className="flex h-10 w-full appearance-none cursor-pointer rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <option value="DEVS">Developer</option>
@@ -169,7 +192,7 @@ export function UserForm({
                         }
                         onBlur={field.onBlur}
                         name={field.name}
-                        disabled={isLoading}
+                        disabled={isLoading || viewOnly}
                         className="flex h-10 w-full appearance-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <option value="active">
@@ -204,15 +227,17 @@ export function UserForm({
             onClick={onCancel}
             disabled={isLoading}
           >
-            Cancel
+            {viewOnly ? "Close" : "Cancel"}
           </Button>
-          <Button
-            type="submit"
-            form="user-form"
-            disabled={isLoading || isUnchangedUpdate}
-          >
-            {isLoading ? "Saving..." : initialData ? "Update User" : "Create User"}
-          </Button>
+          {viewOnly ? null : (
+            <Button
+              type="submit"
+              form="user-form"
+              disabled={isLoading || isUnchangedUpdate}
+            >
+              {isLoading ? "Saving..." : initialData ? "Update User" : "Create User"}
+            </Button>
+          )}
         </div>
       </CardFooter>
     </Card>

@@ -38,6 +38,7 @@ interface SprintTableProps {
   hidePagination?: boolean;
   teamSprintMap?: Map<string, string>;
   pendingStartSprintId?: string | null;
+  startBlockedReason?: string | null;
 }
 
 export function SprintTable({
@@ -57,6 +58,7 @@ export function SprintTable({
   hidePagination = false,
   teamSprintMap,
   pendingStartSprintId,
+  startBlockedReason,
 }: SprintTableProps) {
   const pageSizeOptions = [5, 10, 20, 50];
   const searchParams = useSearchParams();
@@ -109,6 +111,7 @@ export function SprintTable({
         controlsPending,
         teamSprintMap,
         pendingStartSprintId,
+        startBlockedReason,
       }),
     ],
     [
@@ -122,6 +125,7 @@ export function SprintTable({
       controlsPending,
       teamSprintMap,
       pendingStartSprintId,
+      startBlockedReason,
     ],
   );
 

@@ -25,6 +25,7 @@ interface UserTableProps {
   data: User[];
   total: number;
   isMobile: boolean;
+  onView: (user: User) => void;
   onEdit: (user: User) => void;
   onDelete: (id: string) => void;
   selectedUserIds: string[];
@@ -36,6 +37,7 @@ export function UserTable({
   data,
   total,
   isMobile,
+  onView,
   onEdit,
   onDelete,
   selectedUserIds,
@@ -82,9 +84,9 @@ export function UserTable({
           mobileVisible: true,
         },
       },
-      ...getColumns({ onEdit, onDelete }),
+      ...getColumns({ onView, onEdit, onDelete }),
     ],
-    [onDelete, onEdit],
+    [onDelete, onEdit, onView],
   );
 
   const handlePageChange = (newPage: number) => {

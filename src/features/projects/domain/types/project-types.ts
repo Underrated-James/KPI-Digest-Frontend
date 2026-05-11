@@ -1,4 +1,4 @@
-export type ProjectStatus = "active" | "inactive" | "inProgress";
+export type ProjectStatus = "draft" | "active" | "inactive" | "inProgress";
 export type ProjectMemberRole = "ADMIN" | "DEVS" | "QA";
 
 export interface ProjectMember {

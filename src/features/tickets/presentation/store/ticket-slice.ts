@@ -1,5 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Ticket } from "../../domain/types/ticket-types";
+import type { RootState } from "@/lib/store";
+import type { FormMode } from "@/lib/form-mode";
+import { Ticket, TicketStatus } from "../../domain/types/ticket-types";
 
 interface DeleteTarget {
   id?: string;
@@ -9,6 +11,8 @@ interface DeleteTarget {
 export interface TicketUiState {
   isFormOpen: boolean;
   editingTicket: Ticket | null;
+  formMode: FormMode;
+  statusOverride: TicketStatus | null;
   deleteTarget: DeleteTarget | null;
   selectedTicketIds: string[];
 }
@@ -16,6 +20,8 @@ export interface TicketUiState {
 const initialState: TicketUiState = {
   isFormOpen: false,
   editingTicket: null,
+  formMode: "create",
+  statusOverride: null,
   deleteTarget: null,
   selectedTicketIds: [],
 };
@@ -27,14 +33,32 @@ const ticketUiSlice = createSlice({
     openCreateTicketForm: (state) => {
       state.isFormOpen = true;
       state.editingTicket = null;
+      state.formMode = "create";
+      state.statusOverride = null;
     },
     openEditTicketForm: (state, action: PayloadAction<Ticket>) => {
       state.isFormOpen = true;
       state.editingTicket = action.payload;
+      state.formMode = "edit";
+      state.statusOverride = null;
+    },
+    openCompleteTicketForm: (state, action: PayloadAction<Ticket>) => {
+      state.isFormOpen = true;
+      state.editingTicket = action.payload;
+      state.formMode = "edit";
+      state.statusOverride = "completed";
+    },
+    openViewTicketForm: (state, action: PayloadAction<Ticket>) => {
+      state.isFormOpen = true;
+      state.editingTicket = action.payload;
+      state.formMode = "view";
+      state.statusOverride = null;
     },
     closeTicketForm: (state) => {
       state.isFormOpen = false;
       state.editingTicket = null;
+      state.formMode = "create";
+      state.statusOverride = null;
     },
     openDeleteTicketModal: (state, action: PayloadAction<DeleteTarget>) => {
       state.deleteTarget = action.payload;
@@ -51,13 +75,11 @@ const ticketUiSlice = createSlice({
   },
 });
 
-type TicketUiRootState = {
-  ticketUi: TicketUiState;
-};
-
 export const {
   openCreateTicketForm,
   openEditTicketForm,
+  openCompleteTicketForm,
+  openViewTicketForm,
   closeTicketForm,
   openDeleteTicketModal,
   closeDeleteTicketModal,
@@ -65,14 +87,18 @@ export const {
   clearSelectedTicketIds,
 } = ticketUiSlice.actions;
 
-export const selectTicketUi = (state: TicketUiRootState) => state.ticketUi;
-export const selectIsTicketFormOpen = (state: TicketUiRootState) =>
+export const selectTicketUi = (state: RootState) => state.ticketUi;
+export const selectIsTicketFormOpen = (state: RootState) =>
   state.ticketUi.isFormOpen;
-export const selectEditingTicket = (state: TicketUiRootState) =>
+export const selectEditingTicket = (state: RootState) =>
   state.ticketUi.editingTicket;
-export const selectDeleteTarget = (state: TicketUiRootState) =>
+export const selectTicketFormMode = (state: RootState) =>
+  state.ticketUi.formMode;
+export const selectTicketStatusOverride = (state: RootState) =>
+  state.ticketUi.statusOverride;
+export const selectDeleteTarget = (state: RootState) =>
   state.ticketUi.deleteTarget;
-export const selectSelectedTicketIds = (state: TicketUiRootState) =>
+export const selectSelectedTicketIds = (state: RootState) =>
   state.ticketUi.selectedTicketIds;
 
 export const ticketUiReducer = ticketUiSlice.reducer;

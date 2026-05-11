@@ -17,7 +17,7 @@ const statusOptions: Array<{ label: string; value: TicketStatus | "ALL" }> = [
   { label: "All Status", value: "ALL" },
   { label: TICKET_STATUS_LABELS.open, value: "open" },
   { label: TICKET_STATUS_LABELS.inProgress, value: "inProgress" },
-  { label: TICKET_STATUS_LABELS.done, value: "done" },
+  { label: TICKET_STATUS_LABELS.completed, value: "completed" },
   { label: TICKET_STATUS_LABELS.cancelled, value: "cancelled" },
 ];
 
@@ -87,9 +87,7 @@ export function TicketPageToolbar({
               </label>
               <Select
                 value={selectedStatus}
-                onValueChange={(v) =>
-                  onStatusChange(v as TicketStatus | "ALL")
-                }
+                onValueChange={(v) => onStatusChange(v as TicketStatus | "ALL")}
               >
                 <SelectTrigger
                   id="ticket-status-filter"
@@ -116,7 +114,9 @@ export function TicketPageToolbar({
               </label>
               <Select
                 value={selectedProjectId ?? "ALL"}
-                onValueChange={(value) => onProjectChange(value as string | "ALL")}
+                onValueChange={(value) =>
+                  onProjectChange(value as string | "ALL")
+                }
               >
                 <SelectTrigger
                   id="ticket-project-filter"
