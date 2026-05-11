@@ -9,7 +9,7 @@ export const ticketFormSchema = z.object({
   // Backend validates non-empty string only (not URL format). Avoid Zod's strict .url()
   // so existing links (e.g. missing scheme) do not block save.
   descriptionLink: z.string().min(1, "Description link is required"),
-  status: z.enum(["open", "inProgress", "completed", "cancelled"]),
+  status: z.enum(["open", "inProgress", "done", "cancelled"]),
   assignedDevId: z.string().nullable().optional(),
   assignedQaId: z.string().nullable().optional(),
   developmentEstimation: z

@@ -4,7 +4,7 @@ import type { TicketStatus } from "../../domain/types/ticket-types";
 export const TICKET_STATUS_LABELS: Record<TicketStatus, string> = {
   open: "Open",
   inProgress: "In Progress",
-  completed: "Completed",
+  done: "Completed",
   cancelled: "Cancelled",
 };
 
@@ -19,7 +19,7 @@ export function getTicketStatusTransitionOptions(
     case "open":
       return ["inProgress", "cancelled"];
     case "inProgress":
-      return ["completed", "cancelled"];
+      return ["done", "cancelled"];
     default:
       return [];
   }
