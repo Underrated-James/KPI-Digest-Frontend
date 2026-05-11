@@ -135,7 +135,8 @@ export function SprintProjectTable({
                 Project Name
               </TableHead>
               <TableHead className="py-3 px-3 text-muted-foreground md:p-4">
-                Number of Sprints
+                <span className="md:hidden">No. Sprints</span>
+                <span className="hidden md:inline">Number of Sprints</span>
               </TableHead>
               <TableHead className="py-3 px-3 text-muted-foreground md:p-4">
                 Project Status
@@ -259,11 +260,10 @@ export function SprintProjectTable({
                         event.preventDefault();
                         handlePageChange(1);
                       }}
-                      className={`h-9 w-9 cursor-pointer ${
-                        page === 1
+                      className={`h-9 w-9 cursor-pointer ${page === 1
                           ? "border-primary bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground"
                           : "text-foreground hover:bg-muted"
-                      }`}
+                        }`}
                     >
                       1
                     </Button>
@@ -286,11 +286,10 @@ export function SprintProjectTable({
                       event.preventDefault();
                       handlePageChange(currentPage);
                     }}
-                    className={`h-9 w-9 cursor-pointer ${
-                      page === currentPage
+                    className={`h-9 w-9 cursor-pointer ${page === currentPage
                         ? "border-primary bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground"
                         : "text-foreground hover:bg-muted"
-                    }`}
+                      }`}
                   >
                     {currentPage}
                   </Button>
@@ -313,11 +312,10 @@ export function SprintProjectTable({
                         event.preventDefault();
                         handlePageChange(totalPages);
                       }}
-                      className={`h-9 w-9 cursor-pointer ${
-                        page === totalPages
+                      className={`h-9 w-9 cursor-pointer ${page === totalPages
                           ? "border-primary bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground"
                           : "text-foreground hover:bg-muted"
-                      }`}
+                        }`}
                     >
                       {totalPages}
                     </Button>
