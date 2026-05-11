@@ -1,4 +1,4 @@
-export type TicketStatus = "open" | "inProgress" | "completed" | "cancelled";
+export type TicketStatus = "open" | "inProgress" | "done" | "cancelled";
 
 export interface Ticket {
   id: string;

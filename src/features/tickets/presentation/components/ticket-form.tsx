@@ -61,7 +61,7 @@ import {
 const TICKET_FORM_STATUSES = [
   "open",
   "inProgress",
-  "completed",
+  "done",
   "cancelled",
 ] as const satisfies readonly TicketFormValues["status"][];
 
@@ -69,14 +69,14 @@ function normalizeTicketFormStatus(
   status: string | null | undefined,
 ): TicketFormValues["status"] {
   switch (status) {
-    case "done":
-      return "completed";
+    case "completed":
+      return "done";
     case "in progress":
     case "in_progress":
       return "inProgress";
     case "open":
     case "inProgress":
-    case "completed":
+    case "done":
     case "cancelled":
       return status;
     default:
@@ -387,11 +387,11 @@ export function TicketForm() {
     "Current QA";
 
   const currentFormStatus = normalizeTicketFormStatus(selectedStatus);
-  const requiresCompletionEffort = currentFormStatus === "completed";
-  const isCompletionFlow = statusOverride === "completed";
+  const requiresCompletionEffort = currentFormStatus === "done";
+  const isCompletionFlow = statusOverride === "done";
   const baseStatusOptions = isCompletionFlow
     ? [...TICKET_FORM_STATUSES]
-    : TICKET_FORM_STATUSES.filter((status) => status !== "completed");
+    : TICKET_FORM_STATUSES.filter((status) => status !== "done");
   const availableStatusOptions = Array.from(
     new Set([...baseStatusOptions, currentFormStatus]),
   );
@@ -401,7 +401,7 @@ export function TicketForm() {
       return;
     }
 
-    if (values.status === "completed") {
+    if (values.status === "done") {
       let hasCompletionError = false;
 
       if (values.devTimeSpent == null) {
@@ -502,7 +502,7 @@ export function TicketForm() {
         <CardTitle className="text-xl sm:text-2xl">
           {viewOnly
             ? "View Ticket"
-            : statusOverride === "completed"
+            : statusOverride === "done"
               ? "Complete Ticket"
             : editingTicket
               ? "Edit Ticket"
@@ -511,7 +511,7 @@ export function TicketForm() {
         <CardDescription className="text-pretty text-sm">
           {viewOnly
             ? "Review ticket details, ownership, and effort estimates."
-            : statusOverride === "completed"
+            : statusOverride === "done"
               ? "Confirm the final ticket details and record the actual delivery effort before closing it."
             : "Configure ticket details, ownership, and estimates in one place."}
         </CardDescription>
@@ -578,11 +578,26 @@ export function TicketForm() {
                                   {orphanProjectLabel}
                                 </SelectItem>
                               ) : null}
-                              {projectsData?.content.map((project) => (
-                                <SelectItem key={project.id} value={project.id}>
-                                  {project.name}
-                                </SelectItem>
-                              ))}
+                              {projectsData?.content
+                                .filter((project) => {
+                                  // Always show the project already assigned to the ticket being edited
+                                  if (
+                                    editingTicket &&
+                                    project.id === editingTicket.projectId
+                                  ) {
+                                    return true;
+                                  }
+                                  // For new tickets or other projects in the list, only show active ones
+                                  return project.status !== "inactive";
+                                })
+                                .map((project) => (
+                                  <SelectItem
+                                    key={project.id}
+                                    value={project.id}
+                                  >
+                                    {project.name}
+                                  </SelectItem>
+                                ))}
                             </SelectContent>
                           </Select>
                           <FormMessage />

@@ -52,7 +52,7 @@ const previewTooltipContentClassName =
 const statusColors: Record<TicketStatus, string> = {
   open: "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20",
   inProgress: "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20",
-  completed: "bg-green-500/10 text-green-500 hover:bg-green-500/20",
+  done: "bg-green-500/10 text-green-500 hover:bg-green-500/20",
   cancelled: "bg-red-500/10 text-red-500 hover:bg-red-500/20",
 };
 

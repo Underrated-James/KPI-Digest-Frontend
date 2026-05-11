@@ -46,7 +46,7 @@ const ticketUiSlice = createSlice({
       state.isFormOpen = true;
       state.editingTicket = action.payload;
       state.formMode = "edit";
-      state.statusOverride = "completed";
+      state.statusOverride = "done";
     },
     openViewTicketForm: (state, action: PayloadAction<Ticket>) => {
       state.isFormOpen = true;

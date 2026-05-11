@@ -17,7 +17,7 @@ const statusOptions: Array<{ label: string; value: TicketStatus | "ALL" }> = [
   { label: "All Status", value: "ALL" },
   { label: TICKET_STATUS_LABELS.open, value: "open" },
   { label: TICKET_STATUS_LABELS.inProgress, value: "inProgress" },
-  { label: TICKET_STATUS_LABELS.completed, value: "completed" },
+  { label: TICKET_STATUS_LABELS.done, value: "done" },
   { label: TICKET_STATUS_LABELS.cancelled, value: "cancelled" },
 ];
 
