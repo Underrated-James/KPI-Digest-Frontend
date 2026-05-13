@@ -25,6 +25,9 @@ import {
   Trash2,
   UserRound,
   XCircle,
+  Play,
+  CirclePause,
+  CircleCheckBig,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -61,6 +64,10 @@ interface ColumnProps {
   onStatusChange: (ticket: Ticket, status: TicketStatus) => void;
   onEdit: (ticket: Ticket) => void;
   onDelete: (ticket: Ticket) => void;
+  onStartTimer: (ticket: Ticket) => void;
+  onPauseTimer: (ticket: Ticket) => void;
+  onCompleteTimer: (ticket: Ticket) => void;
+  getTimerDisplay: (ticket: Ticket) => string;
   statusChangePendingTicketId?: string | null;
 }
 
@@ -109,9 +116,6 @@ function getTicketPreviewContent(ticket: Ticket) {
             <p className="font-medium text-foreground">Assignments</p>
             <p className="text-muted-foreground">
               Dev: {ticket.assignedDevName || "Unassigned"}
-            </p>
-            <p className="text-muted-foreground">
-              QA: {ticket.assignedQaName || "Unassigned"}
             </p>
           </div>
         </div>
@@ -272,6 +276,10 @@ export const getColumns = ({
   onStatusChange,
   onEdit,
   onDelete,
+  onStartTimer,
+  onPauseTimer,
+  onCompleteTimer,
+  getTimerDisplay,
   statusChangePendingTicketId,
 }: ColumnProps): ColumnDef<Ticket>[] => [
   {
@@ -368,7 +376,7 @@ export const getColumns = ({
   },
   {
     accessorKey: "assignedDevName",
-    header: "Developer",
+    header: "Assigned",
     meta: {
       mobileLabel: "Developer",
     },
@@ -377,49 +385,62 @@ export const getColumns = ({
     ),
   },
   {
-    accessorKey: "assignedQaName",
-    header: "QA",
+    id: "controls",
+    header: () => <div className="w-full text-center">Controls</div>,
     meta: {
-      mobileLabel: "QA",
-    },
-    cell: ({ row }) => <div>{row.original.assignedQaName || "Unassigned"}</div>,
-  },
-  {
-    accessorKey: "developmentEstimation",
-    header: "Dev Est.",
-    meta: {
-      mobileLabel: "Dev estimation",
+      mobileLabel: "Ctrl",
     },
     cell: ({ row }) => (
-      <div>{formatEstimate(row.original.developmentEstimation)}</div>
+      <div className="flex items-center justify-center gap-1.5">
+        <button
+          type="button"
+          className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-35"
+          aria-label="Start"
+          onClick={(event) => {
+            event.stopPropagation();
+            onStartTimer(row.original);
+          }}
+          disabled={row.original.timerRunning || row.original.status === "done"}
+        >
+          <Play className="h-4 w-4 text-muted-foreground transition-colors hover:text-foreground" />
+        </button>
+        <button
+          type="button"
+          className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-35"
+          aria-label="Pause"
+          onClick={(event) => {
+            event.stopPropagation();
+            onPauseTimer(row.original);
+          }}
+          disabled={!row.original.timerRunning}
+        >
+          <CirclePause className="h-4 w-4 text-muted-foreground transition-colors hover:text-foreground" />
+        </button>
+        <button
+          type="button"
+          className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-35"
+          aria-label="Complete"
+          onClick={(event) => {
+            event.stopPropagation();
+            onCompleteTimer(row.original);
+          }}
+          disabled={row.original.status === "done"}
+        >
+          <CircleCheckBig className="h-4 w-4 text-muted-foreground transition-colors hover:text-foreground" />
+        </button>
+      </div>
     ),
   },
   {
-    accessorKey: "estimationTesting",
-    header: "QA Est.",
+    id: "timer",
+    header: () => <div className="w-full text-center">Timer</div>,
     meta: {
-      mobileLabel: "QA estimation",
+      mobileLabel: "Time",
     },
     cell: ({ row }) => (
-      <div>{formatEstimate(row.original.estimationTesting)}</div>
-    ),
-  },
-  {
-    accessorKey: "devTimeSpent",
-    header: "Dev Spent",
-    meta: {
-      mobileLabel: "Dev spent",
-    },
-    cell: ({ row }) => <div>{formatEstimate(row.original.devTimeSpent)}</div>,
-  },
-  {
-    accessorKey: "testingTimeSpent",
-    header: "QA Spent",
-    meta: {
-      mobileLabel: "QA spent",
-    },
-    cell: ({ row }) => (
-      <div>{formatEstimate(row.original.testingTimeSpent)}</div>
+      <div className="text-center font-mono text-sm tabular-nums text-primary">
+        {getTimerDisplay(row.original)}
+      </div>
     ),
   },
   {

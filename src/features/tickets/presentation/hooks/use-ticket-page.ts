@@ -170,13 +170,13 @@ export function useTicketPage() {
     onAddTicket: () => dispatch(openCreateTicketForm()),
     onEditTicket: (ticket: Ticket) =>
       dispatch(
-        ticket.status === "completed" || ticket.status === "cancelled"
+        ticket.status === "done" || ticket.status === "cancelled"
           ? openViewTicketForm(ticket)
           : openEditTicketForm(ticket),
       ),
     onViewTicket: (ticket: Ticket) => dispatch(openViewTicketForm(ticket)),
     onStatusChange: (ticket: Ticket, status: TicketStatus) => {
-      if (ticket.status === "inProgress" && status === "completed") {
+      if (ticket.status === "inProgress" && status === "done") {
         dispatch(openCompleteTicketForm(ticket));
         return;
       }

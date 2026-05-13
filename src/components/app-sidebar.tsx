@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useState } from "react";
 import {
   Users,
   Briefcase,
@@ -185,9 +186,13 @@ function SidebarBrandToggle() {
 function SidebarNavButton({
   item,
   pathname,
+  hidden = false,
+  ticketMode = false,
 }: {
   item: NavItem;
   pathname: string;
+  hidden?: boolean;
+  ticketMode?: boolean;
 }) {
   const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
@@ -200,25 +205,40 @@ function SidebarNavButton({
       : "text-zinc-500 dark:text-zinc-400 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:text-zinc-600 group-data-[collapsible=icon]:dark:bg-zinc-800 group-data-[collapsible=icon]:dark:text-zinc-300 group-data-[collapsible=icon]:group-hover/menu-button:bg-zinc-700 group-data-[collapsible=icon]:group-hover/menu-button:text-white dark:group-data-[collapsible=icon]:group-hover/menu-button:bg-zinc-300 dark:group-data-[collapsible=icon]:group-hover/menu-button:text-black group-data-[collapsible=icon]:group-hover/menu-button:shadow-sm",
   );
 
+  const handleNavigate = () => {
+    const targetHref =
+      ticketMode && item.title === "Tickets" ? "/ticketMode" : item.href;
+    if (pathname !== targetHref) {
+      router.push(targetHref);
+    }
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   return (
-    <SidebarMenuItem key={item.title}>
+    <SidebarMenuItem
+      key={item.title}
+      aria-hidden={hidden}
+      className={cn(
+        "overflow-hidden transition-all duration-300 ease-out",
+        hidden
+          ? "pointer-events-none mb-0 max-h-0 translate-y-1 opacity-0"
+          : "mb-2 max-h-12 translate-y-0 opacity-100 last:mb-0",
+      )}
+    >
       <SidebarMenuButton
         isActive={isActive}
         tooltip={item.title}
         className={cn(
           sidebarButtonClassName,
           isActive &&
-          "shadow-sm group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none",
+            "shadow-sm group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none",
         )}
         aria-label={item.title}
-        onClick={() => {
-          if (!isActive) {
-            router.push(item.href);
-          }
-          if (isMobile) {
-            setOpenMobile(false);
-          }
-        }}
+        disabled={hidden}
+        tabIndex={hidden ? -1 : 0}
+        onClick={handleNavigate}
       >
         <span className={navIconClassName}>
           <item.icon className="size-4" />
@@ -250,7 +270,13 @@ function SidebarActionButton({
   );
 }
 
-function SidebarThemeMenu() {
+function SidebarThemeMenu({
+  enabled,
+  setEnabled,
+}: {
+  enabled: boolean;
+  setEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -270,19 +296,39 @@ function SidebarThemeMenu() {
         ? Moon
         : Sun;
 
+  const router = useRouter();
+
   return (
     <SidebarMenuItem>
       {isCollapsed ? (
         <Popover open={collapsedThemeOpen} onOpenChange={setCollapsedThemeOpen}>
           <PopoverTrigger asChild>
-            <SidebarMenuButton tooltip="Settings" className={sidebarButtonClassName}>
+            <SidebarMenuButton
+              tooltip="Settings"
+              className={sidebarButtonClassName}
+            >
               <span className="flex size-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200 group-data-[collapsible=icon]:group-hover/menu-button:scale-105 group-data-[collapsible=icon]:group-hover/menu-button:bg-[var(--sidebar-hover)] group-data-[collapsible=icon]:group-hover/menu-button:text-current group-data-[collapsible=icon]:group-hover/menu-button:shadow-sm">
                 <Settings className="size-4" />
               </span>
-              <span className="group-data-[collapsible=icon]:hidden">Settings</span>
+              <span className="group-data-[collapsible=icon]:hidden">
+                Settings
+              </span>
             </SidebarMenuButton>
           </PopoverTrigger>
           <PopoverContent className="w-72 rounded-xl border-sidebar-border bg-sidebar p-3">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-sm font-medium text-sidebar-foreground">
+                Notifications
+              </span>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={enabled}
+                  onChange={() => setEnabled(!enabled)}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
             <div className="mb-3 flex items-center justify-between">
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sidebar-foreground/55">
                 Theme
@@ -312,7 +358,9 @@ function SidebarThemeMenu() {
             <span className="flex size-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200 group-data-[collapsible=icon]:group-hover/menu-button:scale-105 group-data-[collapsible=icon]:group-hover/menu-button:bg-[var(--sidebar-hover)] group-data-[collapsible=icon]:group-hover/menu-button:text-current group-data-[collapsible=icon]:group-hover/menu-button:shadow-sm">
               <Settings className="size-4" />
             </span>
-            <span className="group-data-[collapsible=icon]:hidden">Settings</span>
+            <span className="group-data-[collapsible=icon]:hidden">
+              Settings
+            </span>
             <span className="ml-auto flex size-7 shrink-0 items-center justify-center rounded-lg border border-sidebar-border/80 bg-[var(--sidebar-hover)] text-sidebar-foreground group-data-[collapsible=icon]:hidden">
               <ActiveThemeIcon className="size-4" />
             </span>
@@ -328,6 +376,31 @@ function SidebarThemeMenu() {
             )}
           >
             <div className="rounded-xl border border-sidebar-border bg-[var(--sidebar-hover)]/55 p-3">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-sm font-medium text-sidebar-foreground">
+                  Ticket Mode
+                </span>
+
+                <label className="switch cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={enabled}
+                    onChange={() => {
+                      const newValue = !enabled;
+                      setEnabled(newValue);
+
+                      if (newValue) {
+                        router.push("/ticketMode"); // ← Add this
+                      } else {
+                        router.push("/tickets"); // ← Add this
+                      }
+                    }}
+                  />
+
+                  <span className="slider"></span>
+                </label>
+              </div>
+
               <div className="mb-3 flex items-center justify-between">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sidebar-foreground/55">
                   Theme
@@ -356,6 +429,8 @@ function SidebarThemeMenu() {
 function AppSidebarBase() {
   const pathname = usePathname();
 
+  const [ticketMode, setTicketMode] = useState(false);
+
   return (
     <Sidebar
       collapsible="icon"
@@ -371,12 +446,14 @@ function AppSidebarBase() {
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-2">
+            <SidebarMenu className="gap-0">
               {navItems.map((item) => (
                 <SidebarNavButton
                   key={item.title}
                   item={item}
                   pathname={pathname}
+                  hidden={ticketMode && item.title !== "Tickets"}
+                  ticketMode={ticketMode}
                 />
               ))}
             </SidebarMenu>
@@ -386,7 +463,7 @@ function AppSidebarBase() {
 
       <SidebarFooter className="border-t border-sidebar-border p-4 group-data-[collapsible=icon]:px-1">
         <SidebarMenu className="gap-1.5">
-          <SidebarThemeMenu />
+          <SidebarThemeMenu enabled={ticketMode} setEnabled={setTicketMode} />
           <SidebarActionButton title="Log out" icon={LogOut} />
         </SidebarMenu>
       </SidebarFooter>
