@@ -2,8 +2,8 @@ import { Metadata } from "next";
 import { ProjectPage } from "@/features/projects";
 
 export const metadata: Metadata = {
-  title: "Users | KPI Digest",
-  description: "Manage your team and users.",
+  title: "Projects | KPI Digest",
+  description: "Manage your projects.",
 };
 
 export default function Projects() {

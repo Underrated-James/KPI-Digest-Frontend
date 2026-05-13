@@ -56,6 +56,14 @@ function getColumnHeaderClass(columnId: string) {
     return "w-[140px] whitespace-nowrap py-3 pl-2 pr-4 text-center md:w-auto md:p-2";
   }
 
+  if (columnId === "controls") {
+    return "w-[132px] whitespace-nowrap px-2 py-3 text-center md:w-[132px] md:px-2";
+  }
+
+  if (columnId === "timer") {
+    return "w-[110px] whitespace-nowrap px-2 py-3 text-center md:w-[110px] md:px-2";
+  }
+
   if (columnId === "name") {
     return "py-3 pl-1 pr-2 md:p-2";
   }
@@ -86,6 +94,14 @@ function getColumnCellClass(columnId: string) {
 
   if (columnId === "actions") {
     return "w-[140px] whitespace-nowrap py-3 pl-2 pr-4 text-center align-middle md:w-auto md:p-2";
+  }
+
+  if (columnId === "controls") {
+    return "w-[132px] whitespace-nowrap px-2 py-3 text-center align-middle md:w-[132px] md:px-2";
+  }
+
+  if (columnId === "timer") {
+    return "w-[110px] whitespace-nowrap px-2 py-3 text-center align-middle md:w-[110px] md:px-2";
   }
 
   return undefined;
